@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import textwrap
+import json
 from pathlib import Path
 from typing import Any
 
@@ -229,46 +230,55 @@ def render_fallback_og_card(*, output_path: Path, title: str, subtitle: str, eye
     canvas.save(output_path, format="JPEG", quality=86, optimize=True, progressive=True)
 
 
-def _should_refresh(output_path: Path, source_path: Path, page_path: Path | None, *, force: bool) -> bool:
-    if force or not output_path.exists():
-        return True
-    output_mtime = output_path.stat().st_mtime_ns
-    if source_path.exists() and source_path.stat().st_mtime_ns > output_mtime:
-        return True
-    if page_path and page_path.exists() and page_path.stat().st_mtime_ns > output_mtime:
-        return True
-    return False
+OG_STAMP_PATH = ROOT / ".stillmrk-build" / "og-stamps.json"
+
+
+def _load_stamps() -> dict[str, Any]:
+    try:
+        return json.loads(OG_STAMP_PATH.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return {}
+
+
+def _stamp_for(target: dict[str, str], source_path: Path | None) -> dict[str, Any]:
+    stamp: dict[str, Any] = {
+        "title": target["title"],
+        "subtitle": target["subtitle"],
+        "eyebrow": target["key"],
+        "source": source_path.relative_to(ROOT).as_posix() if source_path and source_path.exists() else "",
+    }
+    if source_path and source_path.exists():
+        stamp["source_mtime_ns"] = source_path.stat().st_mtime_ns
+        stamp["source_size"] = source_path.stat().st_size
+    return stamp
 
 
 def ensure_og_images_from_content(content: dict[str, Any], *, force: bool = False) -> list[str]:
+    """Render social cards only when their title, subtitle or photo changed.
+
+    The previous version compared against page modification times, and pages
+    are rewritten on every build, so every build re-rendered every card.
+    """
     pipeline = load_pipeline()
+    stamps = _load_stamps()
     generated: list[str] = []
     for target in _page_targets(content):
         og_path = ROOT / target["og_path"].lstrip("/")
         source_path = source_path_for_work(target["series_slug"], target["work_id"], pipeline=pipeline)
-        page_path = ROOT / target["page_path"]
-        if source_path and source_path.exists():
-            if not _should_refresh(og_path, source_path, page_path, force=force):
-                continue
-            render_og_card(
-                source_image_path=source_path,
-                output_path=og_path,
-                title=target["title"],
-                subtitle=target["subtitle"],
-                eyebrow=target["key"],
-            )
+        has_source = bool(source_path and source_path.exists())
+        key = og_path.relative_to(ROOT).as_posix()
+        stamp = _stamp_for(target, source_path if has_source else None)
+        if not force and og_path.exists() and stamps.get(key) == stamp:
+            continue
+        if has_source:
+            render_og_card(source_image_path=source_path, output_path=og_path, title=target["title"], subtitle=target["subtitle"], eyebrow=target["key"])
         else:
-            # Metadata-only builds still need valid share images. Generate an
-            # on-brand fallback card until the real photograph source exists.
-            if og_path.exists() and not force and page_path.exists() and og_path.stat().st_mtime_ns >= page_path.stat().st_mtime_ns:
-                continue
-            render_fallback_og_card(
-                output_path=og_path,
-                title=target["title"],
-                subtitle=target["subtitle"],
-                eyebrow=target["key"],
-            )
-        generated.append(og_path.relative_to(ROOT).as_posix())
+            render_fallback_og_card(output_path=og_path, title=target["title"], subtitle=target["subtitle"], eyebrow=target["key"])
+        stamps[key] = stamp
+        generated.append(key)
+    if generated:
+        OG_STAMP_PATH.parent.mkdir(parents=True, exist_ok=True)
+        OG_STAMP_PATH.write_text(json.dumps(stamps, indent=2) + "\n", encoding="utf-8")
     return generated
 
 

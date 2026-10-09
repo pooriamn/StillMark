@@ -9,6 +9,7 @@ import os
 import stat
 import re
 import shutil
+import time
 from datetime import datetime, timezone
 from collections import Counter
 from urllib.parse import quote, urlparse
@@ -49,8 +50,16 @@ BUILD_META_DIR = BUILD_STATE_DIR / 'meta'
 BUILD_STATUS_PATH = BUILD_META_DIR / 'build-status.json'
 CONTENT_GRAPH_PATH = BUILD_META_DIR / 'content-graph.json'
 RELEASE_REPORT_PATH = BUILD_META_DIR / 'release-report.json'
-PUBLIC_UPLOAD_DIR = ROOT / 'public_upload'
-PUBLIC_UPLOAD_INSTRUCTIONS_PATH = ROOT / 'HOST_UPLOAD_INSTRUCTIONS.txt'
+# All build output goes to dist/. Nothing generated is written into the source
+# tree any more (pages, data.js and the upload bundle used to be written to the
+# repository root and to public_upload/).
+DIST_DIR = ROOT / 'dist'
+PUBLIC_UPLOAD_DIR = DIST_DIR  # legacy name, kept for older tooling
+IMAGE_STAMP_NAME = '.derivatives.json'
+
+# 'build' renders missing/outdated derivatives; 'validate' only reads image
+# headers so `--validate-only` never decodes, resizes or writes anything.
+IMAGE_MODE = 'build'
 
 PUBLISH_STATE_PATH = BUILD_META_DIR / 'publish-state.json'
 
@@ -146,12 +155,6 @@ def load_site_content() -> dict[str, Any]:
 
     work_entries = load_yaml_folder(CONTENT_DIR / 'works')
     content['works'] = sorted(work_entries, key=lambda entry: str(entry.get('id', '')))
-
-    if ensure_og_images_from_content:
-        try:
-            ensure_og_images_from_content(content, force=False)
-        except Exception:
-            pass
 
     validate_site_content(content)
     return content
@@ -1126,6 +1129,42 @@ def build_empty_image_meta(work_entry: dict[str, Any], image_config: dict[str, A
     }
 
 
+IMAGE_STATS = {'rendered': 0, 'cached': 0}
+_EXIF_ORIENTATION_TAG = 274
+_ROTATED_ORIENTATIONS = {5, 6, 7, 8}
+
+
+def _read_json(path: Path) -> Any:
+    try:
+        return json.loads(path.read_text(encoding='utf-8'))
+    except (OSError, ValueError):
+        return None
+
+
+def source_dimensions(source_path: Path) -> tuple[int, int]:
+    """Return the displayed size of a source image from its header only.
+
+    Opening a file with Pillow reads the header lazily, so this costs
+    milliseconds instead of a full decode. EXIF rotation is applied to the
+    reported size so it matches what prepare_source_image() produces.
+    """
+    with Image.open(source_path) as image:
+        width, height = image.size
+        try:
+            orientation = image.getexif().get(_EXIF_ORIENTATION_TAG)
+        except Exception:
+            orientation = None
+    if orientation in _ROTATED_ORIENTATIONS:
+        return height, width
+    return width, height
+
+
+def derivative_widths(intrinsic_width: int) -> list[int]:
+    widths = [width for width in RESPONSIVE_WIDTHS if width < intrinsic_width]
+    widths.append(intrinsic_width)
+    return sorted(set(int(width) for width in widths))
+
+
 def ensure_responsive_assets(work_entry: dict[str, Any], generated_assets: set[str]) -> dict[str, Any]:
     image_config = resolve_image_definition(work_entry)
     explicit_source = str(image_config.get("source") or image_config.get("original") or image_config.get("master") or "").strip()
@@ -1150,46 +1189,54 @@ def ensure_responsive_assets(work_entry: dict[str, Any], generated_assets: set[s
         )
         return build_empty_image_meta(work_entry, image_config, str(exc))
 
-    prepared = prepare_source_image(source_path)
-    intrinsic_width, intrinsic_height = prepared.size
-
-    target_widths = [width for width in RESPONSIVE_WIDTHS if width < intrinsic_width]
-    target_widths.append(intrinsic_width)
-    target_widths = sorted(set(int(width) for width in target_widths))
+    intrinsic_width, intrinsic_height = source_dimensions(source_path)
+    target_widths = derivative_widths(intrinsic_width)
 
     series_slug = str(image_config.get('series') or resolve_series_slug_for_work(work_entry) or 'unassigned').strip() or 'unassigned'
     render_slug = str(image_config.get("render_name") or work_entry.get('render_name') or work_entry["id"]).strip().replace("\\", "/").strip("/")
     render_name = render_slug.replace('/', '-') or work_entry['id']
     work_output_dir = current_generated_root() / series_slug / render_name
     responsive_base_path = work_output_dir / render_name
-    work_output_dir.mkdir(parents=True, exist_ok=True)
 
-    source_mtime = source_path.stat().st_mtime_ns
     jpg_quality = int(IMAGE_PIPELINE.get("jpg_quality", DEFAULT_IMAGE_PIPELINE["jpg_quality"]))
     webp_quality = int(IMAGE_PIPELINE.get("webp_quality", DEFAULT_IMAGE_PIPELINE["webp_quality"]))
     force_rebuild = bool(image_config.get("force_rebuild", False))
+    expected_files = [work_output_dir / f"{render_name}-{width}.{ext}" for width in target_widths for ext in ('jpg', 'webp')]
 
-    for width in target_widths:
-        if width == intrinsic_width:
-            variant = prepared.copy()
-        else:
-            height = max(1, round(intrinsic_height * width / intrinsic_width))
-            variant = prepared.resize((width, height), Image.Resampling.LANCZOS)
+    stamp = {
+        'source': relative_asset_path(source_path),
+        'source_size': source_path.stat().st_size,
+        'source_mtime_ns': source_path.stat().st_mtime_ns,
+        'widths': target_widths,
+        'jpg_quality': jpg_quality,
+        'webp_quality': webp_quality,
+    }
+    stamp_path = work_output_dir / IMAGE_STAMP_NAME
+    cache_hit = (
+        not force_rebuild
+        and all(path.exists() for path in expected_files)
+        and _read_json(stamp_path) == stamp
+    )
 
-        jpg_path = work_output_dir / f"{render_name}-{width}.jpg"
-        webp_path = work_output_dir / f"{render_name}-{width}.webp"
+    if IMAGE_MODE == 'build' and not cache_hit:
+        # Only decode the source when something actually needs rendering.
+        prepared = prepare_source_image(source_path)
+        work_output_dir.mkdir(parents=True, exist_ok=True)
+        for width in target_widths:
+            if width == intrinsic_width:
+                variant = prepared
+            else:
+                height = max(1, round(intrinsic_height * width / intrinsic_width))
+                variant = prepared.resize((width, height), Image.Resampling.LANCZOS)
+            variant.save(work_output_dir / f"{render_name}-{width}.jpg", format="JPEG", quality=jpg_quality, optimize=True, progressive=True)
+            variant.save(work_output_dir / f"{render_name}-{width}.webp", format="WEBP", quality=webp_quality, method=6)
+        stamp_path.write_text(json.dumps(stamp, indent=2) + "\n", encoding='utf-8')
+        IMAGE_STATS['rendered'] += 1
+    else:
+        IMAGE_STATS['cached'] += 1
 
-        jpg_is_current = jpg_path.exists() and jpg_path.stat().st_mtime_ns >= source_mtime
-        webp_is_current = webp_path.exists() and webp_path.stat().st_mtime_ns >= source_mtime
-
-        if force_rebuild or not jpg_is_current:
-            variant.save(jpg_path, format="JPEG", quality=jpg_quality, optimize=True, progressive=True)
-
-        if force_rebuild or not webp_is_current:
-            variant.save(webp_path, format="WEBP", quality=webp_quality, method=6)
-
-        generated_assets.add(relative_asset_path(jpg_path))
-        generated_assets.add(relative_asset_path(webp_path))
+    for path in expected_files:
+        generated_assets.add(relative_asset_path(path))
 
     largest_width = target_widths[-1]
     largest_jpg = work_output_dir / f"{render_name}-{largest_width}.jpg"
@@ -1365,7 +1412,10 @@ def normalize_content(raw: dict[str, Any]) -> dict[str, Any]:
                 "visibility": visibility,
                 "clientName": str(series.get('client_name') or '').strip(),
                 "accessNote": str(series.get('access_note') or series.get('accessNote') or '').strip(),
-                "accessHash": hash_access_code(series.get('access_code')),
+                # Never publish an access hash. A hash checked in the browser can
+                # be brute-forced offline, so private series simply stay locked
+                # on the public site. Share private work through the host instead.
+                "accessHash": "",
                 "reviewMode": bool(series.get('review_mode', False)),
                 "allowFavorites": bool(series.get('allow_favorites', True)),
                 "allowInquiryBasket": bool(series.get('allow_inquiry_basket', True)),
@@ -1710,10 +1760,10 @@ def generate_release_report(store: dict[str, Any]) -> dict[str, Any]:
         add_check('Canonical/OG base is absolute', bool(site['metadataBaseUrl'].startswith('http')) and not looks_like_placeholder(site['metadataBaseUrl']), f"Metadata base: {site['metadataBaseUrl']}")
 
     if site['allowIndexing'] and site['siteUrl']:
-        sitemap_text = (ROOT / 'sitemap.xml').read_text(encoding='utf-8') if (ROOT / 'sitemap.xml').exists() else ''
+        sitemap_text = (DIST_DIR / 'sitemap.xml').read_text(encoding='utf-8') if (DIST_DIR / 'sitemap.xml').exists() else ''
         add_check('Sitemap present for indexable build', '<urlset' in sitemap_text, 'Indexable builds should emit a sitemap.')
     else:
-        add_check('Sitemap intentionally suppressed', '<!-- STILLMRK sitemap is intentionally disabled' in (ROOT / 'sitemap.xml').read_text(encoding='utf-8'), 'Non-indexable builds suppress the sitemap on purpose.')
+        add_check('Sitemap intentionally suppressed', '<!-- STILLMRK sitemap is intentionally disabled' in (DIST_DIR / 'sitemap.xml').read_text(encoding='utf-8'), 'Non-indexable builds suppress the sitemap on purpose.')
 
     private_series = [series['slug'] for series in store['series_list'] if series.get('visibility') == 'private']
     private_work_ids = {work_id for work_id, work in store['works_by_id'].items() if str(work.get('series') or '').strip() in private_series}
@@ -1798,99 +1848,41 @@ def reset_directory(path: Path) -> None:
     path.mkdir(parents=True, exist_ok=True)
 
 
-def write_public_upload_bundle(store: dict[str, Any], report: dict[str, Any]) -> None:
-    reset_directory(PUBLIC_UPLOAD_DIR)
+PAGE_FILES = ['index.html', 'portfolio.html', 'series.html', 'performance.html', 'about.html', 'contact.html', '404.html']
+ASSET_COPY_BLOCKLIST = {'incoming', 'originals', 'manifests'}
 
-    top_level_files = [
-        'index.html',
-        'portfolio.html',
-        'series.html',
-        'performance.html',
-        'about.html',
-        'contact.html',
-        '404.html',
-        'robots.txt',
-        'sitemap.xml',
-        'site.webmanifest',
-    ]
-    for relative in top_level_files:
-        source = ROOT / relative
-        if source.exists():
-            shutil.copy2(source, PUBLIC_UPLOAD_DIR / relative)
 
-    assets_source = ROOT / 'assets'
-    if assets_source.exists():
-        def ignore_assets(_current_dir: str, names: list[str]) -> set[str]:
-            blocked = {'incoming', 'originals', 'manifests'}
-            return {name for name in names if name in blocked}
+def prepare_dist() -> None:
+    """Reset dist/ and copy the static assets the public site needs."""
+    reset_directory(DIST_DIR)
 
-        shutil.copytree(assets_source, PUBLIC_UPLOAD_DIR / 'assets', dirs_exist_ok=True, ignore=ignore_assets)
+    def ignore_assets(_current_dir: str, names: list[str]) -> set[str]:
+        return {name for name in names if name in ASSET_COPY_BLOCKLIST or name.startswith('.')}
 
-    # Public data is the hard dependency for every gallery module. Keep this
-    # copy explicit instead of relying on broad copytree behaviour so a future
-    # asset ignore rule cannot silently ship an empty portfolio.
-    data_source = ROOT / 'assets/js/data.js'
-    data_target = PUBLIC_UPLOAD_DIR / 'assets/js/data.js'
-    if not data_source.exists():
-        raise FileNotFoundError(f"Generated site data is missing: {data_source.relative_to(ROOT).as_posix()}")
-    data_target.parent.mkdir(parents=True, exist_ok=True)
-    shutil.copy2(data_source, data_target)
+    shutil.copytree(ROOT / 'assets', DIST_DIR / 'assets', dirs_exist_ok=True, ignore=ignore_assets)
 
-    required_public_assets = [data_target]
-    missing_public_assets = [path.relative_to(ROOT).as_posix() for path in required_public_assets if not path.exists() or path.stat().st_size <= 0]
-    if missing_public_assets:
-        raise RuntimeError('Public upload integrity failed: ' + ', '.join(missing_public_assets))
 
+def write_dist_file(relative: str, text: str) -> None:
+    target = DIST_DIR / relative
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_text(text, encoding='utf-8')
+
+
+def write_upload_manifest(store: dict[str, Any], report: dict[str, Any]) -> None:
+    data_target = DIST_DIR / 'assets/js/data.js'
+    if not data_target.exists() or data_target.stat().st_size <= 0:
+        raise RuntimeError('Build integrity failed: dist/assets/js/data.js is missing or empty.')
     manifest = {
         'generatedAt': iso_timestamp(),
         'environment': report.get('environment') or store['site_data']['site']['environment'],
         'siteUrl': store['site_data']['site']['siteUrl'],
         'displayUrl': store['site_data']['site']['displayUrl'],
         'allowIndexing': store['site_data']['site']['allowIndexing'],
-        'uploadFolder': 'public_upload',
-        'uploadOnly': [
-            'index.html',
-            'portfolio.html',
-            'series.html',
-            'performance.html',
-            'about.html',
-            'contact.html',
-            '404.html',
-            'robots.txt',
-            'sitemap.xml',
-            'site.webmanifest',
-            'assets/',
-        ],
+        'uploadFolder': 'dist',
+        'uploadOnly': PAGE_FILES + ['robots.txt', 'sitemap.xml', 'site.webmanifest', 'assets/'],
     }
-    (PUBLIC_UPLOAD_DIR / 'upload-manifest.json').write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + "\n", encoding='utf-8')
+    write_dist_file('upload-manifest.json', json.dumps(manifest, ensure_ascii=False, indent=2) + "\n")
 
-
-def write_public_upload_instructions(store: dict[str, Any], report: dict[str, Any]) -> None:
-    site = store['site_data']['site']
-    lines = [
-        'STILLMRK public site workflow',
-        '',
-        'This package builds a static public portfolio. Upload only the contents of the public_upload folder to your host.',
-        '',
-        f"Target public URL: {site['siteUrl'] or site['displayUrl'] or 'unset'}",
-        f"Environment: {site['environment']}",
-        f"Indexing enabled: {'yes' if site['allowIndexing'] else 'no'}",
-        f"Last build (UTC): {report.get('generatedAt') or iso_timestamp()}",
-        '',
-        'Local preview:',
-        '1. Run: python preview_server.py',
-        '2. Open: http://127.0.0.1:8000/',
-        '3. Edit content files locally and run python build_site.py when needed.',
-        '',
-        'Upload step:',
-        '1. Open the public_upload folder in this project.',
-        '2. Upload its contents to the host root with FileZilla.',
-        '3. Do not upload content/ or the Python source files to the host.',
-        '',
-        'The public_upload folder is regenerated every time python build_site.py succeeds.',
-        f"Missing-image placeholders used: {len(report.get('missingImages') or [])}",
-    ]
-    PUBLIC_UPLOAD_INSTRUCTIONS_PATH.write_text("\n".join(lines) + "\n", encoding='utf-8')
 
 def load_asset_manifest() -> set[str]:
     if not ASSET_MANIFEST_PATH.exists():
@@ -2511,6 +2503,7 @@ def render_footer(raw: dict[str, Any]) -> str:
         <div class="footer-links">
           {footer_links_html}
           {social_links_html}
+          {'<button type="button" class="footer-consent-link" data-consent-settings>Cookie settings</button>' if analytics_id() else ''}
           <span>{copyright_text}</span>
         </div>
       </div>
@@ -2596,20 +2589,24 @@ def render_404(store: dict[str, Any]) -> str:
 """
 
 
+def analytics_id() -> str:
+    value = str((SITE_CONTENT.get('site') or {}).get('analytics_id') or '').strip()
+    return value if re.fullmatch(r'G-[A-Z0-9]+', value, re.IGNORECASE) else ''
+
+
 def google_analytics_head() -> str:
-    analytics_id = str((SITE_CONTENT.get('site') or {}).get('analytics_id') or '').strip()
-    if not analytics_id or not re.fullmatch(r'G-[A-Z0-9]+', analytics_id, re.IGNORECASE):
+    """Consent-first analytics.
+
+    Nothing from Google loads until the visitor accepts in the consent banner
+    (assets/js/consent.js). This is what UK PECR / UK GDPR and the EU ePrivacy
+    rules require for analytics cookies. Without an analytics_id nothing is
+    emitted at all.
+    """
+    ga_id = analytics_id()
+    if not ga_id:
         return ""
-    return f"""
-    <!-- Google Analytics -->
-    <script async src=\"https://www.googletagmanager.com/gtag/js?id={esc(analytics_id)}\"></script>
-    <script>
-      window.dataLayer = window.dataLayer || [];
-      function gtag(){{dataLayer.push(arguments);}}
-      gtag('js', new Date());
-      gtag('config', '{esc(analytics_id)}');
-    </script>
-    """.strip()
+    return f'''<meta name="stillmark-analytics" content="{esc(ga_id)}">
+    <script src="assets/js/consent.js" defer></script>'''
 
 
 def google_analytics_body() -> str:
@@ -4133,1538 +4130,59 @@ def render_robots_txt() -> str:
     return '\n'.join(lines) + '\n'
 
 
-def render_readme() -> str:
-    return """# STILLMRK - public static portfolio build
-
-This package uses file-backed YAML content and responsive image generation to build the public website.
-
-## What changed
-
-The site uses small YAML files as the source of truth:
-
-- `content/site.yaml`
-- `content/artist.yaml`
-- `content/navigation.yaml`
-- `content/image-pipeline.yaml`
-- `content/pages/*.yaml`
-- `content/series/*.yaml`
-- `content/works/*.yaml`
-
-`build_site.py` now:
-- loads content with `yaml.safe_load()`
-- validates the assembled content against `content/schema/content.schema.json`
-- checks cross-file references such as `series.work_ids`, series covers, homepage featured content, and duplicate responsive render names
-- generates responsive images automatically
-- removes stale generated responsive assets when works are removed or renamed
-- rebuilds the HTML pages and `assets/js/data.js`
-- refreshes the `public_upload/` folder after every successful build
-- emits a branded `404.html` page and fallback Open Graph images when source photographs are not assigned yet
-- avoids empty image preload tags in metadata-only builds
-
-## Recommended local workflow
-
-### Build the site
-```bash
-python build_site.py
-```
-
-### Preview the public site locally
-```bash
-python preview_server.py
-```
-
-Open:
-- public site: `http://127.0.0.1:8000/`
-
-Host upload target:
-- upload only the contents of `public_upload/` to the host
-- do not upload `content/` or the Python source files
-
-## Content workflow
-
-### Add a new photograph
-1. Put one high-quality source file in `assets/images/originals/`
-2. Create one YAML file in `content/works/`, ideally using the same id as the source filename
-3. Add that work id to the correct series file in `content/series/`
-4. Run `python build_site.py`
-
-### Remove a photograph
-1. Remove its id from any series file that references it
-2. Delete its YAML file from `content/works/`
-3. Delete the source image if you do not need it anymore
-4. Run `python build_site.py`
-
-### Reorder a series
-Open the relevant file in `content/series/` and reorder the `work_ids` list.
-
-## Validation
-
-Run a full validation and build:
-
-```bash
-python build_site.py
-```
-
-Run validation only:
-
-```bash
-python build_site.py --validate-only
-```
-
-If validation fails, the build stops before it writes broken output.
-
-## Folder structure
-
-- `assets/images/originals/` → your source images
-- `assets/images/responsive/` → generated site assets
-- `content/works/` → one work per file
-- `content/collections/` → parent collections such as Stage Works
-- `content/series/` → one series/project per file
-- `content/pages/` → page-level copy blocks
-- `content/schema/content.schema.json` → structural validation
-- `.stillmrk-build/responsive-assets.json` → manifest for generated responsive files
-- `assets/images/social/` → generated social preview cards used by Open Graph/Twitter metadata
-
-## Blunt note
-
-This is a static-site workflow. It is simpler and safer because the public site is built directly from the same content files you keep locally.
-"""
-
-def update_app_js(path: Path) -> None:
-    text = path.read_text(encoding='utf-8')
-    text = text.replace(
-        "      status.textContent = 'Update the contact email in assets/js/data.js before publishing. The draft cannot open until that address is real.';",
-        "      status.textContent = 'Update the contact email in content/artist.yaml, then run python build_site.py before publishing. The draft cannot open until that address is real.';",
-    )
-    text = text.replace(
-        "      status.textContent = 'Update the contact email in content/site_content.py, then run python build_site.py before publishing. The draft cannot open until that address is real.';",
-        "      status.textContent = 'Update the contact email in content/artist.yaml, then run python build_site.py before publishing. The draft cannot open until that address is real.';",
-    )
-    text = text.replace(
-        "  const loaders = {\n    home: () => import('./home.js'),\n    portfolio: () => import('./portfolio.js'),\n    series: () => import('./series.js')\n  };",
-        "  const loaders = {\n    portfolio: () => import('./portfolio.js'),\n    series: () => import('./series.js')\n  };",
-    )
-    if 'const STILLMRK_DEBUG' not in text:
-        text = text.replace(
-            "const MAILTO_URL_LIMIT = 1800;",
-            "const MAILTO_URL_LIMIT = 1800;\nconst STILLMRK_DEBUG = new URLSearchParams(window.location.search).has('debug') || window.localStorage?.getItem('stillmrk:debug') === '1';",
-        )
-    text = text.replace(
-        "  } catch (error) {\n    console.error(`[STILLMRK] ${label} failed`, error);\n  }",
-        "  } catch (error) {\n    if (STILLMRK_DEBUG) {\n      // Keep production quiet while still allowing explicit local diagnostics.\n      window.requestAnimationFrame(() => { throw new Error(`[STILLMRK] ${label} failed: ${error?.message || error}`); });\n    }\n  }",
-    )
-    text = text.replace(
-        "      } catch (error) {\n        console.error(error);\n        setStatus('warning', 'The direct form submission did not complete. Use the direct email options below instead.');",
-        "      } catch {\n        setStatus('warning', 'The direct form submission did not complete. Use the direct email options below instead.');",
-    )
-
-    text = text.replace(
-        """  function syncNavA11y(isOpen = false) {\n    const isMobile = window.innerWidth <= mobileNavBreakpoint;\n    if (isMobile) {\n      nav.setAttribute('aria-hidden', String(!isOpen));\n      setInertState(nav, !isOpen);\n      setNavLinksTabbable(isOpen);\n    } else {\n      nav.removeAttribute('aria-hidden');\n      setInertState(nav, false);\n      setNavLinksTabbable(true);\n    }\n  }\n""",
-        """  function syncNavA11y(isOpen = false) {\n    const isMobile = window.innerWidth <= mobileNavBreakpoint;\n    // Do not use native inert on the nav panel itself. Some mobile browser\n    // combinations keep inert descendants visually/semantically stale after\n    // toggling, which can produce an expanded empty black menu. CSS handles\n    // visibility; tabindex + aria-hidden handle keyboard/screen-reader state.\n    nav.removeAttribute('inert');\n    nav.removeAttribute('data-inert-fallback');\n    if (isMobile) {\n      nav.setAttribute('aria-hidden', String(!isOpen));\n      setNavLinksTabbable(isOpen);\n    } else {\n      nav.removeAttribute('aria-hidden');\n      setNavLinksTabbable(true);\n    }\n  }\n""",
-    )
-    text = text.replace(
-        """function initSeriesScrollDots(root = document) {
-  const tracks = [...root.querySelectorAll('.series-card-grid')].filter(
-    (track) => !track.dataset.scrollDotsInit
-  );
-""",
-        """function initSeriesScrollDots(root = document) {
-  const tracks = [...root.querySelectorAll('.series-card-grid')].filter(
-    (track) => !track.dataset.scrollDotsInit
-      && !track.classList.contains('series-card-grid--performance')
-      && track.dataset.scrollDots !== 'false'
-      && track.closest('body')?.dataset.page !== 'performance'
-  );
-""",
-    )
-    path.write_text(text, encoding='utf-8')
-
-
-def update_home_js(path: Path) -> None:
-    path.write_text("document.dispatchEvent(new CustomEvent('stillmrk:refresh'));\n", encoding='utf-8')
-
-
-
-
-
-def update_start_scripts() -> None:
-    sh_path = ROOT / 'start-local-server.sh'
-    sh_path.write_text("#!/usr/bin/env bash\nset -e\npython3 preview_server.py\n", encoding='utf-8')
-    sh_path.chmod(0o755)
-
-    bat_path = ROOT / 'start-local-server.bat'
-    bat_path.write_text("@echo off\r\npython preview_server.py\r\n", encoding='utf-8')
-
-    upload_sh_path = ROOT / 'prepare-host-upload.sh'
-    upload_sh_path.write_text("#!/usr/bin/env bash\nset -e\npython3 build_site.py\nprintf '\nUpload the contents of ./public_upload to your host.\n'\n", encoding='utf-8')
-    upload_sh_path.chmod(0o755)
-
-    upload_bat_path = ROOT / 'prepare-host-upload.bat'
-    upload_bat_path.write_text("@echo off\r\npython build_site.py\r\necho.\r\necho Upload the contents of the public_upload folder to your host.\r\n", encoding='utf-8')
-
-    open_upload_bat_path = ROOT / 'open-public-upload-folder.bat'
-    open_upload_bat_path.write_text('@echo off\r\nstart "" public_upload\r\n', encoding='utf-8')
-
-    open_upload_sh_path = ROOT / 'open-public-upload-folder.sh'
-    open_upload_sh_path.write_text("#!/usr/bin/env bash\nset -e\nprintf 'Open the public_upload folder in your file manager.\n'\n", encoding='utf-8')
-    open_upload_sh_path.chmod(0o755)
-
-def update_styles(path: Path) -> None:
-    css = path.read_text(encoding='utf-8')
-    additions = """
-
-.feature-module-grid {
-  display: grid;
-  gap: 1.1rem;
-  grid-template-columns: repeat(12, minmax(0, 1fr));
-}
-
-.feature-module {
-  grid-column: span 6;
-  display: grid;
-  gap: 1rem;
-  min-height: 100%;
-}
-
-.feature-module--spotlight {
-  grid-column: span 12;
-  grid-template-columns: minmax(0, 0.92fr) minmax(0, 1.08fr);
-  align-items: center;
-}
-
-.feature-module__visual {
-  position: relative;
-  width: 100%;
-  aspect-ratio: var(--media-ratio, 1 / 1);
-  overflow: hidden;
-  border-radius: var(--radius-xl);
-  border: 1px solid var(--border);
-  background: #101010;
-  box-shadow: var(--shadow-lg);
-}
-
-.feature-module__visual img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.feature-module__body {
-  display: grid;
-  gap: 1rem;
-}
-
-.feature-module__title {
-  margin: 0;
-  font-family: var(--font-display);
-  font-weight: 500;
-  line-height: 1.05;
-  letter-spacing: -0.02em;
-  font-size: clamp(1.5rem, 2.8vw, 2.5rem);
-}
-
-@media (max-width: 980px) {
-  .feature-module,
-  .feature-module--spotlight {
-    grid-column: span 12;
-  }
-
-  .feature-module--spotlight {
-    grid-template-columns: 1fr;
-  }
-}
-"""
-    if ".feature-module-grid" not in css:
-        css += additions
-
-    batch2_additions = """
-
-/* ─────────────────────────────────────────────────────────────
-   Batch 2 — Responsive system and mobile polish
-   Scope: safe areas, touch comfort, mobile navigation ergonomics,
-   responsive type/grids, landscape viewing, LCP image priority,
-   reveal thresholds, and native scroll momentum. Content untouched.
-   ───────────────────────────────────────────────────────────── */
-:root {
-  --safe-top: env(safe-area-inset-top, 0px);
-  --safe-right: env(safe-area-inset-right, 0px);
-  --safe-bottom: env(safe-area-inset-bottom, 0px);
-  --safe-left: env(safe-area-inset-left, 0px);
-  --mobile-gutter: clamp(1rem, 5vw, 1.35rem);
-  scroll-padding-top: calc(var(--actual-header-height, var(--header-height)) + 1rem);
-}
-
-html {
-  min-height: 100%;
-  -webkit-text-size-adjust: 100%;
-  text-size-adjust: 100%;
-}
-
-body {
-  min-height: 100svh;
-  -webkit-overflow-scrolling: touch;
-}
-
-@supports (min-height: 100dvh) {
-  body {
-    min-height: 100dvh;
-  }
-}
-
-.skip-link:focus,
-#main-content,
-#contact-form,
-:target {
-  scroll-margin-top: calc(var(--actual-header-height, var(--header-height)) + var(--safe-top) + 1rem);
-}
-
-.site-header {
-  padding-top: calc(0.35rem + var(--safe-top));
-}
-
-.site-header.is-scrolled {
-  padding-top: calc(0.14rem + var(--safe-top));
-}
-
-.site-footer {
-  padding-bottom: calc(clamp(2rem, 5vw, 2.8rem) + var(--safe-bottom));
-}
-
-.container,
-.container-narrow,
-.footer-shell {
-  padding-left: max(0px, var(--safe-left));
-  padding-right: max(0px, var(--safe-right));
-}
-
-button,
-.button,
-.nav-toggle,
-.site-nav a,
-.filter-chip,
-.save-chip,
-.text-link,
-.pagination-link,
-.series-index a,
-.footer-links a,
-.contact-downloads__item,
-.series-card__footer a,
-.work-card__footer a,
-.lightbox__close,
-.lightbox__nav,
-.scroll-dots__dot,
-.info-card__expand {
-  touch-action: manipulation;
-}
-
-.button,
-.nav-toggle,
-.site-nav a,
-.filter-chip,
-.save-chip,
-.pagination-link,
-.series-index a,
-.footer-links a,
-.contact-downloads__item,
-.series-card__footer a,
-.work-card__footer a,
-.lightbox__close,
-.lightbox__nav,
-.info-card__expand {
-  min-width: 44px;
-  min-height: 44px;
-}
-
-.text-link {
-  display: inline-flex;
-  align-items: center;
-  min-height: 44px;
-}
-
-@media (hover: none) {
-  .button:hover,
-  .filter-chip:hover,
-  .pagination-link:hover,
-  .series-card:hover,
-  .work-card:hover,
-  .editorial-card:hover {
-    transform: none;
-  }
-}
-
-@media (max-width: 980px) {
-  .site-header {
-    position: sticky;
-    top: 0;
-  }
-
-  .nav-shell {
-    width: min(100% - (var(--mobile-gutter) * 2), 1360px);
-    padding: 0.72rem 0.78rem;
-  }
-
-  .nav-toggle {
-    width: 48px;
-    height: 48px;
-  }
-
-  .site-nav {
-    padding-bottom: max(0.8rem, var(--safe-bottom));
-    scroll-padding-bottom: calc(1rem + var(--safe-bottom));
-  }
-
-  .site-nav a {
-    min-height: 52px;
-    padding-block: 1rem;
-    -webkit-tap-highlight-color: transparent;
-  }
-
-  .site-nav a.site-nav__cta {
-    justify-content: center;
-  }
-}
-
-@media (max-width: 760px) {
-  .container,
-  .container-narrow,
-  .footer-shell {
-    width: min(100% - (var(--mobile-gutter) * 2), 100%);
-  }
-
-  .section {
-    padding-block: clamp(2.6rem, 12vw, 4.2rem);
-  }
-
-  .section--compact {
-    padding-block: clamp(2rem, 9vw, 3.2rem);
-  }
-
-  .display-title,
-  .page-title {
-    max-width: 11.5ch;
-    font-size: clamp(2.6rem, 15vw, 4.6rem);
-    line-height: 0.92;
-    letter-spacing: -0.055em;
-  }
-
-  .section-title,
-  .series-story-map .section-title,
-  body[data-page="series"] .series-story-map .section-title {
-    max-width: 13ch;
-    font-size: clamp(1.8rem, 9.5vw, 2.65rem);
-    line-height: 1.02;
-    letter-spacing: -0.04em;
-  }
-
-  .hero__lead,
-  .page-hero__lead,
-  .section-intro,
-  .statement-card p,
-  .contact-card p,
-  .info-card p,
-  .series-frame__body p,
-  .work-card__body p,
-  .editorial-card__body p {
-    font-size: clamp(1rem, 4vw, 1.08rem);
-    line-height: 1.64;
-  }
-
-  .hero__layout,
-  .about-hero,
-  .page-hero__layout,
-  .series-masthead,
-  .contact-grid,
-  .statement-grid,
-  .about-band,
-  .series-layout,
-  .metrics-grid,
-  .card-grid,
-  .work-grid,
-  .editorial-grid,
-  .field-grid,
-  .download-grid,
-  .private-series-form__grid {
-    grid-template-columns: minmax(0, 1fr) !important;
-  }
-
-  .work-grid > *,
-  .card-grid > *,
-  .editorial-grid > *,
-  .metrics-grid > *,
-  .field-grid > *,
-  .download-grid > * {
-    grid-column: auto !important;
-    min-width: 0;
-  }
-
-  .work-grid--portfolio .work-card,
-  .work-grid--portfolio .work-card--lead,
-  .work-grid--portfolio .work-card--accent,
-  .work-grid--portfolio .work-card--twin,
-  .work-grid--portfolio .work-card--full,
-  .work-grid--portfolio .work-card--layout-quiet,
-  .work-grid--portfolio .work-card--layout-standard,
-  .work-grid--portfolio .work-card--layout-medium,
-  .work-grid--portfolio .work-card--layout-large,
-  .work-grid--portfolio .work-card--layout-wide,
-  .work-grid--portfolio .work-card--layout-full {
-    grid-column: auto !important;
-    width: 100%;
-  }
-
-  .portfolio-tools__row,
-  .portfolio-tools__meta,
-  .portfolio-shortlist-bar,
-  .contact-shortlist,
-  .private-series-form__actions,
-  .series-frame__actions,
-  .work-card__actions {
-    grid-template-columns: minmax(0, 1fr) !important;
-    align-items: stretch;
-  }
-
-  .button,
-  .filter-chip,
-  .save-chip,
-  .text-link,
-  .contact-downloads__item,
-  .pagination-link {
-    min-height: 48px;
-  }
-
-  input,
-  select,
-  textarea {
-    font-size: 16px;
-    min-height: 52px;
-  }
-
-  .hero__visual,
-  .hero--home .hero__visual,
-  .page-hero__visual,
-  .about-hero__visual,
-  .series-masthead__visual {
-    max-height: none;
-  }
-
-  .series-card-grid:not(.series-card-grid--performance) {
-    scroll-padding-inline: var(--mobile-gutter);
-    padding-inline: var(--mobile-gutter);
-    margin-inline: calc(var(--mobile-gutter) * -1);
-  }
-
-  .series-card-grid:not(.series-card-grid--performance) .series-card {
-    flex-basis: min(86vw, 24rem);
-  }
-
-  .filter-row,
-  .hero__notes,
-  .series-card-grid:not(.series-card-grid--performance) {
-    -webkit-overflow-scrolling: touch;
-    overscroll-behavior-inline: contain;
-  }
-
-  .mobile-contact-bar {
-    left: max(var(--mobile-gutter), var(--safe-left));
-    right: max(var(--mobile-gutter), var(--safe-right));
-    bottom: calc(0.9rem + var(--safe-bottom));
-  }
-}
-
-@media (max-width: 360px) {
-  :root {
-    --mobile-gutter: 0.9rem;
-  }
-
-  .display-title,
-  .page-title {
-    font-size: clamp(2.25rem, 14vw, 3.2rem);
-  }
-
-  .section-title {
-    font-size: clamp(1.55rem, 8.5vw, 2.1rem);
-  }
-
-  .site-nav a,
-  .button,
-  .filter-chip,
-  .pagination-link {
-    padding-inline: 0.85rem;
-  }
-}
-
-@media (orientation: landscape) and (max-height: 500px) {
-  .site-header {
-    padding-top: calc(0.08rem + var(--safe-top));
-  }
-
-  .nav-shell {
-    padding-block: 0.45rem;
-  }
-
-  .brand__eyebrow {
-    display: none;
-  }
-
-  .nav-toggle {
-    width: 44px;
-    height: 44px;
-  }
-
-  .site-nav a {
-    min-height: 44px;
-    padding-block: 0.72rem;
-  }
-
-  .hero,
-  .page-hero,
-  .series-masthead {
-    padding-top: clamp(0.75rem, 3vw, 1.25rem);
-  }
-
-  .hero__visual,
-  .page-hero__visual,
-  .about-hero__visual,
-  .series-masthead__visual {
-    aspect-ratio: 16 / 9;
-    max-height: calc(100dvh - var(--actual-header-height, var(--header-height)) - 2.5rem);
-  }
-
-  .lightbox {
-    height: 100dvh;
-    max-height: 100dvh;
-  }
-
-  .lightbox__media {
-    max-height: calc(100dvh - 6.5rem);
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  html {
-    scroll-behavior: auto;
-  }
-
-  .filter-row,
-  .series-card-grid {
-    scroll-behavior: auto;
-  }
-}
-"""
-    if "Batch 2 — Responsive system and mobile polish" not in css:
-        css += batch2_additions
-    batch3_additions = '\n\n/* ─────────────────────────────────────────────────────────────\n   Batch 3 — Visual hierarchy and premium UI polish\n   Scope: typographic rhythm, atmospheric surfaces, restrained hover\n   states, brand lockup, captions, cards, filters, and color harmony.\n   Content and structure untouched.\n   ───────────────────────────────────────────────────────────── */\n:root {\n  --surface: rgba(255, 255, 255, 0.038);\n  --surface-strong: rgba(255, 255, 255, 0.068);\n  --surface-soft: rgba(255, 255, 255, 0.024);\n  --border: rgba(255, 255, 255, 0.085);\n  --border-strong: rgba(255, 255, 255, 0.16);\n  --border-soft: rgba(255, 255, 255, 0.055);\n  --text-soft: rgba(242, 239, 232, 0.8);\n  --text-secondary: rgba(242, 239, 232, 0.8);\n  --text-muted: rgba(242, 239, 232, 0.62);\n  --shadow-lg: 0 34px 96px rgba(0, 0, 0, 0.38);\n  --shadow-md: 0 18px 56px rgba(0, 0, 0, 0.24);\n  --shadow-card: 0 18px 54px rgba(0, 0, 0, 0.28);\n  --ease-premium: cubic-bezier(0.16, 1, 0.3, 1);\n  --transition: 220ms var(--ease-premium);\n  --transition-slow: 620ms var(--ease-premium);\n  --tracking-eyebrow: 0.215em;\n}\n\nbody {\n  background:\n    radial-gradient(circle at 16% 0%, rgba(216, 197, 162, 0.07), transparent 26rem),\n    radial-gradient(circle at 86% 8%, rgba(255, 255, 255, 0.034), transparent 25rem),\n    radial-gradient(circle at 50% 115%, rgba(216, 197, 162, 0.035), transparent 34rem),\n    linear-gradient(180deg, #0d0d0c 0%, #090909 46%, #070707 100%);\n}\n\nbody::before {\n  background:\n    linear-gradient(180deg, rgba(255, 255, 255, 0.016), transparent 20%),\n    radial-gradient(circle at 50% 12%, transparent 0%, rgba(0, 0, 0, 0.18) 84%),\n    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.006) 0 1px, transparent 1px 6px);\n  opacity: calc(0.34 + (var(--scroll-progress) * 0.05));\n}\n\n.display-title,\n.section-title,\n.work-card__title,\n.series-card h3,\n.editorial-card h3,\n.series-frame h2,\n.info-card h2,\n.empty-state h2,\n.feature-module__title,\n.hero-proof__title {\n  font-feature-settings: "kern" 1, "liga" 1;\n  text-wrap: balance;\n}\n\n.display-title {\n  line-height: 0.98;\n  letter-spacing: -0.035em;\n  max-width: 12.6ch;\n}\n\n.section-title {\n  line-height: 1;\n  letter-spacing: -0.026em;\n  max-width: 15ch;\n}\n\n.section-intro,\n.page-hero__lead,\n.hero__lead,\n.muted-copy,\n.hero-proof__text,\n.form-note,\n.toolbar-note,\n.footer-copy p,\n.series-card p,\n.work-card__body p,\n.editorial-card__body p,\n.series-frame__body p,\n.contact-card p,\n.info-card p,\n.statement-card p,\n.about-band__aside p {\n  line-height: 1.62;\n  letter-spacing: -0.006em;\n}\n\n.eyebrow,\n.brand__eyebrow,\n.field span,\n.pagination-link span,\n.media-caption span,\n.lightbox__counter,\n.lightbox__caption span {\n  font-family: var(--font-sans);\n  font-weight: 750;\n  letter-spacing: var(--tracking-eyebrow);\n  text-transform: uppercase;\n}\n\n.eyebrow {\n  color: rgba(216, 197, 162, 0.72);\n  font-size: clamp(0.72rem, 0.78vw, 0.8rem);\n}\n\n.section-head {\n  gap: clamp(1.4rem, 3vw, 2.6rem);\n  margin-bottom: clamp(1.7rem, 3vw, 2.6rem);\n}\n\n.section-head__copy {\n  gap: 0.9rem;\n}\n\n.site-header.is-solid .nav-shell,\n.site-header.is-scrolled .nav-shell,\n.nav-shell {\n  border-color: rgba(255, 255, 255, 0.075);\n}\n\n.nav-shell {\n  box-shadow: 0 10px 44px rgba(0, 0, 0, 0.16);\n}\n\n.brand {\n  gap: 0.06rem;\n  max-inline-size: min(22rem, 62vw);\n}\n\n.brand__eyebrow {\n  color: rgba(216, 197, 162, 0.74);\n  font-size: 0.64rem;\n  line-height: 1;\n}\n\n.brand__name {\n  font-weight: 600;\n  line-height: 1.05;\n  letter-spacing: -0.01em;\n  color: var(--text-primary);\n}\n\n.site-nav a {\n  letter-spacing: -0.006em;\n}\n\n.site-nav a.is-active {\n  color: #090909;\n  background: var(--accent);\n}\n\n.site-nav a:not(.site-nav__cta):hover {\n  background: rgba(216, 197, 162, 0.11);\n}\n\n.hero__layout,\n.hero--portfolio .hero__layout,\n.page-hero__layout,\n.about-hero,\n.series-masthead {\n  gap: clamp(1.4rem, 4vw, 3.2rem);\n}\n\n.hero__layout,\n.hero--portfolio .hero__layout {\n  grid-template-columns: minmax(0, 0.84fr) minmax(320px, 1.16fr);\n}\n\n.hero__copy,\n.page-hero__copy,\n.about-hero__copy,\n.series-masthead__copy {\n  gap: clamp(0.95rem, 1.8vw, 1.35rem);\n  padding-block-start: clamp(0.1rem, 1.4vw, 1rem);\n}\n\n.hero__lead-group {\n  gap: 1rem;\n}\n\n.hero__visual,\n.about-hero__visual,\n.series-masthead__visual,\n.page-hero__visual {\n  border-radius: clamp(1.45rem, 2.4vw, 2.55rem);\n  box-shadow: 0 34px 92px rgba(0, 0, 0, 0.36);\n}\n\n.hero-figure,\n.series-masthead__figure,\n.about-hero__figure,\n.page-hero__figure {\n  gap: 1rem;\n}\n\n.hero__notes li,\n.series-masthead__facts span {\n  border-color: rgba(255, 255, 255, 0.075);\n  background: rgba(255, 255, 255, 0.022);\n  color: var(--text-secondary);\n  font-size: 0.94rem;\n}\n\n.panel,\n.metric-card,\n.portfolio-tools--header,\n.portfolio-tools--footer,\n.contact-card,\n.info-card,\n.statement-card,\n.pagination-link {\n  border-color: var(--border-soft);\n  background:\n    linear-gradient(180deg, rgba(255, 255, 255, 0.054), rgba(255, 255, 255, 0.018)),\n    radial-gradient(circle at 22% 12%, rgba(216, 197, 162, 0.035), transparent 48%);\n  box-shadow: var(--shadow-card);\n}\n\n.panel--soft {\n  background:\n    linear-gradient(180deg, rgba(255, 255, 255, 0.038), rgba(255, 255, 255, 0.014)),\n    radial-gradient(circle at 18% 8%, rgba(216, 197, 162, 0.022), transparent 50%);\n}\n\n.series-card,\n.work-card,\n.editorial-card,\n.feature-module,\n.metric-card,\n.pagination-link,\n.contact-card,\n.info-card,\n.statement-card {\n  transition:\n    transform var(--transition),\n    border-color var(--transition),\n    background var(--transition),\n    box-shadow var(--transition);\n}\n\n.series-card__media,\n.work-card__media,\n.editorial-card__media,\n.series-frame__media,\n.feature-module__visual,\n.hero__visual,\n.about-hero__visual,\n.series-masthead__visual,\n.page-hero__visual {\n  border-color: rgba(255, 255, 255, 0.075);\n}\n\n.series-card__media::after,\n.work-card__media::after,\n.editorial-card__media::after,\n.series-frame__media::after,\n.feature-module__visual::after,\n.hero__visual::after,\n.about-hero__visual::after,\n.series-masthead__visual::after,\n.page-hero__visual::after {\n  content: "";\n  position: absolute;\n  inset: 0;\n  pointer-events: none;\n  background:\n    linear-gradient(180deg, rgba(255, 255, 255, 0.025), transparent 32%),\n    linear-gradient(0deg, rgba(0, 0, 0, 0.08), transparent 45%);\n  opacity: 0.52;\n  transition: opacity var(--transition-slow);\n}\n\n.hero__visual img,\n.about-hero__visual img,\n.series-masthead__visual img,\n.page-hero__visual img,\n.work-card__media img,\n.series-card__media img,\n.editorial-card__media img,\n.series-frame__media img,\n.feature-module__visual img {\n  transition: transform 760ms var(--ease-premium);\n}\n\n.series-card__body,\n.work-card__body,\n.editorial-card__body,\n.series-frame__body {\n  gap: 0.82rem;\n  padding: clamp(1.05rem, 1.6vw, 1.28rem) clamp(1.05rem, 1.7vw, 1.35rem) clamp(1.15rem, 1.8vw, 1.45rem);\n}\n\n.series-card__meta,\n.work-card__meta,\n.editorial-card__meta,\n.series-frame__meta,\n.work-card__footer,\n.series-card__footer {\n  color: var(--text-muted);\n  font-size: clamp(0.76rem, 0.86vw, 0.88rem);\n  letter-spacing: 0.055em;\n  font-variant-numeric: tabular-nums;\n}\n\n.series-card__meta span,\n.work-card__meta span,\n.editorial-card__meta span,\n.series-frame__meta span,\n.work-card__footer span,\n.series-card__footer span {\n  overflow-wrap: anywhere;\n}\n\n.work-card__title,\n.series-card h3,\n.editorial-card h3,\n.series-frame h2 {\n  line-height: 1.06;\n  letter-spacing: -0.024em;\n}\n\n.work-card__body p,\n.series-card p,\n.editorial-card__body p,\n.series-frame__body p {\n  color: rgba(242, 239, 232, 0.72);\n}\n\n.work-grid--portfolio .work-card__body p {\n  color: rgba(242, 239, 232, 0.64);\n}\n\n.media-caption {\n  gap: 0.28rem;\n  padding-inline: clamp(0.25rem, 1vw, 0.55rem);\n  max-inline-size: min(76ch, 100%);\n}\n\n.media-caption strong {\n  font-family: var(--font-display);\n  font-size: clamp(1.02rem, 1.25vw, 1.18rem);\n  font-weight: 600;\n  line-height: 1.12;\n  letter-spacing: -0.014em;\n}\n\n.media-caption small {\n  color: rgba(242, 239, 232, 0.72);\n  font-size: clamp(0.9rem, 0.95vw, 0.98rem);\n  line-height: 1.55;\n  max-width: 74ch;\n}\n\n.button,\n.site-nav a.site-nav__cta {\n  background: var(--accent);\n  color: #080807;\n  box-shadow: 0 10px 30px rgba(216, 197, 162, 0.12);\n}\n\n.button:hover,\n.site-nav a.site-nav__cta:hover {\n  background: #eadbbd;\n}\n\n.button--secondary,\n.button--ghost {\n  background: rgba(255, 255, 255, 0.035);\n  color: var(--text-primary);\n  border-color: rgba(255, 255, 255, 0.105);\n  box-shadow: none;\n}\n\n.button--secondary:hover,\n.button--ghost:hover {\n  background: rgba(216, 197, 162, 0.09);\n  border-color: rgba(216, 197, 162, 0.28);\n}\n\n.button:active,\n.filter-chip:active,\n.site-nav a:active,\n.series-card__footer a:active,\n.work-card__footer a:active {\n  transform: translateY(0) scale(0.985);\n}\n\n.field span {\n  color: rgba(216, 197, 162, 0.62);\n  font-size: 0.72rem;\n}\n\ninput,\nselect,\ntextarea {\n  border-color: rgba(255, 255, 255, 0.095);\n  background:\n    linear-gradient(180deg, rgba(255, 255, 255, 0.052), rgba(255, 255, 255, 0.026));\n  color: var(--text-primary);\n}\n\nselect {\n  appearance: none;\n  padding-right: 2.9rem;\n  background-image:\n    linear-gradient(45deg, transparent 50%, rgba(216, 197, 162, 0.82) 50%),\n    linear-gradient(135deg, rgba(216, 197, 162, 0.82) 50%, transparent 50%),\n    linear-gradient(180deg, rgba(255, 255, 255, 0.052), rgba(255, 255, 255, 0.026));\n  background-position:\n    calc(100% - 1.15rem) 55%,\n    calc(100% - 0.82rem) 55%,\n    0 0;\n  background-size: 0.34rem 0.34rem, 0.34rem 0.34rem, 100% 100%;\n  background-repeat: no-repeat;\n}\n\n.field__clear {\n  transition: transform var(--transition), border-color var(--transition), background var(--transition), color var(--transition);\n}\n\n.field__clear:hover {\n  border-color: rgba(216, 197, 162, 0.32);\n  background: rgba(216, 197, 162, 0.1);\n  color: var(--text-primary);\n}\n\n.portfolio-tools--header,\n.portfolio-tools--footer {\n  padding: clamp(1.05rem, 1.8vw, 1.45rem);\n}\n\n.portfolio-tools__row {\n  grid-template-columns: minmax(0, 1fr) minmax(13rem, 0.3fr);\n}\n\n.filter-row {\n  gap: 0.62rem;\n}\n\n.filter-chip {\n  min-height: 2.85rem;\n  padding: 0.65rem 0.9rem;\n  font-weight: 650;\n  letter-spacing: -0.006em;\n  border-color: rgba(255, 255, 255, 0.095);\n  background: rgba(255, 255, 255, 0.028);\n}\n\n.filter-chip small {\n  font-variant-numeric: tabular-nums;\n  color: rgba(242, 239, 232, 0.56);\n}\n\n.filter-chip:hover,\n.filter-chip:focus-visible {\n  border-color: rgba(216, 197, 162, 0.32);\n  background: rgba(216, 197, 162, 0.085);\n  color: var(--text-primary);\n}\n\n.filter-chip.is-active {\n  color: #080807;\n  background: var(--accent);\n  border-color: transparent;\n  box-shadow: 0 10px 32px rgba(216, 197, 162, 0.12), inset 0 1px 2px rgba(255, 255, 255, 0.22);\n}\n\n.filter-chip.is-active small {\n  color: rgba(8, 8, 7, 0.66);\n}\n\n.toolbar-note,\n.portfolio-tools__meta {\n  font-variant-numeric: tabular-nums;\n}\n\n.footer-shell {\n  border-top-color: rgba(255, 255, 255, 0.07);\n}\n\n.footer-copy strong,\n.footer-wordmark {\n  color: var(--text-primary);\n  letter-spacing: -0.014em;\n}\n\n.footer-links a {\n  border-radius: 999px;\n  transition: color var(--transition), background var(--transition), transform var(--transition);\n}\n\n.footer-links a:hover,\n.footer-links a:focus-visible {\n  color: var(--accent);\n  background: rgba(216, 197, 162, 0.07);\n}\n\n.nav-backdrop,\n.lightbox::backdrop {\n  will-change: auto;\n}\n\n@media (hover: hover) and (pointer: fine) {\n  .series-card.panel:hover,\n  .editorial-card.panel:hover,\n  .work-card.panel:hover,\n  .feature-module.panel:hover,\n  .pagination-link:hover {\n    transform: translateY(-3px);\n    border-color: rgba(216, 197, 162, 0.22);\n    box-shadow: 0 24px 70px rgba(0, 0, 0, 0.34);\n  }\n\n  .metric-card:hover,\n  .contact-card:hover,\n  .info-card:hover,\n  .statement-card:hover {\n    border-color: rgba(216, 197, 162, 0.16);\n  }\n\n  .series-card__media:hover::after,\n  .work-card__media:hover::after,\n  .editorial-card__media:hover::after,\n  .series-frame__media:hover::after,\n  .feature-module__visual:hover::after,\n  .hero__visual:hover::after,\n  .about-hero__visual:hover::after,\n  .series-masthead__visual:hover::after,\n  .page-hero__visual:hover::after {\n    opacity: 0.34;\n  }\n}\n\n@media (max-width: 1100px) {\n  .hero__layout,\n  .hero--portfolio .hero__layout,\n  .page-hero__layout,\n  .about-hero,\n  .series-masthead {\n    grid-template-columns: 1fr;\n  }\n\n  .hero__copy,\n  .page-hero__copy,\n  .about-hero__copy,\n  .series-masthead__copy {\n    padding-block-start: 0;\n  }\n}\n\n@media (max-width: 760px) {\n  :root {\n    --tracking-eyebrow: 0.18em;\n  }\n\n  body {\n    background:\n      radial-gradient(circle at 50% -8%, rgba(216, 197, 162, 0.055), transparent 18rem),\n      linear-gradient(180deg, #0d0d0c 0%, #080808 100%);\n  }\n\n  .display-title {\n    letter-spacing: -0.028em;\n    max-width: 11.5ch;\n  }\n\n  .section-title {\n    max-width: 12ch;\n  }\n\n  .series-card__meta,\n  .work-card__meta,\n  .editorial-card__meta,\n  .series-frame__meta,\n  .work-card__footer,\n  .series-card__footer {\n    gap: 0.42rem 0.75rem;\n    font-size: 0.78rem;\n  }\n\n  .portfolio-tools--header,\n  .portfolio-tools--footer {\n    border-radius: var(--radius-lg);\n  }\n\n  .filter-row {\n    flex-wrap: nowrap;\n    overflow-x: auto;\n    padding-bottom: 0.3rem;\n    scroll-snap-type: x proximity;\n    scrollbar-width: none;\n  }\n\n  .filter-row::-webkit-scrollbar {\n    display: none;\n  }\n\n  .filter-chip {\n    flex: 0 0 auto;\n    scroll-snap-align: start;\n  }\n\n  .media-caption {\n    padding-inline: 0.1rem;\n  }\n}\n\n@media (prefers-reduced-motion: reduce) {\n  .series-card,\n  .work-card,\n  .editorial-card,\n  .feature-module,\n  .metric-card,\n  .pagination-link,\n  .button,\n  .filter-chip,\n  .site-nav a,\n  .hero__visual img,\n  .about-hero__visual img,\n  .series-masthead__visual img,\n  .page-hero__visual img,\n  .work-card__media img,\n  .series-card__media img,\n  .editorial-card__media img,\n  .series-frame__media img,\n  .feature-module__visual img {\n    transition: none !important;\n    transform: none !important;\n  }\n}\n'
-    if 'Batch 3 — Visual hierarchy and premium UI polish' not in css:
-        css += batch3_additions
-
-    batch4_additions = '''
-
-/* ─────────────────────────────────────────────────────────────
-   Batch 4 — Interaction, accessibility, and usability QA
-   Scope: keyboard flow, focus visibility, ARIA state feedback,
-   loading/error states, readable captions, consistent interactive
-   affordances, and reduced-motion-safe scrolling. Content untouched.
-   ───────────────────────────────────────────────────────────── */
-:root {
-  --focus-ring: 0 0 0 3px rgba(216, 197, 162, 0.34), 0 0 0 6px rgba(8, 8, 7, 0.88);
-  --focus-outline: 2px solid rgba(216, 197, 162, 0.98);
-  --error: #f0b8a8;
-  --success: #b9d8bf;
-}
-
-html {
-  scroll-behavior: smooth;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  html {
-    scroll-behavior: auto;
-  }
-}
-
-:focus:not(:focus-visible) {
-  outline: none;
-}
-
-:where(a, button, input, select, textarea, summary, [tabindex]):focus-visible,
-.filter-chip:focus-visible,
-.save-chip:focus-visible,
-.pagination-link:focus-visible,
-.info-card__expand:focus-visible,
-.lightbox__figure:focus-visible {
-  outline: var(--focus-outline);
-  outline-offset: 4px;
-  box-shadow: var(--focus-ring);
-}
-
-.work-card:focus-within,
-.series-card:focus-within,
-.editorial-card:focus-within,
-.contact-card:focus-within,
-.info-card:focus-within,
-.statement-card:focus-within,
-.portfolio-tools:focus-within {
-  border-color: rgba(216, 197, 162, 0.34);
-  box-shadow: var(--shadow-card), 0 0 0 1px rgba(216, 197, 162, 0.12);
-}
-
-.skip-link:focus-visible {
-  outline-offset: 6px;
-}
-
-.site-nav[aria-hidden="true"] {
-  pointer-events: none;
-}
-
-.site-nav a[aria-current="page"],
-.site-nav a.is-active,
-.filter-chip[aria-current="true"] {
-  text-decoration: none;
-}
-
-.button,
-.button--secondary,
-.button--ghost,
-.text-link,
-.filter-chip,
-.save-chip,
-.pagination-link,
-.site-nav a,
-.footer-links a,
-.contact-downloads__item,
-.info-card__expand,
-.field__clear,
-.lightbox__close,
-.lightbox__nav {
-  -webkit-tap-highlight-color: transparent;
-}
-
-.button:active,
-.button--secondary:active,
-.button--ghost:active,
-.text-link:active,
-.filter-chip:active,
-.save-chip:active,
-.pagination-link:active,
-.site-nav a:active,
-.footer-links a:active,
-.contact-downloads__item:active,
-.info-card__expand:active,
-.field__clear:active,
-.lightbox__close:active,
-.lightbox__nav:active {
-  transform: translateY(1px) scale(0.985);
-}
-
-input[aria-invalid="true"],
-select[aria-invalid="true"],
-textarea[aria-invalid="true"] {
-  border-color: rgba(240, 184, 168, 0.74);
-  box-shadow: 0 0 0 1px rgba(240, 184, 168, 0.24), 0 0 0 5px rgba(240, 184, 168, 0.08);
-}
-
-.form-note[data-state="warning"],
-[data-series-access-status][data-state="warning"] {
-  color: var(--error);
-}
-
-.form-note[data-state="success"],
-[data-series-access-status][data-state="success"] {
-  color: var(--success);
-}
-
-.hero__visual.is-loading,
-.about-hero__visual.is-loading,
-.series-masthead__visual.is-loading,
-.page-hero__visual.is-loading,
-.work-card__media.is-loading,
-.series-card__media.is-loading,
-.editorial-card__media.is-loading,
-.series-frame__media.is-loading,
-.feature-module__visual.is-loading {
-  background:
-    linear-gradient(100deg, rgba(255, 255, 255, 0.035) 0%, rgba(216, 197, 162, 0.06) 42%, rgba(255, 255, 255, 0.035) 78%),
-    #10100f;
-  background-size: 220% 100%, 100% 100%;
-  animation: stillmark-media-pulse 1.4s ease-in-out infinite;
-}
-
-@keyframes stillmark-media-pulse {
-  0% { background-position: 120% 0, 0 0; }
-  100% { background-position: -120% 0, 0 0; }
-}
-
-.media-caption,
-.lightbox__caption,
-.work-card__body p,
-.series-frame__body p {
-  color: rgba(242, 239, 232, 0.78);
-}
-
-.media-caption small,
-.lightbox__caption span {
-  color: rgba(242, 239, 232, 0.74);
-}
-
-.lightbox[open] {
-  outline: none;
-}
-
-.lightbox__hint {
-  color: rgba(242, 239, 232, 0.72);
-}
-
-.protected-media-notice {
-  pointer-events: none;
-}
-
-@media (max-width: 760px) {
-  :where(a, button, input, select, textarea, summary, [tabindex]):focus-visible,
-  .filter-chip:focus-visible,
-  .save-chip:focus-visible,
-  .pagination-link:focus-visible,
-  .info-card__expand:focus-visible {
-    outline-offset: 3px;
-  }
-
-  .media-caption small,
-  .work-card__body p,
-  .series-frame__body p {
-    line-height: 1.62;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .hero__visual.is-loading,
-  .about-hero__visual.is-loading,
-  .series-masthead__visual.is-loading,
-  .page-hero__visual.is-loading,
-  .work-card__media.is-loading,
-  .series-card__media.is-loading,
-  .editorial-card__media.is-loading,
-  .series-frame__media.is-loading,
-  .feature-module__visual.is-loading {
-    animation: none !important;
-  }
-}'''
-    if 'Batch 4 — Interaction, accessibility, and usability QA' not in css:
-        css += batch4_additions
-
-
-    batch5_additions = '''
-
-/* ─────────────────────────────────────────────────────────────
-   Batch 5 — Performance, SEO-safe polish, and final QA
-   Scope: critical-render stability, containment fallbacks, metadata-only
-   share-card support, link/404 polish, and production cleanup.
-   Content and core architecture untouched.
-   ───────────────────────────────────────────────────────────── */
-:root {
-  --deferred-size: 960px;
-  --not-found-min-height: min(72vh, 48rem);
-}
-
-picture > img,
-.hero__visual > img,
-.about-hero__visual > img,
-.series-masthead__visual > img,
-.page-hero__visual > img,
-.work-card__media > img,
-.series-card__media > img,
-.editorial-card__media > img,
-.series-frame__media > img,
-.feature-module__visual > img {
-  inline-size: 100%;
-}
-
-[data-deferred="portfolio-tools-bottom"] {
-  --deferred-size: 320px;
-}
-
-[data-deferred="performance-guide"] {
-  --deferred-size: 620px;
-}
-
-[data-deferred="about-downloads"] {
-  --deferred-size: 760px;
-}
-
-@supports (content-visibility: auto) {
-  [data-deferred] {
-    contain: layout paint style;
-  }
-}
-
-@supports not (content-visibility: auto) {
-  [data-deferred] {
-    contain: layout paint;
-  }
-}
-
-.not-found-hero {
-  min-block-size: var(--not-found-min-height);
-  display: grid;
-  align-items: center;
-  text-align: center;
-}
-
-.not-found-hero .container-narrow {
-  display: grid;
-  justify-items: center;
-  gap: clamp(1rem, 2.2vw, 1.5rem);
-}
-
-.not-found-hero .display-title {
-  max-width: 12ch;
-}
-
-.not-found-hero .page-hero__lead {
-  max-width: 44rem;
-}
-
-.not-found-hero .hero__actions {
-  justify-content: center;
-}
-
-.media-placeholder {
-  contain: layout paint;
-  overflow: hidden;
-}
-
-.media-placeholder::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  background: radial-gradient(circle at 72% 18%, rgba(216, 197, 162, 0.08), transparent 32%);
-}
-
-@media (prefers-reduced-data: reduce) {
-  body::before {
-    display: none;
-  }
-
-  .hero__visual.is-loading,
-  .about-hero__visual.is-loading,
-  .series-masthead__visual.is-loading,
-  .page-hero__visual.is-loading,
-  .work-card__media.is-loading,
-  .series-card__media.is-loading,
-  .editorial-card__media.is-loading,
-  .series-frame__media.is-loading,
-  .feature-module__visual.is-loading {
-    animation: none !important;
-  }
-}
-
-@media (forced-colors: active) {
-  .button,
-  .button--secondary,
-  .button--ghost,
-  .filter-chip,
-  .site-nav a,
-  .pagination-link {
-    border: 1px solid ButtonText;
-  }
-
-  :where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
-    outline: 2px solid Highlight;
-    box-shadow: none;
-  }
-}
-'''
-    if 'Batch 5 — Performance, SEO-safe polish, and final QA' not in css:
-        css += batch5_additions
-
-    hotfix_additions = '''
-
-/* ─────────────────────────────────────────────────────────────
-   Batch 5 Hotfix — visibility fallback and header spacing repair
-   Fixes:
-   1) Reveal fallback must beat the motion-ready hiding selector when JS modules
-      fail or file:// preview blocks imports.
-   2) Safe-area rules must not erase the nav shell's horizontal padding.
-   ───────────────────────────────────────────────────────────── */
-html.js.motion-ready.reveal-fallback .reveal,
-html.js.reveal-fallback .reveal,
-html.reveal-fallback .reveal,
-html:not(.js) .reveal {
-  opacity: 1 !important;
-  transform: none !important;
-  transition: none !important;
-}
-
-.nav-shell {
-  padding-inline: calc(1rem + var(--safe-left, 0px)) calc(1rem + var(--safe-right, 0px));
-}
-
-@media (max-width: 980px) {
-  .nav-shell {
-    padding-inline: calc(0.78rem + var(--safe-left, 0px)) calc(0.78rem + var(--safe-right, 0px));
-  }
-}
-
-@media (orientation: landscape) and (max-height: 500px) {
-  .nav-shell {
-    padding-inline: calc(0.78rem + var(--safe-left, 0px)) calc(0.78rem + var(--safe-right, 0px));
-  }
-}
-'''
-    if 'Batch 5 Hotfix — visibility fallback and header spacing repair' not in css:
-        css += hotfix_additions
-
-    above_fold_reveal_hotfix = '''
-
-/* Above-fold safety: hero/page masthead content must never depend on JS reveal.
-   This prevents the black first viewport when module loading is blocked or slow. */
-html.js.motion-ready .hero .reveal,
-html.js.motion-ready .page-hero .reveal,
-html.js.motion-ready .about-hero.reveal,
-html.js.motion-ready .series-masthead.reveal,
-html.js.motion-ready .contact-grid > .reveal:first-child {
-  opacity: 1 !important;
-  transform: none !important;
-}
-'''
-    if 'Above-fold safety: hero/page masthead content must never depend on JS reveal' not in css:
-        css += above_fold_reveal_hotfix
-
-
-
-    hotfix2_additions = '\n\n/* ─────────────────────────────────────────────────────────────\n   Batch 5 Hotfix 2 — image-fidelity overlay removal + mobile nav repair\n   Fixes:\n   1) Remove the visible top veil from lead/featured photography.\n   2) Keep the mobile menu in the header flow so it shows real links instead\n      of expanding as an empty full-screen black sheet.\n   ───────────────────────────────────────────────────────────── */\n.hero__visual::after,\n.about-hero__visual::after,\n.series-masthead__visual::after,\n.page-hero__visual::after,\n.work-card__media::after,\n.series-card__media::after,\n.editorial-card__media::after,\n.series-frame__media::after,\n.feature-module__visual::after,\n.media-placeholder::after {\n  content: none !important;\n  display: none !important;\n  opacity: 0 !important;\n  background: none !important;\n}\n\n@media (max-width: 980px) {\n  .site-header {\n    z-index: 10000 !important;\n    overflow: visible !important;\n  }\n\n  .site-header .nav-shell {\n    display: grid !important;\n    grid-template-columns: minmax(0, 1fr) auto !important;\n    align-items: center !important;\n    overflow: visible !important;\n  }\n\n  .site-header .nav-toggle {\n    display: grid !important;\n    grid-column: 2 !important;\n    grid-row: 1 !important;\n    justify-self: end !important;\n  }\n\n  .site-header .site-nav {\n    position: static !important;\n    inset: auto !important;\n    grid-column: 1 / -1 !important;\n    grid-row: 2 !important;\n    display: none !important;\n    visibility: hidden !important;\n    opacity: 0 !important;\n    width: 100% !important;\n    max-width: 100% !important;\n    max-height: 0 !important;\n    margin: 0 !important;\n    padding: 0 !important;\n    border: 0 !important;\n    border-radius: 0 !important;\n    background: transparent !important;\n    -webkit-backdrop-filter: none !important;\n    backdrop-filter: none !important;\n    box-shadow: none !important;\n    transform: none !important;\n    overflow: hidden !important;\n    pointer-events: none !important;\n    overscroll-behavior: auto !important;\n  }\n\n  .site-header.is-nav-open .site-nav,\n  .site-header .site-nav.is-open,\n  .site-header .nav-toggle[aria-expanded="true"] + .site-nav {\n    display: grid !important;\n    grid-template-columns: minmax(0, 1fr) !important;\n    gap: 0.55rem !important;\n    visibility: visible !important;\n    opacity: 1 !important;\n    max-height: min(75svh, 34rem) !important;\n    margin-top: 0.85rem !important;\n    padding-top: 0.75rem !important;\n    border-top: 1px solid rgba(255, 255, 255, 0.12) !important;\n    overflow-y: auto !important;\n    pointer-events: auto !important;\n  }\n\n  .site-header.is-nav-open .site-nav a,\n  .site-header .site-nav.is-open a,\n  .site-header .nav-toggle[aria-expanded="true"] + .site-nav a {\n    display: flex !important;\n    align-items: center !important;\n    justify-content: flex-start !important;\n    visibility: visible !important;\n    opacity: 1 !important;\n    width: 100% !important;\n    min-height: 52px !important;\n    margin: 0 !important;\n    padding: 1rem 1rem !important;\n    color: var(--text) !important;\n    background: rgba(255, 255, 255, 0.045) !important;\n    border: 1px solid rgba(255, 255, 255, 0.075) !important;\n    border-radius: 1rem !important;\n  }\n\n  .site-header.is-nav-open .site-nav a.is-active,\n  .site-header.is-nav-open .site-nav a:hover,\n  .site-header.is-nav-open .site-nav a:focus-visible {\n    color: #090909 !important;\n    background: var(--accent) !important;\n    border-color: rgba(216, 197, 162, 0.65) !important;\n  }\n\n  .nav-backdrop,\n  .nav-backdrop.is-visible {\n    display: none !important;\n    visibility: hidden !important;\n    opacity: 0 !important;\n    pointer-events: none !important;\n    background: transparent !important;\n    -webkit-backdrop-filter: none !important;\n    backdrop-filter: none !important;\n  }\n\n  body.nav-open,\n  body.mobile-nav-open {\n    position: static !important;\n    overflow: auto !important;\n    touch-action: auto !important;\n    width: auto !important;\n    left: auto !important;\n    right: auto !important;\n    padding-right: 0 !important;\n  }\n}\n'
-    if 'Batch 5 Hotfix 2 — image-fidelity overlay removal + mobile nav repair' not in css:
-        css += hotfix2_additions
-
-    hotfix3_additions = '\n\n/* ─────────────────────────────────────────────────────────────\n   Batch 5 Hotfix 3 — mobile story order + Stage Works corrections\n   Fixes:\n   1) On mobile Series pages, keep the image sequence before the Story Index.\n   2) Remove non-functional carousel dots from Stage Works.\n   3) Preserve the Stage Works feature image ratio/focal point on mobile.\n   ───────────────────────────────────────────────────────────── */\n@media (max-width: 760px) {\n  body[data-page="series"] .series-layout {\n    display: flex !important;\n    flex-direction: column !important;\n  }\n\n  body[data-page="series"] .series-main {\n    order: 1 !important;\n  }\n\n  body[data-page="series"] .series-sidebar {\n    order: 2 !important;\n    margin-top: clamp(1.5rem, 8vw, 2.75rem) !important;\n  }\n\n  body[data-page="series"] .series-sidebar .eyebrow::before {\n    content: "After the sequence / ";\n  }\n\n  body[data-page="performance"] .hero--performance .hero__visual,\n  body[data-page="performance"] .hero--performance .hero-figure .hero__visual {\n    aspect-ratio: var(--media-ratio, 4 / 3) !important;\n    max-height: none !important;\n    min-height: 0 !important;\n  }\n\n  body[data-page="performance"] .hero--performance .hero__visual picture,\n  body[data-page="performance"] .hero--performance .hero__visual img,\n  body[data-page="performance"] .hero--performance .hero__visual .media-placeholder {\n    width: 100% !important;\n    height: 100% !important;\n  }\n\n  body[data-page="performance"] .hero--performance .hero__visual img {\n    object-fit: contain !important;\n    object-position: var(--media-position, center center) !important;\n    background: #030303 !important;\n  }\n\n  body[data-page="performance"] .series-card-grid--performance {\n    display: grid !important;\n    grid-template-columns: minmax(0, 1fr) !important;\n    overflow: visible !important;\n    padding-inline: 0 !important;\n    margin-inline: 0 !important;\n    scroll-snap-type: none !important;\n  }\n\n  body[data-page="performance"] .series-card-grid--performance .series-card {\n    width: 100% !important;\n    max-width: 100% !important;\n    flex: none !important;\n    scroll-snap-align: none !important;\n  }\n\n  body[data-page="performance"] .series-card-grid--performance + .scroll-dots,\n  body[data-page="performance"] .scroll-dots {\n    display: none !important;\n    visibility: hidden !important;\n    opacity: 0 !important;\n    pointer-events: none !important;\n  }\n}\n'
-    if 'Batch 5 Hotfix 3 — mobile story order + Stage Works corrections' not in css:
-        css += hotfix3_additions
-
-
-    hotfix4_additions = '\n\n/* ─────────────────────────────────────────────────────────────\n   Batch 5 Hotfix 4 — mobile hero consistency + first Stage Work copy\n   Fixes:\n   1) On mobile, page feature images consistently appear before title/copy.\n   2) Stage Works first featured card keeps its description visible on mobile.\n   3) Series mastheads expose the active series description instead of hiding it\n      behind generic page-level copy.\n   ───────────────────────────────────────────────────────────── */\n@media (max-width: 760px) {\n  body[data-page] .hero__layout,\n  body[data-page] .page-hero__layout,\n  body[data-page] .about-hero,\n  body[data-page="series"] .series-masthead {\n    display: flex !important;\n    flex-direction: column !important;\n    align-items: stretch !important;\n    gap: clamp(1rem, 5vw, 1.55rem) !important;\n  }\n\n  body[data-page] .hero-figure,\n  body[data-page] .page-hero__figure,\n  body[data-page] .about-hero__figure,\n  body[data-page="series"] .series-masthead__figure {\n    order: -1 !important;\n    width: 100% !important;\n    max-width: 100% !important;\n    margin: 0 !important;\n  }\n\n  body[data-page] .hero__copy,\n  body[data-page] .page-hero__copy,\n  body[data-page] .about-hero__copy,\n  body[data-page="series"] .series-masthead__copy {\n    order: 1 !important;\n    width: 100% !important;\n    max-width: 100% !important;\n    padding-block-start: 0 !important;\n  }\n\n  body[data-page] .hero__visual,\n  body[data-page] .page-hero__visual,\n  body[data-page] .about-hero__visual,\n  body[data-page="series"] .series-masthead__visual {\n    width: 100% !important;\n    aspect-ratio: 3 / 2 !important;\n    max-height: 65vw !important;\n    min-height: 0 !important;\n  }\n\n  body[data-page] .hero__visual picture,\n  body[data-page] .page-hero__visual picture,\n  body[data-page] .about-hero__visual picture,\n  body[data-page="series"] .series-masthead__visual picture,\n  body[data-page] .hero__visual img,\n  body[data-page] .page-hero__visual img,\n  body[data-page] .about-hero__visual img,\n  body[data-page="series"] .series-masthead__visual img,\n  body[data-page] .hero__visual .media-placeholder,\n  body[data-page] .page-hero__visual .media-placeholder,\n  body[data-page] .about-hero__visual .media-placeholder,\n  body[data-page="series"] .series-masthead__visual .media-placeholder {\n    width: 100% !important;\n    height: 100% !important;\n  }\n\n  body[data-page="performance"] .hero--performance .hero__visual img {\n    object-fit: contain !important;\n    object-position: var(--media-position, center center) !important;\n    background: #030303 !important;\n  }\n\n  body[data-page="performance"] .series-card-grid--performance .series-card,\n  body[data-page="performance"] .series-card-grid--performance .series-card--story-featured {\n    height: auto !important;\n    max-height: none !important;\n    min-height: 0 !important;\n  }\n\n  body[data-page="performance"] .series-card-grid--performance .series-card__body,\n  body[data-page="performance"] .series-card-grid--performance .series-card--story-featured .series-card__body {\n    display: grid !important;\n    height: auto !important;\n    max-height: none !important;\n    min-height: 0 !important;\n    overflow: visible !important;\n  }\n\n  body[data-page="performance"] .series-card-grid--performance .series-card__body > p,\n  body[data-page="performance"] .series-card-grid--performance .series-card--story-featured .series-card__body > p {\n    display: block !important;\n    visibility: visible !important;\n    opacity: 1 !important;\n    max-height: none !important;\n    overflow: visible !important;\n    -webkit-line-clamp: unset !important;\n    -webkit-box-orient: initial !important;\n  }\n}\n'
-    if 'Batch 5 Hotfix 4 — mobile hero consistency + first Stage Work copy' not in css:
-        css += hotfix4_additions
-
-
-    hotfix4b_additions = '\n\n/* Hotfix 4 specificity guard: later/mobile hero sizing must beat older page-specific hotfixes. */\n@media (max-width: 760px) {\n  body[data-page="home"] .hero--home .hero__visual,\n  body[data-page="portfolio"] .hero--portfolio .hero__visual,\n  body[data-page="performance"] .hero--performance .hero__visual,\n  body[data-page="about"] .about-hero__visual,\n  body[data-page="contact"] .page-hero__visual,\n  body[data-page="series"] .series-masthead__visual {\n    aspect-ratio: 3 / 2 !important;\n    max-height: 65vw !important;\n    min-height: 0 !important;\n  }\n}\n'
-    if 'Hotfix 4 specificity guard' not in css:
-        css += hotfix4b_additions
-
-
-    hotfix5_additions = '''
-
-/* ─────────────────────────────────────────────────────────────
-   Batch 5 Hotfix 5 — feature-work media fidelity + Stage Works card parity
-   Fixes:
-   1) Mobile feature-work/card images render without crop across pages/subpages.
-   2) The first Stage Works card keeps its copy visible and no longer lets media
-      consume the card body.
-   3) Desktop Stage Works feature cards use the same card scale/language as the
-      Portfolio grid instead of an oversized special-case card.
-   ───────────────────────────────────────────────────────────── */
-@media (max-width: 760px) {
-  body[data-page] .hero__visual img,
-  body[data-page] .page-hero__visual img,
-  body[data-page] .about-hero__visual img,
-  body[data-page="series"] .series-masthead__visual img,
-  body[data-page] .work-card__media img,
-  body[data-page] .series-card__media img,
-  body[data-page] .editorial-card__media img,
-  body[data-page] .series-frame__media img,
-  body[data-page] .feature-module__visual img {
-    object-fit: contain !important;
-    object-position: var(--media-position, 50% 50%) !important;
-    background: #030303 !important;
-    transform: none !important;
-  }
-
-  body[data-page] .work-card__media,
-  body[data-page] .series-card__media,
-  body[data-page] .editorial-card__media,
-  body[data-page] .series-frame__media,
-  body[data-page] .feature-module__visual {
-    aspect-ratio: 4 / 3 !important;
-    min-height: 0 !important;
-    max-height: none !important;
-    background: #030303 !important;
-  }
-
-  body[data-page] .work-card__media picture,
-  body[data-page] .series-card__media picture,
-  body[data-page] .editorial-card__media picture,
-  body[data-page] .series-frame__media picture,
-  body[data-page] .feature-module__visual picture,
-  body[data-page] .work-card__media img,
-  body[data-page] .series-card__media img,
-  body[data-page] .editorial-card__media img,
-  body[data-page] .series-frame__media img,
-  body[data-page] .feature-module__visual img {
-    width: 100% !important;
-    height: 100% !important;
-  }
-
-  body[data-page="performance"] .series-card-grid--performance,
-  body[data-page="performance"] .series-card-grid--performance .series-card,
-  body[data-page="performance"] .series-card-grid--performance .series-card--story-featured {
-    overflow: visible !important;
-  }
-
-  body[data-page="performance"] .series-card-grid--performance .series-card,
-  body[data-page="performance"] .series-card-grid--performance .series-card--story-featured {
-    display: grid !important;
-    grid-template-columns: minmax(0, 1fr) !important;
-    grid-template-rows: auto auto !important;
-    height: auto !important;
-    max-height: none !important;
-    min-height: 0 !important;
-  }
-
-  body[data-page="performance"] .series-card-grid--performance .series-card__media,
-  body[data-page="performance"] .series-card-grid--performance .series-card--story-featured .series-card__media {
-    height: auto !important;
-    min-height: 0 !important;
-    max-height: none !important;
-    aspect-ratio: 4 / 3 !important;
-  }
-
-  body[data-page="performance"] .series-card-grid--performance .series-card__body,
-  body[data-page="performance"] .series-card-grid--performance .series-card--story-featured .series-card__body {
-    display: grid !important;
-    grid-template-rows: auto auto auto auto !important;
-    gap: 0.72rem !important;
-    height: auto !important;
-    min-height: 0 !important;
-    max-height: none !important;
-    overflow: visible !important;
-  }
-
-  body[data-page="performance"] .series-card-grid--performance .series-card__body > p,
-  body[data-page="performance"] .series-card-grid--performance .series-card--story-featured .series-card__body > p,
-  body[data-page="performance"] .series-card-grid--performance article:first-child .series-card__body > p {
-    display: block !important;
-    visibility: visible !important;
-    opacity: 1 !important;
-    height: auto !important;
-    max-height: none !important;
-    overflow: visible !important;
-    -webkit-line-clamp: unset !important;
-    -webkit-box-orient: initial !important;
-  }
-}
-
-@media (min-width: 981px) {
-  body[data-page="performance"] .series-card-grid--performance {
-    grid-template-columns: repeat(12, minmax(0, 1fr)) !important;
-    align-items: stretch !important;
-  }
-
-  body[data-page="performance"] .series-card-grid--performance .series-card,
-  body[data-page="performance"] .series-card-grid--performance .series-card--story-featured {
-    grid-column: span 4 !important;
-    display: grid !important;
-    grid-template-columns: minmax(0, 1fr) !important;
-    grid-template-rows: auto 1fr !important;
-    height: 100% !important;
-    min-height: 0 !important;
-  }
-
-  body[data-page="performance"] .series-card-grid--performance .series-card__media,
-  body[data-page="performance"] .series-card-grid--performance .series-card--story-featured .series-card__media {
-    aspect-ratio: 4 / 3 !important;
-    height: auto !important;
-    max-height: none !important;
-  }
-
-  body[data-page="performance"] .series-card-grid--performance .series-card__body,
-  body[data-page="performance"] .series-card-grid--performance .series-card--story-featured .series-card__body {
-    display: grid !important;
-    grid-template-rows: auto auto 1fr auto !important;
-    height: auto !important;
-    min-height: 0 !important;
-    overflow: visible !important;
-  }
-}
-'''
-    if 'Batch 5 Hotfix 5 — feature-work media fidelity + Stage Works card parity' not in css:
-        css += hotfix5_additions
-
-
-    hotfix6_additions = r'''
-
-/* ─────────────────────────────────────────────────────────────
-   Batch 5 Hotfix 6 — mobile card image fit + focal-point framing
-   The previous mobile fidelity fix used contain globally. That preserved
-   full frames, but it created black side gutters and made cards feel uneven.
-   Mobile cards now fill their frame again while respecting the focal point
-   stored as --media-position on each media wrapper.
-   ───────────────────────────────────────────────────────────── */
-@media (max-width: 760px) {
-  body[data-page] .hero__visual,
-  body[data-page] .page-hero__visual,
-  body[data-page] .about-hero__visual,
-  body[data-page="series"] .series-masthead__visual,
-  body[data-page] .work-card__media,
-  body[data-page] .series-card__media,
-  body[data-page] .editorial-card__media,
-  body[data-page] .series-frame__media,
-  body[data-page] .feature-module__visual {
-    aspect-ratio: var(--media-ratio, 4 / 3) !important;
-    min-height: 0 !important;
-    max-height: none !important;
-    overflow: hidden !important;
-    background: #030303 !important;
-  }
-
-  body[data-page] .hero__visual picture,
-  body[data-page] .page-hero__visual picture,
-  body[data-page] .about-hero__visual picture,
-  body[data-page="series"] .series-masthead__visual picture,
-  body[data-page] .work-card__media picture,
-  body[data-page] .series-card__media picture,
-  body[data-page] .editorial-card__media picture,
-  body[data-page] .series-frame__media picture,
-  body[data-page] .feature-module__visual picture,
-  body[data-page] .hero__visual img,
-  body[data-page] .page-hero__visual img,
-  body[data-page] .about-hero__visual img,
-  body[data-page="series"] .series-masthead__visual img,
-  body[data-page] .work-card__media img,
-  body[data-page] .series-card__media img,
-  body[data-page] .editorial-card__media img,
-  body[data-page] .series-frame__media img,
-  body[data-page] .feature-module__visual img {
-    width: 100% !important;
-    height: 100% !important;
-  }
-
-  body[data-page] .hero__visual img,
-  body[data-page] .page-hero__visual img,
-  body[data-page] .about-hero__visual img,
-  body[data-page="series"] .series-masthead__visual img,
-  body[data-page] .work-card__media img,
-  body[data-page] .series-card__media img,
-  body[data-page] .editorial-card__media img,
-  body[data-page] .series-frame__media img,
-  body[data-page] .feature-module__visual img {
-    object-fit: cover !important;
-    object-position: var(--media-position, 50% 50%) !important;
-    transform: none !important;
-  }
-
-  /* Stage Works must not inherit the horizontal mobile carousel behavior. */
-  body[data-page="performance"] .series-card-grid--performance {
-    display: grid !important;
-    grid-template-columns: minmax(0, 1fr) !important;
-    gap: clamp(1rem, 4vw, 1.25rem) !important;
-    overflow: visible !important;
-    scroll-snap-type: none !important;
-    padding: 0 !important;
-    margin-inline: 0 !important;
-  }
-
-  body[data-page="performance"] .series-card-grid--performance .series-card,
-  body[data-page="performance"] .series-card-grid--performance .series-card--story-featured {
-    width: 100% !important;
-    max-width: none !important;
-    flex: none !important;
-    scroll-snap-align: none !important;
-    display: grid !important;
-    grid-template-columns: minmax(0, 1fr) !important;
-    grid-template-rows: auto auto !important;
-    height: auto !important;
-    min-height: 0 !important;
-    max-height: none !important;
-    overflow: hidden !important;
-  }
-
-  body[data-page="performance"] .series-card-grid--performance .series-card__media,
-  body[data-page="performance"] .series-card-grid--performance .series-card--story-featured .series-card__media {
-    display: block !important;
-    aspect-ratio: var(--media-ratio, 4 / 3) !important;
-    height: auto !important;
-    min-height: 0 !important;
-    max-height: min(76vw, 24rem) !important;
-    overflow: hidden !important;
-  }
-
-  body[data-page="performance"] .series-card-grid--performance .series-card__media img,
-  body[data-page="performance"] .series-card-grid--performance .series-card--story-featured .series-card__media img {
-    object-fit: cover !important;
-    object-position: var(--media-position, 50% 50%) !important;
-  }
-
-  body[data-page="performance"] .series-card-grid--performance .series-card__body,
-  body[data-page="performance"] .series-card-grid--performance .series-card--story-featured .series-card__body {
-    display: grid !important;
-    grid-template-rows: auto auto auto auto !important;
-    gap: 0.72rem !important;
-    height: auto !important;
-    min-height: 0 !important;
-    max-height: none !important;
-    overflow: visible !important;
-  }
-
-  body[data-page="performance"] .series-card-grid--performance .series-card__body > p,
-  body[data-page="performance"] .series-card-grid--performance .series-card--story-featured .series-card__body > p,
-  body[data-page="performance"] .series-card-grid--performance article:first-child .series-card__body > p {
-    display: block !important;
-    visibility: visible !important;
-    opacity: 1 !important;
-    height: auto !important;
-    max-height: none !important;
-    overflow: visible !important;
-    -webkit-line-clamp: unset !important;
-    -webkit-box-orient: initial !important;
-  }
-}
-'''
-    if 'Batch 5 Hotfix 6 — mobile card image fit + focal-point framing' not in css:
-        css += hotfix6_additions
-
-    footer_mark_additions = r'''
-
-/* ─────────────────────────────────────────────────────────────
-   Footer mark hotfix 9 — typographic colophon signature
-   Scope: footer wordmark only. No footer copy, layout, links, or JS changed.
-   ───────────────────────────────────────────────────────────── */
-.footer-copy strong {
-  display: inline-block;
-  width: fit-content;
-  max-width: 100%;
-  line-height: 1;
-}
-
-.footer-wordmark--colophon {
-  --footer-mark-cream: rgba(242, 239, 232, 0.96);
-  --footer-mark-soft: rgba(242, 239, 232, 0.62);
-  --footer-mark-gold: rgba(216, 197, 162, 0.86);
-  position: relative;
-  display: inline-grid;
-  grid-template-columns: minmax(0, auto);
-  gap: 0.06rem;
-  width: fit-content;
-  max-width: 100%;
-  padding: 0;
-  color: var(--footer-mark-cream);
-  isolation: isolate;
-}
-
-.footer-wordmark--colophon::before {
-  content: "";
-  position: absolute;
-  inset: -0.29rem -0.40rem -0.31rem -0.34rem;
-  z-index: -1;
-  border-radius: 0.66rem;
-  background:
-    radial-gradient(circle at 0% 18%, rgba(216, 197, 162, 0.07), transparent 1.35rem),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.025), transparent 68%);
-  opacity: 0.82;
-  pointer-events: none;
-}
-
-.footer-wordmark__overline {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.38rem;
-  font-family: var(--font-sans);
-  font-size: clamp(0.41rem, 0.47vw, 0.47rem);
-  font-weight: 760;
-  letter-spacing: 0.28em;
-  line-height: 1;
-  color: var(--footer-mark-gold);
-  text-transform: uppercase;
-  white-space: nowrap;
-}
-
-.footer-wordmark__overline::after {
-  content: "";
-  display: inline-block;
-  width: clamp(1.55rem, 3.8vw, 3.0rem);
-  height: 1px;
-  background: linear-gradient(90deg, rgba(216, 197, 162, 0.66), rgba(216, 197, 162, 0));
-  transform: translateY(0.02rem);
-}
-
-.footer-wordmark__name {
-  display: inline-flex;
-  align-items: baseline;
-  gap: 0.02em;
-  font-family: var(--font-display);
-  font-size: clamp(0.95rem, 1.96vw, 2.11rem);
-  font-weight: 600;
-  line-height: 0.72;
-  letter-spacing: -0.085em;
-  color: var(--footer-mark-cream);
-  text-rendering: optimizeLegibility;
-  font-feature-settings: "kern" 1, "liga" 1;
-  white-space: nowrap;
-}
-
-.footer-wordmark__still {
-  color: rgba(242, 239, 232, 0.94);
-}
-
-.footer-wordmark__mark {
-  color: rgba(216, 197, 162, 0.92);
-  margin-left: -0.03em;
-}
-
-.footer-wordmark__trace {
-  position: relative;
-  display: block;
-  width: min(100%, 8.8rem);
-  height: 0.18rem;
-  overflow: hidden;
-}
-
-.footer-wordmark__trace::before,
-.footer-wordmark__trace::after,
-.footer-wordmark__trace span {
-  content: "";
-  position: absolute;
-  left: 0;
-  right: 0;
-  height: 1px;
-  border-radius: 999px;
-  pointer-events: none;
-}
-
-.footer-wordmark__trace::before {
-  top: 0.035rem;
-  background: linear-gradient(90deg, rgba(242, 239, 232, 0.5), rgba(216, 197, 162, 0.34) 42%, rgba(242, 239, 232, 0));
-}
-
-.footer-wordmark__trace span {
-  top: 0.115rem;
-  width: 58%;
-  background: linear-gradient(90deg, rgba(216, 197, 162, 0.42), rgba(242, 239, 232, 0));
-  opacity: 0.72;
-}
-
-.footer-wordmark__trace::after {
-  top: 0.035rem;
-  left: clamp(2.6rem, 24%, 4.3rem);
-  right: auto;
-  width: 0.16rem;
-  height: 0.16rem;
-  border: 1px solid rgba(216, 197, 162, 0.72);
-  background: rgba(8, 8, 7, 0.9);
-  border-radius: 50%;
-  transform: translateY(-50%);
-  box-shadow: 0 0 0 0.10rem rgba(216, 197, 162, 0.05);
-}
-
-.footer-copy p {
-  margin-top: 0.30rem;
-}
-
-@media (hover: hover) and (pointer: fine) {
-  .footer-wordmark--colophon {
-    transition: transform var(--transition), filter var(--transition);
-  }
-
-  .footer-wordmark--colophon:hover {
-    transform: translateY(-0.5px);
-    filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.22));
-  }
-
-  .footer-wordmark--colophon:hover .footer-wordmark__trace span {
-    width: 72%;
-  }
-
-  .footer-wordmark__trace span {
-    transition: width 520ms var(--ease-premium), opacity var(--transition);
-  }
-}
-
-@media (max-width: 620px) {
-  .footer-wordmark--colophon::before {
-    inset: -0.25rem -0.31rem -0.27rem -0.27rem;
-    border-radius: 0.64rem;
-  }
-
-  .footer-wordmark__overline {
-    letter-spacing: 0.22em;
-  }
-
-  .footer-wordmark__overline::after {
-    width: clamp(1.2rem, 9vw, 2.15rem);
-  }
-
-  .footer-wordmark__name {
-    font-size: clamp(1.06rem, 5.4vw, 1.55rem);
-    letter-spacing: -0.07em;
-  }
-
-  .footer-wordmark__trace {
-    width: min(100%, 7.55rem);
-  }
-}
-
-@media (max-width: 380px) {
-  .footer-wordmark__overline {
-    letter-spacing: 0.19em;
-  }
-
-  .footer-wordmark__name {
-    font-size: clamp(0.95rem, 5.4vw, 1.31rem);
-  }
-}
-'''
-
-    if 'Footer mark hotfix 9 — typographic colophon signature' not in css:
-        css += footer_mark_additions
-
-    path.write_text(css, encoding='utf-8')
-
-
 def write_all() -> None:
+    started = time.perf_counter()
     store = normalize_content(SITE_CONTENT)
     cleanup_report = prune_generated_responsive_assets(store['generated_assets'])
     write_image_manifests(store, cleanup_report)
 
-    (ROOT / 'assets/js/data.js').write_text(render_data_js(store), encoding='utf-8')
-    (ROOT / 'index.html').write_text(render_home(store), encoding='utf-8')
-    (ROOT / 'portfolio.html').write_text(render_portfolio(store), encoding='utf-8')
-    (ROOT / 'series.html').write_text(render_series(store), encoding='utf-8')
-    (ROOT / 'performance.html').write_text(render_performance(store), encoding='utf-8')
-    (ROOT / 'about.html').write_text(render_about(store), encoding='utf-8')
-    (ROOT / 'contact.html').write_text(render_contact(store), encoding='utf-8')
-    (ROOT / '404.html').write_text(render_404(store), encoding='utf-8')
-    (ROOT / 'robots.txt').write_text(render_robots_txt(), encoding='utf-8')
-    (ROOT / 'sitemap.xml').write_text(render_sitemap_xml(), encoding='utf-8')
-    (ROOT / 'site.webmanifest').write_text(render_site_manifest(), encoding='utf-8')
-    (ROOT / 'README.md').write_text(render_readme(), encoding='utf-8')
+    if ensure_og_images_from_content:
+        try:
+            ensure_og_images_from_content(SITE_CONTENT, force=False)
+        except Exception as exc:  # social cards are optional; the site is not
+            print(f"[STILLMRK build] Warning: social card generation failed: {exc}", flush=True)
 
-    update_app_js(ROOT / 'assets/js/app.js')
-    update_home_js(ROOT / 'assets/js/home.js')
-    update_start_scripts()
-    update_styles(ROOT / 'assets/css/styles.css')
+    prepare_dist()
+    write_dist_file('assets/js/data.js', render_data_js(store))
+    write_dist_file('index.html', render_home(store))
+    write_dist_file('portfolio.html', render_portfolio(store))
+    write_dist_file('series.html', render_series(store))
+    write_dist_file('performance.html', render_performance(store))
+    write_dist_file('about.html', render_about(store))
+    write_dist_file('contact.html', render_contact(store))
+    write_dist_file('404.html', render_404(store))
+    write_dist_file('robots.txt', render_robots_txt())
+    write_dist_file('sitemap.xml', render_sitemap_xml())
+    write_dist_file('site.webmanifest', render_site_manifest())
 
     report = write_build_metadata(store)
-    write_public_upload_bundle(store, report)
-    write_public_upload_instructions(store, report)
+    write_upload_manifest(store, report)
 
     missing_assets = list(store.get('missing_assets') or [])
     if missing_assets:
         print(f"[STILLMRK build] Warning: {len(missing_assets)} work(s) are metadata-only because no source image is assigned yet.", flush=True)
-    print('[STILLMRK build] Site rebuilt successfully.')
+    elapsed = time.perf_counter() - started
+    print(f"[STILLMRK build] Images: {IMAGE_STATS['rendered']} rendered, {IMAGE_STATS['cached']} reused from cache.", flush=True)
+    print(f"[STILLMRK build] Site rebuilt successfully in {elapsed:.1f}s -> dist/", flush=True)
+
+
+def validate_only() -> None:
+    global IMAGE_MODE
+    IMAGE_MODE = 'validate'
+    started = time.perf_counter()
+    normalize_content(SITE_CONTENT)  # also runs validate_runtime_store()
+    print(f"[STILLMRK build] Content validation passed in {time.perf_counter() - started:.1f}s.", flush=True)
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description='Build STILLMRK from YAML content files.')
-    parser.add_argument('--validate-only', action='store_true', help='Validate content without writing site output.')
+    parser = argparse.ArgumentParser(description='Build STILLMRK from YAML content files into dist/.')
+    parser.add_argument('--validate-only', action='store_true', help='Check content and references without rendering images or writing output.')
     args = parser.parse_args()
-
     if args.validate_only:
-        normalize_content(SITE_CONTENT)
-        print('[STILLMRK build] Content validation passed.')
+        validate_only()
         return
-
     write_all()
 
 
 if __name__ == '__main__':
     main()
-
-
-# Hotfix 7 CSS addition preserved in styles.css/assets/css/styles.css.
