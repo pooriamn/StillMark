@@ -4385,13 +4385,154 @@ def work_inquiry_href(work: dict[str, Any]) -> str:
     return f"/contact.html?{query}"
 
 
-def render_work_page(store: dict[str, Any], work: dict[str, Any], neighbours: tuple[dict[str, Any] | None, dict[str, Any] | None], position: tuple[int, int]) -> str:
+# ─────────────────────────────────────────────────────────────
+# Phase 3: templates (templates/*.html, Jinja2) and the new design system
+# (assets/css/site.css). Pages move here one at a time; the remaining
+# f-string renderers above are deleted once every page has moved.
+# ─────────────────────────────────────────────────────────────
+TEMPLATES_DIR = ROOT / 'templates'
+_TEMPLATE_ENV = None
+
+
+def template_env():
+    global _TEMPLATE_ENV
+    if _TEMPLATE_ENV is None:
+        from jinja2 import Environment, FileSystemLoader, StrictUndefined, select_autoescape
+        from markupsafe import Markup
+        env = Environment(
+            loader=FileSystemLoader(str(TEMPLATES_DIR)),
+            autoescape=select_autoescape(['html']),
+            undefined=StrictUndefined,
+            trim_blocks=False,
+            lstrip_blocks=False,
+        )
+        env.globals.update(
+            image_path=image_path,
+            source_set=source_set,
+            avif_source_set=avif_source_set,
+            preferred_width=preferred_width,
+            largest_available_width=largest_available_width,
+            series_path=series_path,
+            work_path=work_path,
+        )
+        env.filters['md'] = lambda value: Markup(md_inline(value))
+        _TEMPLATE_ENV = env
+    return _TEMPLATE_ENV
+
+
+def head_context(page_key: str, meta: dict[str, Any], *, preload_work: dict[str, Any] | None = None,
+                 preload_sizes: str = '100vw', schema: dict[str, Any] | None = None, og_type: str = 'website') -> dict[str, Any]:
+    from markupsafe import Markup
+    site = SITE_CONTENT['site']
+    settings = build_site_settings(site)
+    canonical_override = str(meta.get('canonical_path') or '').strip()
+    if canonical_override.startswith(('http://', 'https://')):
+        canonical = canonical_override
+    elif canonical_override or page_key in {'work', 'series'}:
+        canonical = absolute_url(canonical_override, settings['metadataBaseUrl'])
+    else:
+        canonical = build_page_url(page_key, site)
+    image = absolute_url(str(meta.get('og_image') or site['og_image']).strip(), settings['metadataBaseUrl'])
+    preload = None
+    if preload_work and preload_work.get('responsiveBase'):
+        avif = avif_source_set(preload_work)
+        preload = {'type': 'image/avif' if avif else 'image/webp', 'srcset': avif or source_set(preload_work, 'webp'), 'sizes': preload_sizes}
+    names = [str(SITE_CONTENT['artist'].get('name') or '')] + list(SITE_CONTENT['artist'].get('alternate_names') or [])
+    return {
+        'title': meta['title'],
+        'description': md_plain(meta.get('description')),
+        'og_description': md_plain(meta.get('og_description') or meta.get('description')),
+        'author': ', '.join(name for name in names if name),
+        'robots': settings['robots'],
+        'canonical': canonical,
+        'site_name': str(site.get('name') or 'STILLMRK'),
+        'og_type': og_type,
+        'image': image,
+        'image_alt': str(meta.get('og_image_alt') or meta['title']),
+        'preload': preload,
+        'analytics_id': analytics_id(),
+        'base_schema': Markup(json_ld(base_schema())),
+        'page_schema': Markup(json_ld(schema or page_schema(page_key, meta, canonical, image))),
+    }
+
+
+def chrome_context(store: dict[str, Any], nav_section: str) -> dict[str, Any]:
     raw = store['raw']
+    identity = build_public_identity(raw)
+    nav = []
+    for item in _visible_nav_items(raw):
+        page = str(item.get('page') or '')
+        if page == 'home':
+            continue  # the wordmark is the way home
+        href = str(item.get('href') or '')
+        nav.append({'label': item.get('label'), 'href': href if href.startswith(('/', 'http')) else '/' + href, 'page': page})
+    return {
+        'site_name': str(raw['site'].get('name') or 'STILLMRK'),
+        'nav': nav,
+        'nav_section': nav_section,
+        'artist_name': identity.get('name') or '',
+        'email': identity['email'] if has_public_contact_email(identity.get('email')) else '',
+        'social_links': _artist_social_links(raw['artist']),
+        'analytics_id': analytics_id(),
+        'year': datetime.now(timezone.utc).year,
+    }
+
+
+def render_template(name: str, **context: Any) -> str:
+    return template_env().get_template(name).render(**context)
+
+
+def _paragraphs(text: Any) -> list[Any]:
+    from markupsafe import Markup
+    return [Markup(md_inline(part.strip())) for part in re.split(r'\n\s*\n', str(text or '')) if part.strip()]
+
+
+def render_home_v2(store: dict[str, Any]) -> str:
+    raw = store['raw']
+    home = raw['pages']['home']
+    hero_raw = home.get('hero') or {}
+    works_by_id = store['works_by_id']
+    hero_work = works_by_id.get(str(hero_raw.get('feature_work_id') or ''))
+    lead = str(hero_raw.get('lead') or '')
+    lead_paragraphs = _paragraphs(lead) if '\n\n' in lead else [part for part in split_home_hero_lead(lead) if part]
+    actions = [action for action in (hero_raw.get('primary_action'), hero_raw.get('secondary_action')) if isinstance(action, dict) and action.get('href')]
+    programme = []
+    for series, works in public_series_works(store):
+        cover = works_by_id.get(series.get('cardCoverWorkId') or series.get('coverWorkId') or '')
+        programme.append({'title': series['title'], 'href': series_path(series['slug']), 'count': len(works), 'years': series.get('years') or '', 'cover': cover})
+    selected = []
+    for work_id in (home.get('selected_works') or {}).get('work_ids') or []:
+        work = works_by_id.get(work_id)
+        if work:
+            selected.append({'work': work, 'series_title': (store['series_lookup'].get(work.get('series') or '') or {}).get('title', '')})
+    statement = next((module for module in home.get('modules') or [] if isinstance(module, dict) and module.get('type') == 'text'), None)
+    meta = dict(home['meta'])
+    meta['canonical_path'] = ''
+    return render_template(
+        'pages/home.html',
+        page_key='home',
+        head=head_context('home', meta, preload_work=hero_work, preload_sizes='(min-width: 60rem) 70vw, 100vw'),
+        **chrome_context(store, 'home'),
+        hero={
+            'work': hero_work,
+            'title': hero_raw.get('title') or raw['site'].get('name'),
+            'lead': lead_paragraphs,
+            'actions': actions,
+            'series_title': (store['series_lookup'].get((hero_work or {}).get('series') or '') or {}).get('title', ''),
+        },
+        programme=programme,
+        programme_intro=md_plain((home.get('featured_series') or {}).get('intro')),
+        selected=selected,
+        selected_intro=md_plain((home.get('selected_works') or {}).get('intro')),
+        statement=statement,
+    )
+
+
+def render_work_v2(store: dict[str, Any], work: dict[str, Any], neighbours: tuple[dict[str, Any] | None, dict[str, Any] | None], position: tuple[int, int]) -> str:
     series = store['series_lookup'].get(work.get('series') or '')
     site_name = str(SITE_CONTENT['site'].get('name') or 'STILLMRK')
-    site_url = _site_url()
-    caption = str(work.get('caption') or '').strip()
-    description = summarize_story_text(caption or work.get('alt') or '', fallback=work.get('alt') or '', limit=158)
+    caption = RAW_CAPTIONS.get(work['id'], work.get('caption') or '')
+    description = summarize_story_text(md_plain(caption) or work.get('alt') or '', fallback=work.get('alt') or '', limit=158)
     meta = {
         'title': f"{work['title']} - {site_name}",
         'description': description,
@@ -4400,77 +4541,59 @@ def render_work_page(store: dict[str, Any], work: dict[str, Any], neighbours: tu
         'og_image_alt': work.get('alt') or work['title'],
         'canonical_path': work_path(work['id']).lstrip('/'),
     }
+    facts = [(label, value) for label, value in (('Year', work.get('year')), ('Place', work.get('location')), ('Medium', work.get('medium')), ('Edition', work.get('edition'))) if real_value(value)]
+    previous, following = neighbours
+    return render_template(
+        'pages/work.html',
+        page_key='work',
+        head=head_context('work', meta, preload_work=work, preload_sizes='(min-width: 60rem) 72vw, 100vw', schema=work_schema(work, series), og_type='article'),
+        **chrome_context(store, 'portfolio'),
+        work=work,
+        series=series,
+        position=position[0],
+        total=position[1],
+        caption_paragraphs=_paragraphs(caption),
+        facts=facts,
+        inquiry_href=work_inquiry_href(work),
+        previous=previous,
+        following=following,
+    )
+
+
+def render_404_v2(store: dict[str, Any]) -> str:
+    site_name = str(SITE_CONTENT['site'].get('name') or 'STILLMRK')
+    meta = {'title': f'Page not found - {site_name}', 'description': 'This address does not exist on the site.', 'canonical_path': '404.html'}
+    head = head_context('404', meta)
+    head['robots'] = 'noindex'
+    return render_template('pages/404.html', page_key='404', head=head, **chrome_context(store, ''))
+
+
+PLACEHOLDER_VALUES = {'', 'unspecified', 'unknown', 'n/a', 'na', 'none', '-', 'tbd'}
+
+
+def real_value(value: Any) -> str:
+    """Return the value as text, or '' when it is a placeholder like 'Unspecified'."""
+    text = str(value or '').strip()
+    return '' if text.lower() in PLACEHOLDER_VALUES else text
+
+
+def work_schema(work: dict[str, Any], series: dict[str, Any] | None) -> dict[str, Any]:
+    site_url = _site_url()
     schema = {
         '@context': 'https://schema.org',
         '@type': 'VisualArtwork',
         'name': work['title'],
-        'description': md_plain(caption) or work.get('alt') or '',
+        'description': md_plain(RAW_CAPTIONS.get(work['id'], work.get('caption') or '')) or work.get('alt') or '',
         'url': absolute_url(work_path(work['id']).lstrip('/'), site_url),
         'image': _image_url(work) if work.get('responsiveBase') else None,
         'artform': 'Photography',
         'artMedium': work.get('medium') or 'Monochrome photograph',
         'creator': {'@id': f'{site_url}#person'},
-        'dateCreated': str(work.get('year') or '') or None,
-        'contentLocation': work.get('location') or None,
+        'dateCreated': real_value(work.get('year')) or None,
+        'contentLocation': real_value(work.get('location')) or None,
         'isPartOf': {'@type': 'CreativeWorkSeries', 'name': series['title'], 'url': absolute_url(series_path(series['slug']).lstrip('/'), site_url)} if series else None,
     }
-    schema = {key: value for key, value in schema.items() if value}
-    paragraphs = ''.join(f'<p>{part.strip()}</p>' for part in re.split(r'\n\s*\n', caption_html(work)) if part.strip())
-    facts = [(label, value) for label, value in (('Year', work.get('year')), ('Location', work.get('location')), ('Medium', work.get('medium')), ('Edition', work.get('edition'))) if str(value or '').strip()]
-    facts_html = ''.join(f'<div><dt>{esc(label)}</dt><dd>{esc(value)}</dd></div>' for label, value in facts)
-    previous, following = neighbours
-    index, total = position
-    eyebrow = f"{esc(series['title'])} · {index} of {total}" if series else 'Photograph'
-    crumbs = f'<a href="{portfolio_path()}">Portfolio</a><span aria-hidden="true">/</span>' + (f'<a href="{series_path(series["slug"])}">{esc(series["title"])}</a>' if series else '')
-    def pager_link(target: dict[str, Any] | None, rel: str, label: str) -> str:
-        if not target:
-            return '<span class="work-pager__spacer"></span>'
-        return (f'<a class="work-pager__link work-pager__link--{rel}" rel="{rel}" href="{work_path(target["id"])}">'
-                f'<span class="work-pager__label">{label}</span><span class="work-pager__title">{esc(target["title"])}</span></a>')
-    series_link = f'<a class="button button--secondary" href="{series_path(series["slug"])}">View the full series</a>' if series else ''
-    lightbox = lightbox_attrs(work, store['series_lookup'], 'work-page', '96vw') if work.get('responsiveBase') else ''
-    return f"""<!DOCTYPE html>
-<html lang="en">
-{page_head('work', meta, preload_work=work if work.get('responsiveBase') else None, preload_sizes='(min-width: 1100px) 72vw, 100vw', schema=schema)}
-  <body data-page="work" data-work-id="{esc(work['id'])}">
-    <a class="skip-link" href="#main-content">Skip to content</a>
-    {render_nav(raw)}
-    <main id="main-content">
-      <article class="work-page">
-        <div class="container">
-          <nav class="work-page__crumbs" aria-label="Breadcrumb">{crumbs}</nav>
-          <figure class="work-page__figure">
-            <button type="button" class="work-page__media" style="--media-ratio: {work['width']} / {work['height']};" aria-label="View {esc(work['title'])} full screen" {lightbox} data-protect-media="true">
-              {responsive_image_html(work, '(min-width: 1100px) 72vw, 100vw', loading='eager', fetchpriority='high')}
-            </button>
-          </figure>
-          <div class="work-page__body">
-            <header class="work-page__heading">
-              <p class="eyebrow">{eyebrow}</p>
-              <h1 class="display-title work-page__title">{esc(work['title'])}</h1>
-            </header>
-            <div class="work-page__text">
-              {paragraphs}
-              {f'<dl class="work-page__facts">{facts_html}</dl>' if facts_html else ''}
-              <div class="work-page__actions">
-                <a class="button" href="{work_inquiry_href(work)}">Inquire about this work</a>
-                {series_link}
-              </div>
-            </div>
-          </div>
-          <nav class="work-pager" aria-label="More from this series">
-            {pager_link(previous, 'prev', 'Previous')}
-            {pager_link(following, 'next', 'Next')}
-          </nav>
-        </div>
-      </article>
-    </main>
-    {render_footer(raw)}
-    {render_lightbox()}
-    <script type="module" src="assets/js/app.js"></script>
-  </body>
-</html>
-"""
+    return {key: value for key, value in schema.items() if value}
 
 
 def public_series_works(store: dict[str, Any]) -> list[tuple[dict[str, Any], list[dict[str, Any]]]]:
@@ -4497,13 +4620,13 @@ def write_all() -> None:
     prepare_dist()
     write_dist_file('assets/js/data.js', rootify_data_js(render_data_js(store)))
     pages = {
-        'index.html': render_home(store),
+        'index.html': render_home_v2(store),
         'portfolio.html': render_portfolio(store),
         'series.html': render_series(store),
         'performance.html': render_performance(store),
         'about.html': render_about(store),
         'contact.html': render_contact(store),
-        '404.html': render_404(store),
+        '404.html': render_404_v2(store),
     }
     extra_paths: list[str] = []
     for series, works in public_series_works(store):
@@ -4512,7 +4635,7 @@ def write_all() -> None:
         for index, work in enumerate(works):
             previous = works[index - 1] if index > 0 else None
             following = works[index + 1] if index + 1 < len(works) else None
-            pages[f"works/{work['id']}/index.html"] = render_work_page(store, work, (previous, following), (index + 1, len(works)))
+            pages[f"works/{work['id']}/index.html"] = render_work_v2(store, work, (previous, following), (index + 1, len(works)))
             extra_paths.append(work_path(work['id']))
     for relative, html_text in pages.items():
         write_dist_file(relative, rootify_html(html_text))

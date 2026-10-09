@@ -33,7 +33,11 @@ photographs are rendered again.
 
 ```
 content/                 the source of truth: one YAML file per work, series and page
-assets/css, assets/js    site styles and scripts (edit these directly)
+templates/               page templates (Jinja2) for redesigned pages
+assets/css/site.css      the design system: tokens, type, layout (redesigned pages)
+assets/css/styles.css    legacy stylesheet, removed once every page is redesigned
+assets/js                site scripts (site.js for redesigned pages)
+assets/fonts             self-hosted Bodoni Moda and Schibsted Grotesk (OFL)
 assets/images/originals  full-resolution source photographs
 assets/icons, documents  favicons and downloadable PDFs
 build_site.py            the build: content → dist/

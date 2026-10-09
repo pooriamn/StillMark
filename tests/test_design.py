@@ -1,0 +1,50 @@
+"""Rules for pages on the new design system (templates/ + assets/css/site.css)."""
+from __future__ import annotations
+
+import re
+
+from conftest import DIST, ROOT
+
+REDESIGNED = ['index.html', '404.html', 'works/mirror-shore/index.html', 'works/mother-sees-nothing/index.html']
+
+
+def test_site_css_has_no_important_overrides():
+    css = (ROOT / 'assets' / 'css' / 'site.css').read_text(encoding='utf-8')
+    assert '!important' not in css
+
+
+def test_fonts_are_self_hosted_and_licensed():
+    fonts = ROOT / 'assets' / 'fonts'
+    assert list(fonts.glob('*.woff2'))
+    assert list(fonts.glob('OFL-*.txt')), 'ship the font licences with the fonts'
+
+
+def test_redesigned_pages_load_only_the_new_assets(build):
+    for page in REDESIGNED:
+        html = (DIST / page).read_text(encoding='utf-8')
+        assert '/assets/css/site.css' in html, page
+        assert 'styles.css' not in html, f'{page} still loads the old stylesheet'
+        assert 'data.js' not in html and 'assets/js/app.js' not in html, f'{page} loads the 288 KB data file'
+        assert 'fonts.googleapis.com' not in html, page
+
+
+def test_redesigned_pages_have_no_inline_code(build):
+    """Inline scripts and style blocks would block a strict Content Security Policy."""
+    for page in REDESIGNED:
+        html = (DIST / page).read_text(encoding='utf-8')
+        inline_scripts = [m for m in re.findall(r'<script(?![^>]*\bsrc=)([^>]*)>', html) if 'application/ld+json' not in m]
+        assert not inline_scripts, f'{page}: inline <script>'
+        assert '<style' not in html, f'{page}: inline <style>'
+
+
+def test_photographs_are_never_cropped(build):
+    css = (ROOT / 'assets' / 'css' / 'site.css').read_text(encoding='utf-8')
+    assert 'object-fit: cover' not in css, 'site.css must not crop photographs'
+
+
+def test_one_h1_per_page_and_landmarks(build):
+    for page in REDESIGNED:
+        html = (DIST / page).read_text(encoding='utf-8')
+        assert html.count('<h1') == 1, page
+        assert '<main id="main">' in html and 'href="#main"' in html, page
+        assert '<nav class="site-nav"' in html, page
