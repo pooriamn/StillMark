@@ -1,0 +1,15 @@
+Qt control panel
+================
+
+Install dependencies:
+
+    pip install -r requirements-qt.txt
+
+Run the control panel:
+
+    python scripts/control_panel.py
+
+Notes:
+- This is the PySide6/Qt hard-cutover entry point.
+- The public website UI and content structure stay unchanged.
+- The old Tk control panel was removed from scripts/ to keep the package focused on the current Qt panel.
