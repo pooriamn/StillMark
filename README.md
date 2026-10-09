@@ -33,10 +33,9 @@ photographs are rendered again.
 
 ```
 content/                 the source of truth: one YAML file per work, series and page
-templates/               page templates (Jinja2) for redesigned pages
-assets/css/site.css      the design system: tokens, type, layout (redesigned pages)
-assets/css/styles.css    legacy stylesheet, removed once every page is redesigned
-assets/js                site scripts (site.js for redesigned pages)
+templates/               page templates (Jinja2): layout, partials, one file per page type
+assets/css/site.css      the design system: tokens, type scale, layout, components
+assets/js                site.js (menu, viewer, portfolio filters, contact) and consent.js
 assets/fonts             self-hosted Bodoni Moda and Schibsted Grotesk (OFL)
 assets/images/originals  full-resolution source photographs
 assets/icons, documents  favicons and downloadable PDFs

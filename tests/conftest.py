@@ -13,12 +13,10 @@ DIST = ROOT / 'dist'
 
 # Source files the build must never modify (it used to rewrite all of them).
 GUARDED_SOURCES = [
-    'assets/js/app.js',
-    'assets/js/home.js',
-    'assets/js/portfolio.js',
-    'assets/js/series.js',
+    'assets/js/site.js',
     'assets/js/consent.js',
-    'assets/css/styles.css',
+    'assets/css/site.css',
+    'templates/base.html',
     'README.md',
     'start-local-server.sh',
     'start-local-server.bat',

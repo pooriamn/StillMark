@@ -7207,21 +7207,14 @@ def verify_preview_output() -> dict[str, Any]:
         rows.append({"path": rel, "status": status, "detail": ok_detail if ok else error_detail})
 
     index_html = PUBLIC_UPLOAD_DIR / "index.html"
-    data_js = PUBLIC_UPLOAD_DIR / "assets" / "js" / "data.js"
+    site_js = PUBLIC_UPLOAD_DIR / "assets" / "js" / "site.js"
     sitemap = PUBLIC_UPLOAD_DIR / "sitemap.xml"
     css_path = PUBLIC_UPLOAD_DIR / "assets" / "css"
     images_path = PUBLIC_UPLOAD_DIR / "assets" / "images"
 
     add(index_html, index_html.exists(), error_detail="Missing index.html")
-    data_ok = False
-    data_detail = "Missing data.js"
-    try:
-        data_ok = data_js.exists() and data_js.stat().st_size > 100  # Minimum plausible size.
-        if data_js.exists() and not data_ok:
-            data_detail = "data.js is empty or implausibly small"
-    except OSError as exc:
-        data_detail = f"Could not stat data.js: {exc}"
-    add(data_js, data_ok, ok_detail="Found non-empty data.js", error_detail=data_detail)
+    site_js_ok = site_js.exists() and site_js.stat().st_size > 100
+    add(site_js, site_js_ok, ok_detail="Found site.js", error_detail="Missing or empty site.js")
     add(sitemap, sitemap.exists(), error_detail="Missing sitemap.xml")
     add(css_path, css_path.exists() and css_path.is_dir(), error_detail="Missing CSS assets directory")
     image_files: list[Path] = []

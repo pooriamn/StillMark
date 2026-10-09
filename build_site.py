@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import argparse
-import copy
 import hashlib
 import html
 import json
@@ -18,7 +17,7 @@ from typing import Any
 
 import yaml
 from jsonschema import Draft202012Validator
-from PIL import Image, ImageOps, ImageDraw, ImageFont, features as pil_features
+from PIL import Image, ImageOps, features as pil_features
 
 try:
     from scripts.og_images import ensure_og_images_from_content
@@ -65,7 +64,6 @@ PUBLISH_STATE_PATH = BUILD_META_DIR / 'publish-state.json'
 
 BUILD_MISSING_ASSET_ROWS: list[dict[str, Any]] = []
 PLACEHOLDER_INTRINSIC_SIZE = (1600, 1200)
-
 
 
 def build_public_identity(raw: dict[str, Any]) -> dict[str, str]:
@@ -183,7 +181,6 @@ def validate_schema(content: dict[str, Any]) -> list[str]:
     for error in sorted(validator.iter_errors(content), key=lambda item: list(item.absolute_path)):
         errors.append(f'{format_error_path(list(error.absolute_path))}: {error.message}')
     return errors
-
 
 
 def validate_relationships(content: dict[str, Any]) -> list[str]:
@@ -519,7 +516,6 @@ def default_focal_point_config() -> dict[str, int]:
     }
 
 
-
 def normalize_base_url(value: Any) -> str:
     text_value = str(value or '').strip()
     if not text_value:
@@ -590,11 +586,6 @@ def is_real_repo(value: Any) -> bool:
     if not text_value or looks_like_placeholder(text_value):
         return False
     return '/' in text_value and len(text_value.split('/', 1)[0]) > 1 and len(text_value.split('/', 1)[1]) > 1
-
-
-def root_public_path(path: str) -> str:
-    cleaned = str(path or '').strip().lstrip('/')
-    return f'/{cleaned}' if cleaned else '/'
 
 
 def build_site_settings(raw_site: dict[str, Any]) -> dict[str, Any]:
@@ -725,10 +716,7 @@ def md_inline(value: Any) -> str:
 
 
 RAW_CAPTIONS: dict[str, str] = {}
-
-
-def caption_html(work: dict[str, Any]) -> str:
-    return md_inline(RAW_CAPTIONS.get(work.get('id', ''), work.get('caption') or ''))
+RAW_SERIES_TEXT: dict[str, dict[str, str]] = {}
 
 
 def md_plain(value: Any) -> str:
@@ -739,10 +727,6 @@ def md_plain(value: Any) -> str:
 
 def esc(value: Any) -> str:
     return html.escape(str(value), quote=True)
-
-
-def classes(*values: str | None) -> str:
-    return " ".join(value for value in values if value)
 
 
 def relative_asset_path(path: Path) -> str:
@@ -944,82 +928,6 @@ def _record_missing_asset(work_entry: dict[str, Any], series_slug: str, render_n
         BUILD_MISSING_ASSET_ROWS.append(row)
 
 
-def _placeholder_canvas(width: int, height: int, label: str, detail: str = '') -> Image.Image:
-    image = Image.new('RGB', (width, height), '#11161b')
-    draw = ImageDraw.Draw(image)
-    try:
-        title_font = ImageFont.load_default()
-        meta_font = ImageFont.load_default()
-    except Exception:  # pragma: no cover
-        title_font = None
-        meta_font = None
-    draw.rectangle((0, 0, width - 1, height - 1), outline='#2f3945', width=3)
-    accent_y = max(24, height // 2 - 40)
-    draw.line((width * 0.18, accent_y, width * 0.82, accent_y), fill='#697786', width=2)
-    draw.line((width * 0.18, accent_y + 14, width * 0.72, accent_y + 14), fill='#3d4753', width=2)
-    title = 'Image unavailable'
-    bbox = draw.textbbox((0, 0), title, font=title_font) if title_font else (0, 0, 180, 20)
-    title_x = max(32, (width - (bbox[2] - bbox[0])) // 2)
-    title_y = min(height - 120, accent_y + 48)
-    draw.text((title_x, title_y), title, fill='#d7e1ec', font=title_font)
-    subtitle = label[:72]
-    bbox2 = draw.textbbox((0, 0), subtitle, font=meta_font) if meta_font else (0, 0, 160, 20)
-    sub_x = max(32, (width - (bbox2[2] - bbox2[0])) // 2)
-    draw.text((sub_x, title_y + 24), subtitle, fill='#9fb0c0', font=meta_font)
-    if detail:
-        detail_text = detail[:96]
-        bbox3 = draw.textbbox((0, 0), detail_text, font=meta_font) if meta_font else (0, 0, 160, 20)
-        det_x = max(32, (width - (bbox3[2] - bbox3[0])) // 2)
-        draw.text((det_x, title_y + 48), detail_text, fill='#718396', font=meta_font)
-    return image
-
-
-def build_placeholder_image_meta(work_entry: dict[str, Any], image_config: dict[str, Any], generated_assets: set[str], detail: str = '') -> dict[str, Any]:
-    series_slug = str(image_config.get('series') or resolve_series_slug_for_work(work_entry) or 'unassigned').strip() or 'unassigned'
-    render_slug = str(image_config.get('render_name') or work_entry.get('render_name') or work_entry['id']).strip().replace('\\', '/').strip('/')
-    render_name = render_slug.replace('/', '-') or work_entry['id']
-    work_output_dir = current_generated_root() / series_slug / render_name
-    responsive_base_path = work_output_dir / render_name
-    work_output_dir.mkdir(parents=True, exist_ok=True)
-
-    intrinsic_width, intrinsic_height = PLACEHOLDER_INTRINSIC_SIZE
-    canvas = _placeholder_canvas(intrinsic_width, intrinsic_height, str(work_entry.get('title') or work_entry.get('id') or 'Work'), str(work_entry.get('id') or ''))
-    target_widths = [width for width in RESPONSIVE_WIDTHS if width < intrinsic_width]
-    target_widths.append(intrinsic_width)
-    target_widths = sorted(set(int(width) for width in target_widths))
-    jpg_quality = int(IMAGE_PIPELINE.get('jpg_quality', DEFAULT_IMAGE_PIPELINE['jpg_quality']))
-    webp_quality = int(IMAGE_PIPELINE.get('webp_quality', DEFAULT_IMAGE_PIPELINE['webp_quality']))
-
-    for width in target_widths:
-        if width == intrinsic_width:
-            variant = canvas.copy()
-        else:
-            height = max(1, round(intrinsic_height * width / intrinsic_width))
-            variant = canvas.resize((width, height), Image.Resampling.LANCZOS)
-        jpg_path = work_output_dir / f'{render_name}-{width}.jpg'
-        webp_path = work_output_dir / f'{render_name}-{width}.webp'
-        variant.save(jpg_path, format='JPEG', quality=jpg_quality, optimize=True, progressive=True)
-        variant.save(webp_path, format='WEBP', quality=webp_quality, method=6)
-        generated_assets.add(relative_asset_path(jpg_path))
-        generated_assets.add(relative_asset_path(webp_path))
-
-    _record_missing_asset(work_entry, series_slug, render_name, detail or 'placeholder generated')
-    print(f"[STILLMRK build] Warning: missing source for {work_entry.get('id', 'unknown')} — using generated placeholder.", flush=True)
-
-    return {
-        'width': intrinsic_width,
-        'height': intrinsic_height,
-        'src': relative_asset_path(work_output_dir / f'{render_name}-{intrinsic_width}.jpg'),
-        'responsiveBase': relative_asset_path(responsive_base_path),
-        'sourceOriginal': '',
-        'renderName': render_name,
-        'seriesSlug': series_slug,
-        'missingSource': True,
-        'missingSourceDetail': detail or 'placeholder generated',
-    }
-
-
-
 def clamp_percentage(value: Any, fallback: int = 50) -> int:
     try:
         number = int(round(float(value)))
@@ -1057,12 +965,6 @@ def derivative_inventory_for_work(work: dict[str, Any]) -> list[dict[str, Any]]:
     return inventory
 
 
-
-def hash_access_code(value: Any) -> str:
-    text_value = str(value or '').strip()
-    return hashlib.sha256(text_value.encode('utf-8')).hexdigest() if text_value else ''
-
-
 def slugify_label(value: Any, fallback: str = 'item') -> str:
     text_value = re.sub(r'[^a-z0-9]+', '-', str(value or '').strip().lower()).strip('-')
     return text_value or fallback
@@ -1092,39 +994,6 @@ def build_release_settings(raw_release: dict[str, Any]) -> dict[str, Any]:
         'commitMessageTemplate': str(release.get('commit_message_template') or 'content: {collection} - {entry}').strip(),
         'changeNoteTemplate': str(release.get('change_note_template') or 'Edited {collection}/{entry}: summarize what changed and why.').strip(),
         'requiredChecks': [str(item).strip() for item in (release.get('required_checks') or []) if str(item).strip()],
-    }
-
-
-def existing_generated_image_meta(work_entry: dict[str, Any], image_config: dict[str, Any], generated_assets: set[str]) -> dict[str, Any] | None:
-    series_slug = str(image_config.get('series') or resolve_series_slug_for_work(work_entry) or 'unassigned').strip() or 'unassigned'
-    render_slug = str(image_config.get("render_name") or work_entry.get('render_name') or work_entry["id"]).strip().replace("\\", "/").strip("/")
-    render_name = render_slug.replace('/', '-') or work_entry['id']
-    work_output_dir = current_generated_root() / series_slug / render_name
-    responsive_base_path = work_output_dir / render_name
-    if not work_output_dir.exists():
-        return None
-
-    jpg_variants = sorted(work_output_dir.glob(f"{render_name}-*.jpg"), key=lambda path: int(path.stem.rsplit('-', 1)[-1]) if path.stem.rsplit('-', 1)[-1].isdigit() else -1)
-    webp_variants = sorted(work_output_dir.glob(f"{render_name}-*.webp"), key=lambda path: int(path.stem.rsplit('-', 1)[-1]) if path.stem.rsplit('-', 1)[-1].isdigit() else -1)
-    if not jpg_variants and not webp_variants:
-        return None
-
-    for path in jpg_variants + webp_variants:
-        generated_assets.add(relative_asset_path(path))
-
-    probe_path = jpg_variants[-1] if jpg_variants else webp_variants[-1]
-    with Image.open(probe_path) as probe:
-        intrinsic_width, intrinsic_height = probe.size
-
-    largest_jpg = jpg_variants[-1] if jpg_variants else probe_path
-    return {
-        "width": intrinsic_width,
-        "height": intrinsic_height,
-        "src": relative_asset_path(largest_jpg),
-        "responsiveBase": relative_asset_path(responsive_base_path),
-        "sourceOriginal": str(image_config.get('source') or image_config.get('original') or image_config.get('master') or ''),
-        "renderName": render_name,
-        "seriesSlug": series_slug,
     }
 
 
@@ -1459,6 +1328,7 @@ def normalize_content(raw: dict[str, Any]) -> dict[str, Any]:
             portfolio_works.append(work)
 
         visibility = str(series.get('visibility') or 'public').strip().lower()
+        RAW_SERIES_TEXT[str(series["slug"])] = {'description': str(series.get("description") or '')}
         series_list.append(
             {
                 "slug": series["slug"],
@@ -1677,11 +1547,6 @@ def iso_timestamp() -> str:
 
 def build_date_iso() -> str:
     return datetime.now(timezone.utc).date().isoformat()
-
-
-def admin_route(collection: str, entry_key: str | None = None) -> str:
-    base = f"#/collections/{collection}"
-    return f"{base}/entries/{entry_key}" if entry_key else base
 
 
 def _unique_strings(values: list[Any]) -> list[str]:
@@ -1935,9 +1800,10 @@ def write_dist_file(relative: str, text: str) -> None:
 
 
 def write_upload_manifest(store: dict[str, Any], report: dict[str, Any]) -> None:
-    data_target = DIST_DIR / 'assets/js/data.js'
-    if not data_target.exists() or data_target.stat().st_size <= 0:
-        raise RuntimeError('Build integrity failed: dist/assets/js/data.js is missing or empty.')
+    for required in ('index.html', 'assets/css/site.css', 'assets/js/site.js'):
+        target = DIST_DIR / required
+        if not target.exists() or target.stat().st_size <= 0:
+            raise RuntimeError(f'Build integrity failed: dist/{required} is missing or empty.')
     manifest = {
         'generatedAt': iso_timestamp(),
         'environment': report.get('environment') or store['site_data']['site']['environment'],
@@ -2129,24 +1995,12 @@ def prune_generated_responsive_assets(current_assets: set[str]) -> dict[str, Any
     return report
 
 
-def compareable_title(value: str) -> str:
-    return value.casefold()
-
-
 def series_path(slug: str) -> str:
     return f"/series/{quote(slug)}/"
 
 
 def work_path(work_id: str) -> str:
     return f"/works/{quote(work_id)}/"
-
-
-def portfolio_path(slug: str | None = None) -> str:
-    return f"/portfolio.html?series={quote(slug)}" if slug else "/portfolio.html"
-
-
-def collection_path(slug: str) -> str:
-    return f"{slug}.html"
 
 
 def available_widths(work: dict[str, Any]) -> list[int]:
@@ -2193,12 +2047,6 @@ def avif_source_set(work: dict[str, Any]) -> str:
     return ", ".join(f"{base}-{width}.avif {width}w" for width in available_widths(work) if width in widths)
 
 
-def aspect_ratio(work: dict[str, Any], context: str = "default") -> str:
-    ratios = work.get('displayRatios') if isinstance(work.get('displayRatios'), dict) else {}
-    fallback = f"{work['width']} / {work['height']}"
-    return normalize_ratio_value(ratios.get(context) or ratios.get('default'), fallback)
-
-
 def orientation(work: dict[str, Any]) -> str:
     ratio = work["width"] / work["height"]
     if ratio > 1.12:
@@ -2207,90 +2055,6 @@ def orientation(work: dict[str, Any]) -> str:
         return "portrait"
     return "square"
 
-
-def object_position(work: dict[str, Any]) -> str:
-    focal_point = work.get('focalPoint') or {'x': 50, 'y': 50}
-    x_value = clamp_percentage(focal_point.get('x'), 50)
-    y_value = clamp_percentage(focal_point.get('y'), 50)
-    return f"{x_value}% {y_value}%"
-
-
-def media_attrs(work: dict[str, Any], class_name: str, context: str = 'default') -> str:
-    return f'class="{class_name}" style="--media-ratio: {aspect_ratio(work, context)}; --media-position: {object_position(work)};" data-orientation="{orientation(work)}" data-protect-media="true"'
-
-
-def responsive_image_html(work: dict[str, Any], sizes: str, loading: str = "lazy", fetchpriority: str = "auto") -> str:
-    jpg_srcset = source_set(work, "jpg")
-    webp_srcset = source_set(work, "webp")
-    priority_attr = f' fetchpriority="{fetchpriority}"' if fetchpriority != "auto" else ""
-    has_image = bool(jpg_srcset and webp_srcset) or bool(str(work.get('src') or '').strip())
-
-    if not has_image:
-        return f"""
-            <div class=\"media-placeholder\" role=\"img\" aria-label=\"{esc(work.get('alt') or work.get('title') or 'Image pending')}\">
-              <span>Image pending</span>
-              <strong>{esc(work.get('title') or 'Untitled work')}</strong>
-              <small>{esc(work.get('alt') or 'No image assigned yet.')}</small>
-            </div>
-        """.strip()
-
-    if jpg_srcset and webp_srcset:
-        avif_srcset = avif_source_set(work)
-        avif_source = f'<source type="image/avif" srcset="{esc(avif_srcset)}" sizes="{esc(sizes)}">' if avif_srcset else ''
-        return f"""
-            <picture>
-              {avif_source}
-              <source type=\"image/webp\" srcset=\"{esc(webp_srcset)}\" sizes=\"{esc(sizes)}\">
-              <img
-                src=\"{esc(image_path(work, preferred_width(work), 'jpg'))}\"
-                srcset=\"{esc(jpg_srcset)}\"
-                sizes=\"{esc(sizes)}\"
-                width=\"{work['width']}\"
-                height=\"{work['height']}\"
-                alt=\"{esc(work['alt'])}\"
-                loading=\"{loading}\"
-                decoding=\"async\" draggable=\"false\"{priority_attr}>
-            </picture>
-        """.strip()
-
-    return f"""
-        <img
-          src=\"{esc(work.get('src') or '')}\"
-          width=\"{work['width']}\"
-          height=\"{work['height']}\"
-          alt=\"{esc(work['alt'])}\"
-          loading=\"{loading}\"
-          decoding=\"async\" draggable=\"false\"{priority_attr}>
-    """.strip()
-
-def render_media_caption(label: str = '', title: str = '', meta: str = '') -> str:
-    parts: list[str] = []
-    if str(label).strip():
-        parts.append(f'<span>{esc(label)}</span>')
-    if str(title).strip():
-        parts.append(f'<strong>{esc(title)}</strong>')
-    if str(meta).strip():
-        parts.append(f'<small>{esc(meta)}</small>')
-    return f'<figcaption class="media-caption">{"".join(parts)}</figcaption>' if parts else ''
-
-
-
-def work_caption_or_fallback(work: dict[str, Any], fallback: str = '') -> str:
-    caption = str(work.get('caption') or '').strip()
-    return caption or fallback
-
-
-def work_media_meta(work: dict[str, Any], series_lookup: dict[str, dict[str, Any]], include_series: bool = True) -> str:
-    fallback_parts: list[str] = []
-    if include_series:
-        series = series_lookup.get(work['series'])
-        fallback_parts.append(f"{series['title'] if series else 'Series'} series")
-    if str(work.get('location') or '').strip():
-        fallback_parts.append(str(work['location']))
-    if str(work.get('year') or '').strip():
-        fallback_parts.append(str(work['year']))
-    fallback = " / ".join([part for part in fallback_parts if str(part).strip()])
-    return work_caption_or_fallback(work, fallback)
 
 LAYOUT_TOKENS = {"auto", "quiet", "standard", "medium", "large", "wide", "full"}
 LAYOUT_ALIASES = {
@@ -2315,149 +2079,6 @@ def normalize_layout_token(value: Any, fallback: str = "auto") -> str:
     return token if token in LAYOUT_TOKENS else fallback
 
 
-def work_layout_token(work: dict[str, Any], context: str, fallback: str = "auto") -> str:
-    direct_key = "portfolioLayout" if context == "portfolio" else "seriesLayout"
-    token = normalize_layout_token(work.get(direct_key), "auto")
-    if token != "auto":
-        return token
-    layouts = work.get("displayLayouts") if isinstance(work.get("displayLayouts"), dict) else {}
-    token = normalize_layout_token(layouts.get(context), "auto")
-    return token if token != "auto" else fallback
-
-
-def portfolio_card_variant(index: int, total: int, work: dict[str, Any] | None = None) -> str:
-    if work:
-        override = work_layout_token(work, "portfolio", "auto")
-        if override != "auto":
-            return override
-
-    if index == 0:
-        return "lead"
-    if index == 1:
-        return "accent"
-    if total <= 2:
-        return "standard"
-
-    remaining = max(total - 2, 0)
-    relative_index = max(index - 2, 0)
-    full_rows, remainder = divmod(remaining, 3)
-    cutoff = full_rows * 3
-
-    if relative_index < cutoff:
-        return "standard"
-
-    if remainder == 1:
-        return "standard"
-    if remainder == 2:
-        return "twin"
-    return "standard"
-
-
-def portfolio_card_sizes(variant: str) -> str:
-    return {
-        "quiet": "(min-width: 1180px) 24vw, (min-width: 760px) 46vw, 100vw",
-        "standard": "(min-width: 1180px) 30vw, (min-width: 760px) 46vw, 100vw",
-        "medium": "(min-width: 1180px) 38vw, (min-width: 760px) 92vw, 100vw",
-        "large": "(min-width: 1180px) 46vw, (min-width: 760px) 92vw, 100vw",
-        "wide": "(min-width: 1180px) 62vw, (min-width: 760px) 92vw, 100vw",
-        "full": "(min-width: 1180px) 92vw, (min-width: 760px) 100vw, 100vw",
-        "lead": "(min-width: 1180px) 46vw, (min-width: 760px) 92vw, 100vw",
-        "accent": "(min-width: 1180px) 46vw, (min-width: 760px) 92vw, 100vw",
-        "twin": "(min-width: 1180px) 30vw, (min-width: 760px) 46vw, 100vw",
-    }.get(variant, "(min-width: 1180px) 30vw, (min-width: 760px) 46vw, 100vw")
-
-
-def portfolio_layout_class(variant: str) -> str:
-    canonical = {
-        "lead": "large",
-        "accent": "large",
-        "twin": "standard",
-    }.get(variant, variant)
-    canonical = normalize_layout_token(canonical, "standard")
-    return f" work-card--layout-{canonical}"
-
-
-def portfolio_card_summary(series: dict[str, Any] | None, work: dict[str, Any], variant: str) -> str:
-    caption = str(work.get('caption') or '').strip()
-    if caption:
-        return caption
-    series_title = series['title'] if series else 'Series'
-    if variant == 'lead':
-        return f"Featured work · {series_title} · {work['location']}"
-    if variant == 'accent':
-        return f"{series_title} · {work['location']} · {work['year']}"
-    return f"{series_title} · {work['location']}"
-
-def lightbox_meta(work: dict[str, Any], series_lookup: dict[str, dict[str, Any]]) -> str:
-    return work_media_meta(work, series_lookup, include_series=True)
-
-
-def lightbox_attrs(work: dict[str, Any], series_lookup: dict[str, dict[str, Any]], group: str, sizes: str) -> str:
-    return " ".join(
-        [
-            f'data-lightbox-group="{esc(group)}"',
-            f'data-lightbox-src="{esc(image_path(work, largest_available_width(work), "jpg"))}"',
-            f'data-lightbox-jpg-srcset="{esc(source_set(work, "jpg"))}"',
-            f'data-lightbox-webp-srcset="{esc(source_set(work, "webp"))}"',
-            f'data-lightbox-sizes="{esc(sizes)}"',
-            f'data-lightbox-alt="{esc(work["alt"])}"',
-            f'data-lightbox-title="{esc(work["title"])}"',
-            f'data-lightbox-meta="{esc(lightbox_meta(work, series_lookup))}"',
-            f'data-lightbox-caption="{esc(work.get("caption") or "")}"',
-            f'data-lightbox-width="{work["width"]}"',
-            f'data-lightbox-height="{work["height"]}"',
-            f'data-lightbox-href="{esc(work_path(work["id"]))}"',
-        ]
-    )
-
-
-def render_actions(actions: list[dict[str, str]]) -> str:
-    parts = []
-    for item in actions:
-        style = item.get("style", "primary")
-        class_name = "button"
-        if style == "secondary":
-            class_name = "button button--secondary"
-        elif style == "ghost":
-            class_name = "button button--ghost"
-        parts.append(f'<a class="{class_name}" href="{esc(item["href"])}">{esc(item["label"])}</a>')
-    return "\n".join(parts)
-
-
-
-
-def resolve_page_downloads(store: dict[str, Any], document_block: dict[str, Any] | None, *, limit: int | None = None) -> list[dict[str, Any]]:
-    block = dict(document_block or {})
-    public_downloads = list(store.get("public_downloads") or [])
-    downloads_by_id = dict(store.get("downloads_by_id") or {})
-    selected_ids = [str(item).strip() for item in (block.get("document_ids") or []) if str(item).strip()]
-    if selected_ids:
-        rows: list[dict[str, Any]] = []
-        for ident in selected_ids:
-            row = downloads_by_id.get(ident)
-            if isinstance(row, dict):
-                rows.append(dict(row))
-        downloads = rows or public_downloads
-    else:
-        downloads = public_downloads
-    if limit is not None:
-        return downloads[:limit]
-    return downloads
-
-
-def render_download_cards(downloads: list[dict[str, Any]], compact: bool = False) -> str:
-    cards: list[str] = []
-    for item in downloads:
-        if compact:
-            cards.append(
-                f'<a class="contact-downloads__item" href="{esc(item["file"])}" target="_blank" rel="noreferrer"><strong>{esc(item["title"])}</strong><span>{esc(item.get("description") or "")}</span></a>'
-            )
-        else:
-            cards.append(
-                f'''<article class="download-card panel reveal"><p class="eyebrow">{esc(item.get("kind") or "Document")}</p><h3>{esc(item["title"])}</h3><p>{esc(item.get("description") or "")}</p><a class="button button--secondary" href="{esc(item["file"])}" target="_blank" rel="noreferrer">Open document</a></article>'''
-            )
-    return ''.join(cards)
-
 def _visible_nav_items(raw: dict[str, Any]) -> list[dict[str, Any]]:
     items: list[dict[str, Any]] = []
     for entry in raw.get('navigation') or []:
@@ -2467,48 +2088,6 @@ def _visible_nav_items(raw: dict[str, Any]) -> list[dict[str, Any]]:
             continue
         items.append(entry)
     return items
-
-
-def render_nav(raw: dict[str, Any]) -> str:
-    nav_links = []
-    site_name = str(raw['site'].get('name') or 'STILLMRK').strip()
-    for item in _visible_nav_items(raw):
-        nav_links.append(f'<a href="{esc(item["href"])}" data-page="{esc(item["page"])}">{esc(item["label"])}</a>')
-
-    return f"""
-    <header class="site-header" data-site-header>
-      <div class="nav-shell">
-        <a class="brand" href="index.html" aria-label="Go to {esc(site_name)} homepage">
-          <span class="brand__eyebrow">{esc(site_name)}</span>
-          <span class="brand__name">{esc(str(raw['artist'].get('header_label') or raw['artist']['name']))}</span>
-        </a>
-
-        <button class="nav-toggle" type="button" aria-label="Open menu" aria-expanded="false" aria-controls="primary-nav" aria-haspopup="true">
-          <span></span>
-        </button>
-
-        <nav class="site-nav" id="primary-nav" aria-label="Primary navigation">
-          {'\n          '.join(nav_links)}
-        </nav>
-      </div>
-    </header>
-    """.strip()
-
-
-def render_footer_wordmark(site_name: str) -> str:
-    normalized = site_name.strip()
-    if normalized.upper() == 'STILLMRK':
-        return (
-            '<span class="footer-wordmark footer-wordmark--colophon" aria-label="Stillmark">'
-            '<span class="footer-wordmark__overline" aria-hidden="true">STILLMRK</span>'
-            '<span class="footer-wordmark__name" aria-hidden="true">'
-            '<span class="footer-wordmark__still">Still</span>'
-            '<span class="footer-wordmark__mark">mark</span>'
-            '</span>'
-            '<span class="footer-wordmark__trace" aria-hidden="true"><span></span></span>'
-            '</span>'
-        )
-    return esc(normalized)
 
 
 def _artist_social_links(artist: dict[str, Any]) -> list[dict[str, str]]:
@@ -2529,260 +2108,9 @@ def _artist_social_links(artist: dict[str, Any]) -> list[dict[str, str]]:
     return links
 
 
-def _footer_links(raw: dict[str, Any]) -> list[dict[str, str]]:
-    site = raw.get('site') if isinstance(raw.get('site'), dict) else {}
-    configured = site.get('footer_links') if isinstance(site.get('footer_links'), list) else []
-    links: list[dict[str, str]] = []
-    for entry in configured:
-        if not isinstance(entry, dict):
-            continue
-        if entry.get('visible', True) is False:
-            continue
-        href = str(entry.get('href') or '').strip()
-        label = str(entry.get('label') or '').strip()
-        if href and label:
-            links.append({'label': label, 'href': href})
-    if links:
-        return links
-    return [
-        {'label': 'Portfolio', 'href': 'portfolio.html'},
-        {'label': 'Series', 'href': 'series.html'},
-        {'label': 'About', 'href': 'about.html'},
-        {'label': 'Contact', 'href': 'contact.html'},
-    ]
-
-
-def render_footer(raw: dict[str, Any]) -> str:
-    artist = raw["artist"]
-    site = raw.get('site') if isinstance(raw.get('site'), dict) else {}
-    site_name = str(site.get('name') or 'STILLMRK').strip()
-    identity = build_public_identity(raw)
-    email = str(identity.get('email') or '').strip()
-    footer_text = str(site.get('footer_text') or artist.get('tagline') or '').strip()
-    footer_microcopy = str(site.get('footer_microcopy') or '').strip()
-    footer_contact_text = str(site.get('footer_contact_text') or '').strip()
-    copyright_text = str(site.get('copyright_text') or '© <span data-year></span>').strip()
-    footer_contact = (
-        f'<a href="mailto:{esc(email)}" data-artist-email>{esc(email)}</a>'
-        if has_public_contact_email(email)
-        else '<a data-artist-email>Available on request</a>'
-    )
-    footer_wordmark = render_footer_wordmark(site_name)
-    footer_links_html = ''.join(f'<a href="{esc(item["href"])}">{esc(item["label"])}</a>' for item in _footer_links(raw))
-    social_links_html = ''.join(f'<a href="{esc(item["href"])}" target="_blank" rel="noreferrer">{esc(item["label"])}</a>' for item in _artist_social_links(artist))
-    contact_label_html = f'<p>{esc(footer_contact_text)}</p>' if footer_contact_text else ''
-    microcopy_html = f'<p>{esc(footer_microcopy)}</p>' if footer_microcopy else ''
-    return f"""
-    <footer class="site-footer">
-      <div class="footer-shell">
-        <div class="footer-copy">
-          <strong>{footer_wordmark}</strong>
-          {f'<p>{esc(footer_text)}</p>' if footer_text else ''}
-          {microcopy_html}
-          {contact_label_html}
-          {footer_contact}
-        </div>
-        <div class="footer-links">
-          {footer_links_html}
-          {social_links_html}
-          {'<button type="button" class="footer-consent-link" data-consent-settings>Cookie settings</button>' if analytics_id() else ''}
-          <span>{copyright_text}</span>
-        </div>
-      </div>
-    </footer>
-    """.strip()
-
-
-def render_protocol_notice() -> str:
-    return """
-      <div class="container">
-        <div class="protocol-warning" data-protocol-warning role="status" hidden>
-          <strong>Local preview note</strong>
-          Open this folder through the local preview server such as <code>python preview_server.py</code>. JavaScript modules will not fully render through <code>file:///</code>.
-        </div>
-      </div>
-    """.strip()
-
-
-def render_lightbox() -> str:
-    return """
-    <dialog class="lightbox" data-lightbox role="dialog" aria-hidden="true" aria-modal="true" aria-labelledby="lightbox-title" aria-describedby="lightbox-meta lightbox-hint">
-      <div class="lightbox__topbar">
-        <div class="lightbox__support">
-          <p class="lightbox__counter" id="lightbox-counter" data-lightbox-counter aria-live="polite">01 / 01</p>
-          <p class="lightbox__hint" id="lightbox-hint">Use the arrow keys or swipe to move through the sequence. Press Escape to close.</p>
-        </div>
-        <button class="lightbox__close" type="button" data-lightbox-close aria-label="Close image viewer">Close</button>
-      </div>
-      <div class="lightbox__stage">
-        <button class="lightbox__nav" type="button" data-lightbox-prev aria-label="Previous photograph">‹</button>
-        <figure class="lightbox__figure" data-lightbox-figure tabindex="-1">
-          <div class="lightbox__media" style="--media-ratio: 1 / 1;">
-            <picture>
-              <source data-lightbox-source type="image/webp">
-              <img data-lightbox-image src="" alt="" width="1600" height="1600" loading="eager" decoding="async">
-            </picture>
-          </div>
-          <figcaption class="lightbox__caption" id="lightbox-caption" data-lightbox-caption>
-            <strong id="lightbox-title" data-lightbox-title></strong>
-            <a class="lightbox__permalink" data-lightbox-permalink href="#" hidden>Open this photograph's page</a>
-            <span id="lightbox-meta" data-lightbox-meta></span>
-          </figcaption>
-        </figure>
-        <button class="lightbox__nav" type="button" data-lightbox-next aria-label="Next photograph">›</button>
-      </div>
-    </dialog>
-    """.strip()
-
-def render_404(store: dict[str, Any]) -> str:
-    raw = store["raw"]
-    meta = {
-        'title': 'Page not found | STILLMRK',
-        'description': 'The requested STILLMRK page could not be found. Return to the portfolio, series index, or contact page.',
-        'og_description': 'The requested STILLMRK page could not be found. Return to the portfolio, series index, or contact page.',
-        'og_image': str(raw.get('site', {}).get('og_image') or 'assets/images/social/quiet-lens-og-home.jpg'),
-        'og_image_alt': 'STILLMRK social preview card.',
-        'canonical_path': '404.html',
-    }
-    return f"""<!DOCTYPE html>
-<html lang="en">
-{page_head('404', meta)}
-  <body data-page="404">
-    {google_analytics_body()}
-    <a class="skip-link" href="#main-content">Skip to content</a>
-    {render_nav(raw)}
-    <main id="main-content">
-      {render_protocol_notice()}
-      <section class="page-hero page-hero--centered not-found-hero">
-        <div class="container-narrow reveal">
-          <p class="eyebrow">404 / Not found</p>
-          <h1 class="display-title">This frame is no longer here.</h1>
-          <p class="page-hero__lead">The address may have changed, or the work may have moved into another sequence.</p>
-          <div class="hero__actions">
-            <a class="button" href="portfolio.html">Return to portfolio</a>
-            <a class="button button--secondary" href="series.html">Explore series</a>
-          </div>
-        </div>
-      </section>
-    </main>
-    {render_footer(raw)}
-    <script type="module" src="assets/js/app.js"></script>
-  </body>
-</html>
-"""
-
-
 def analytics_id() -> str:
     value = str((SITE_CONTENT.get('site') or {}).get('analytics_id') or '').strip()
     return value if re.fullmatch(r'G-[A-Z0-9]+', value, re.IGNORECASE) else ''
-
-
-def google_analytics_head() -> str:
-    """Consent-first analytics.
-
-    Nothing from Google loads until the visitor accepts in the consent banner
-    (assets/js/consent.js). This is what UK PECR / UK GDPR and the EU ePrivacy
-    rules require for analytics cookies. Without an analytics_id nothing is
-    emitted at all.
-    """
-    ga_id = analytics_id()
-    if not ga_id:
-        return ""
-    return f'''<meta name="stillmark-analytics" content="{esc(ga_id)}">
-    <script src="assets/js/consent.js" defer></script>'''
-
-
-def google_analytics_body() -> str:
-    return ""
-
-
-def critical_head_css() -> str:
-    # Tiny, stable above-the-fold guardrail. Keep this intentionally small; the
-    # full visual system remains in assets/css/styles.css.
-    return """
-    <style data-critical-css>
-      :root{color-scheme:dark;--bg:#0b0b0b;--text:#f2efe8;--accent:#d8c5a2;--font-sans:Inter,"SF Pro Text","Segoe UI",Roboto,Helvetica,Arial,sans-serif;--font-display:"Cormorant Garamond",Georgia,serif;--container:min(1360px,calc(100% - max(2rem,min(5vw,4rem))));--header-height:5.6rem}
-      *,*::before,*::after{box-sizing:border-box}html{background:var(--bg)}body{margin:0;min-height:100vh;background:#0b0b0b;color:var(--text);font-family:var(--font-sans);line-height:1.6;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}img,picture{display:block;max-width:100%}img{height:auto}.container{width:var(--container);margin-inline:auto}.site-header{position:sticky;top:0;z-index:1000}.hero,.page-hero{padding-top:clamp(2.2rem,6vw,5rem)}.display-title,.section-title{font-family:var(--font-display);font-weight:500;line-height:1}.js.motion-ready .reveal:not(.is-visible){opacity:0}.js.motion-ready .hero .reveal,.js.motion-ready .page-hero .reveal,.js.motion-ready .about-hero.reveal,.js.motion-ready .series-masthead.reveal{opacity:1!important;transform:none!important}.js.motion-ready.reveal-fallback .reveal,.js.reveal-fallback .reveal{opacity:1!important;transform:none!important;transition:none!important}@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto!important}.js .reveal{opacity:1!important;transform:none!important}}
-    </style>
-    """.strip()
-
-
-def page_head(page_key: str, meta: dict[str, str], *, preload_work: dict[str, Any] | None = None, preload_sizes: str | None = None, schema: dict[str, Any] | None = None) -> str:
-    preload = ""
-    if preload_work:
-        webp_srcset = source_set(preload_work, "webp")
-        jpg_srcset = source_set(preload_work, "jpg")
-        resolved_preload_sizes = preload_sizes or "(min-width: 1100px) 42vw, (min-width: 760px) 52vw, calc(100vw - 2rem)"
-        # Do not emit empty preload tags for metadata-only placeholders. Empty
-        # image preloads waste a request slot and can hurt the LCP path the
-        # preload is supposed to protect.
-        if webp_srcset:
-            webp_1200 = image_path(preload_work, preferred_width(preload_work), "webp")
-            preload = f'''\n    <link rel="preload" as="image" type="image/webp" href="{esc(webp_1200)}" imagesrcset="{esc(webp_srcset)}" imagesizes="{esc(resolved_preload_sizes)}" fetchpriority="high">'''
-        elif jpg_srcset:
-            jpg_1200 = image_path(preload_work, preferred_width(preload_work), "jpg")
-            preload = f'''\n    <link rel="preload" as="image" type="image/jpeg" href="{esc(jpg_1200)}" imagesrcset="{esc(jpg_srcset)}" imagesizes="{esc(resolved_preload_sizes)}" fetchpriority="high">'''
-        elif str(preload_work.get('src') or '').strip():
-            preload = f'''\n    <link rel="preload" as="image" href="{esc(str(preload_work.get('src') or '').strip())}" fetchpriority="high">'''
-
-
-    site_settings = build_site_settings(SITE_CONTENT['site'])
-    site_name = str(SITE_CONTENT['site'].get('name') or 'STILLMRK').strip()
-    canonical_override = str(meta.get('canonical_path') or '').strip()
-    if canonical_override.startswith('http://') or canonical_override.startswith('https://'):
-        canonical_url = canonical_override
-    elif canonical_override:
-        canonical_url = absolute_url(canonical_override, site_settings['metadataBaseUrl'])
-    else:
-        canonical_url = build_page_url(page_key, SITE_CONTENT['site'])
-    social_image_path = str(meta.get('og_image') or SITE_CONTENT['site']['og_image']).strip()
-    social_image = absolute_url(social_image_path, site_settings['metadataBaseUrl'])
-    social_alt = str(meta.get('og_image_alt') or 'STILLMRK monochrome photography portfolio preview image').strip()
-    twitter_alt = str(meta.get('twitter_image_alt') or social_alt).strip()
-    return f"""
-  <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <script>document.documentElement.classList.add('js'); if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {{ document.documentElement.classList.add('motion-ready'); window.STILLMRK_REVEAL_FALLBACK = window.setTimeout(function () {{ document.documentElement.classList.add('reveal-fallback'); }}, 2400); }} {series_redirect_script() if page_key == 'series' else ''}</script>
-    <title>{esc(meta['title'])}</title>
-    <meta name="description" content="{esc(meta['description'])}">
-    <meta name="author" content="Pooria Moozarm Nia, Pooria Mn, پوریا موزرم نیا">
-    <meta name="creator" content="Pooria Moozarm Nia">
-    <meta name="publisher" content="{esc(site_name)}">
-    <meta name="robots" content="{esc(site_settings['robots'])}">
-    <meta name="theme-color" content="#0b0b0b">
-    <meta name="color-scheme" content="dark">
-    <meta property="og:site_name" content="{esc(site_name)}">
-    <meta property="og:title" content="{esc(meta['title'])}">
-    <meta property="og:description" content="{esc(meta['og_description'])}">
-    <meta property="og:type" content="website">
-    <meta property="og:image" content="{esc(social_image)}">
-    <meta property="og:image:type" content="image/jpeg">
-    <meta property="og:image:width" content="1200">
-    <meta property="og:image:height" content="630">
-    <meta property="og:image:alt" content="{esc(social_alt)}">
-    <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="{esc(meta['title'])}">
-    <meta name="twitter:description" content="{esc(meta['og_description'])}">
-    <meta name="twitter:image" content="{esc(social_image)}">
-    <meta name="twitter:image:alt" content="{esc(twitter_alt)}">
-    <meta property="og:url" content="{esc(canonical_url)}">
-    <link rel="canonical" href="{esc(canonical_url)}">{preload}
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&display=swap" rel="stylesheet">
-    <link rel="icon" href="assets/icons/favicon.svg" type="image/svg+xml">
-    <link rel="icon" href="assets/icons/favicon-32x32.png" sizes="32x32" type="image/png">
-    <link rel="icon" href="assets/icons/favicon.ico" sizes="any">
-    <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png" sizes="180x180">
-    <link rel="manifest" href="site.webmanifest">
-    {critical_head_css()}
-    <link rel="stylesheet" href="assets/css/styles.css">
-    {google_analytics_head()}
-    <script type="application/ld+json" data-base-schema>{json_ld(base_schema())}</script>
-    <script type="application/ld+json" data-page-schema>{json_ld(schema or page_schema(page_key, meta, canonical_url, social_image))}</script>
-  </head>
-    """.rstrip()
 
 
 def split_home_hero_lead(lead: Any) -> tuple[str, str | None]:
@@ -2804,300 +2132,6 @@ def split_home_hero_lead(lead: Any) -> tuple[str, str | None]:
     return text, None
 
 
-def render_home(store: dict[str, Any]) -> str:
-    raw = store["raw"]
-    page = raw["pages"]["home"]
-    hero = page["hero"]
-    home_feature = store["works_by_id"][hero["feature_work_id"]]
-    section_order = [str(item).strip() for item in (page.get('section_order') or ['featured_series', 'selected_works', 'modules']) if str(item).strip()]
-
-    metrics_html = []
-    auto_values = {
-        "auto:works": str(len(store["site_data"]["works"])).zfill(2),
-        "auto:series": str(len(store["site_data"]["series"])).zfill(2),
-    }
-    for item in page["metrics"]:
-        value = auto_values.get(item["value"], item["value"])
-        metrics_html.append(
-            f'''<article class="metric-card reveal"><strong>{esc(value)}</strong><span>{esc(item['label'])}</span></article>'''
-        )
-
-    featured_series_cards = []
-    for index, slug in enumerate(page["featured_series"]["series_slugs"]):
-        series = store["series_lookup"].get(slug)
-        if not series:
-            continue
-        cover = store["works_by_id"].get(series.get("coverWorkId"))
-        if not cover:
-            continue
-        count = len(series["_work_ids"])
-        featured_series_cards.append(
-            f"""
-            <article class="series-card panel reveal">
-              <a {media_attrs(cover, 'series-card__media', context='cover')} href="{series_path(series['slug'])}" aria-label="Open the {esc(series['title'])} series">
-                {responsive_image_html(cover, '(min-width: 1100px) 28vw, (min-width: 760px) 48vw, 100vw', loading='lazy' if index else 'eager', fetchpriority='high' if index == 0 else 'auto')}
-              </a>
-              <div class="series-card__body">
-                <div class="series-card__meta">
-                  <span>{esc(series['years'])}</span>
-                  <span>{str(count).zfill(2)} works</span>
-                </div>
-                <h3>{esc(series['title'])}</h3>
-                <p>{series.get('descriptionHtml') or esc(series['description'])}</p>
-                <div class="series-card__footer">
-                  <span>{esc(series['mood'])}</span>
-                  <a href="{series_path(series['slug'])}">View series</a>
-                </div>
-              </div>
-            </article>
-            """.strip()
-        )
-
-    selected_cards = []
-    for index, work_id in enumerate(page["selected_works"]["work_ids"]):
-        work = store["works_by_id"].get(work_id)
-        if not work:
-            continue
-        series = store["series_lookup"].get(work["series"])
-        card_class = "editorial-card"
-        image_sizes = '(min-width: 1100px) 28vw, (min-width: 760px) 48vw, 100vw'
-        selected_cards.append(
-            f"""
-            <article class="{card_class} panel reveal">
-              <a
-                {media_attrs(work, 'editorial-card__media', context='cover')} href="{series_path(work['series'])}" aria-label="Open the {esc(work['title'])} image in the {esc(series['title'] if series else 'series')} sequence">
-                {responsive_image_html(work, image_sizes, loading='eager' if index < 2 else 'lazy', fetchpriority='high' if index < 2 else 'auto')}
-              </a>
-              <div class="editorial-card__body">
-                <div class="editorial-card__meta">
-                  <span>{esc(series['title'] if series else 'Series')}</span>
-                  <span>{esc(work['year'])}</span>
-                </div>
-                <h3>{esc(work['title'])}</h3>
-                <p>{esc(work_caption_or_fallback(work, work['location']))}</p>
-                <a href="{series_path(work['series'])}">Open series</a>
-              </div>
-            </article>
-            """.strip()
-        )
-
-    module_cards = []
-    for module in page["modules"]:
-        if module.get('visible', True) is False:
-            continue
-        module_type = module["type"]
-        if module_type == "text":
-            actions = render_actions(module.get("actions", []))
-            module_cards.append(
-                f"""
-                <article class="feature-module panel reveal">
-                  <p class="eyebrow">{esc(module['eyebrow'])}</p>
-                  <h2 class="section-title">{esc(module['title'])}</h2>
-                  <p class="section-intro">{esc(module['text'])}</p>
-                  <div class="hero__actions">{actions}</div>
-                </article>
-                """.strip()
-            )
-        elif module_type == "series_index":
-            items = []
-            for series in store["public_series_list"]:
-                items.append(
-                    f'<li><a href="{series_path(series["slug"])}"><span>{esc(series["title"])}</span><small>{str(len(series["_work_ids"])).zfill(2)}</small></a></li>'
-                )
-            module_cards.append(
-                f"""
-                <aside class="feature-module panel panel--soft reveal">
-                  <p class="eyebrow">{esc(module['eyebrow'])}</p>
-                  <h2 class="feature-module__title">{esc(module['title'])}</h2>
-                  <p class="section-intro">{esc(module['text'])}</p>
-                  <ul class="series-index">{' '.join(items)}</ul>
-                </aside>
-                """.strip()
-            )
-        elif module_type == "work_spotlight":
-            work = store["works_by_id"].get(module["work_id"])
-            if not work:
-                continue
-            action = render_actions([module["action"]]) if module.get("action") else ""
-            module_cards.append(
-                f"""
-                <article class="feature-module feature-module--spotlight panel reveal">
-                  <div
-                    {media_attrs(work, 'feature-module__visual')}>
-                    {responsive_image_html(work, '(min-width: 1100px) 26vw, (min-width: 760px) 40vw, 100vw', loading='lazy')}
-                  </div>
-                  <div class="feature-module__body">
-                    <p class="eyebrow">{esc(module['eyebrow'])}</p>
-                    <h2 class="feature-module__title">{esc(module['title'])}</h2>
-                    <p class="section-intro">{esc(module['text'])}</p>
-                    <div class="hero__actions">{action}</div>
-                  </div>
-                </article>
-                """.strip()
-            )
-
-    featured_series_visible = page.get('featured_series', {}).get('visible', True) is not False
-    selected_works_visible = page.get('selected_works', {}).get('visible', True) is not False
-    modules_visible = bool(module_cards)
-    section_markup: dict[str, str] = {}
-    if featured_series_visible:
-        section_markup['featured_series'] = f"""
-      <section class="section" data-deferred>
-        <div class="container">
-          <div class="section-head reveal">
-            <div>
-              <p class="eyebrow">{esc(page['featured_series']['eyebrow'])}</p>
-              <h2 class="section-title">{esc(page['featured_series']['title'])}</h2>
-            </div>
-            <p class="section-intro">{esc(page['featured_series']['intro'])}</p>
-          </div>
-          <div class="series-card-grid">{' '.join(featured_series_cards)}</div>
-        </div>
-      </section>
-        """.rstrip()
-    if selected_works_visible:
-        section_markup['selected_works'] = f"""
-      <section class="section section--compact" data-deferred="home-selected-works">
-        <div class="container editorial-shell">
-          <div class="section-head reveal">
-            <div>
-              <p class="eyebrow">{esc(page['selected_works']['eyebrow'])}</p>
-              <h2 class="section-title">{esc(page['selected_works']['title'])}</h2>
-            </div>
-            <p class="section-intro">{esc(page['selected_works']['intro'])}</p>
-          </div>
-          <div class="editorial-grid">{' '.join(selected_cards)}</div>
-        </div>
-      </section>
-        """.rstrip()
-    if modules_visible:
-        section_markup['modules'] = f"""
-      <section class="section" data-deferred="home-modules">
-        <div class="container feature-module-grid">{' '.join(module_cards)}</div>
-      </section>
-        """.rstrip()
-    ordered_sections: list[str] = []
-    for section_key in section_order + [key for key in section_markup.keys() if key not in section_order]:
-        markup = section_markup.get(section_key)
-        if markup and markup not in ordered_sections:
-            ordered_sections.append(markup)
-
-    hero_lead_primary, hero_lead_secondary = split_home_hero_lead(hero.get('lead'))
-    hero_lead_markup = f'<div class="hero__lead-group"><p class="hero__lead hero__lead--primary">{esc(hero_lead_primary)}</p>'
-    if hero_lead_secondary:
-        hero_lead_markup += f'<p class="hero__lead">{esc(hero_lead_secondary)}</p>'
-    hero_lead_markup += '</div>'
-
-    return f"""<!DOCTYPE html>
-<html lang="en">
-{page_head('home', page['meta'], preload_work=home_feature)}
-  <body data-page="home">
-    {google_analytics_body()}
-    <a class="skip-link" href="#main-content">Skip to content</a>
-    {render_nav(raw)}
-    <main id="main-content">
-      {render_protocol_notice()}
-      <section class="hero hero--home">
-        <div class="container hero__layout">
-          <div class="hero__copy reveal">
-            <p class="eyebrow">{esc(hero['eyebrow'])}</p>
-            <h1 class="display-title">{esc(hero['title'])}</h1>
-            {hero_lead_markup}
-            <div class="hero__actions">
-              {render_actions([hero['primary_action'], hero['secondary_action']])}
-            </div>
-            <ul class="hero__notes" aria-label="Portfolio characteristics">
-              {''.join(f'<li>{esc(note)}</li>' for note in hero['notes'])}
-            </ul>
-          </div>
-          <figure class="hero-figure reveal">
-            <div class="hero__visual" style="--media-ratio: {aspect_ratio(home_feature, 'hero')};" data-protect-media="true">
-              {responsive_image_html(home_feature, '(min-width: 1100px) 42vw, (min-width: 760px) 52vw, calc(100vw - 2rem)', loading='eager', fetchpriority='high')}
-            </div>
-            {render_media_caption(hero['feature_label'], home_feature['title'], work_media_meta(home_feature, store['series_lookup']))}
-          </figure>
-        </div>
-      </section>
-      {'\n      '.join(ordered_sections)}
-    </main>
-    {render_footer(raw)}
-    {render_lightbox()}
-    <script type="module" src="assets/js/app.js"></script>
-  </body>
-</html>
-"""
-
-
-def render_portfolio_filter_row(store: dict[str, Any], active_series: str = 'all') -> str:
-    filters = [
-        {'value': 'all', 'label': 'All works', 'count': len(store['public_portfolio_works'])},
-        *[
-            {
-                'value': series['slug'],
-                'label': series['title'],
-                'count': len(series['_work_ids']),
-            }
-            for series in store['public_series_list']
-        ],
-    ]
-
-    parts = []
-    for item in filters:
-        href = portfolio_path(item['value'] if item['value'] != 'all' else None)
-        state_class = ' is-active' if active_series == item['value'] else ''
-        parts.append(
-            f'<a class="filter-chip{state_class}" href="{esc(href)}" data-filter="{esc(item['value'])}"><span>{esc(item['label'])}</span><small>{str(item['count']).zfill(2)}</small></a>'
-        )
-    return ''.join(parts)
-
-
-def render_portfolio_grid(store: dict[str, Any], works: list[dict[str, Any]]) -> str:
-    cards: list[str] = []
-    total = len(works)
-    for index, work in enumerate(works):
-        series = store['series_lookup'].get(work['series'])
-        variant = portfolio_card_variant(index, total, work)
-        layout_class = portfolio_layout_class(variant)
-        image_sizes = portfolio_card_sizes(variant)
-        priority_attr = '' if index < 2 or variant == 'lead' else ' data-priority-candidate="portfolio"'
-        cards.append(
-            f'''<article class="work-card panel reveal work-card--{orientation(work)} work-card--{variant}{layout_class}" data-layout="{esc(variant)}">
-              <figure
-                {media_attrs(work, 'work-card__media', context='portfolio')}{priority_attr}>
-                {responsive_image_html(work, image_sizes, loading='eager' if index < 2 or variant == 'lead' else 'lazy', fetchpriority='high' if index < 2 or variant == 'lead' else 'auto')}
-              </figure>
-              <div class="work-card__body">
-                <div class="work-card__meta">
-                  <span>{esc(series['title'] if series else 'Series')}</span>
-                  <span>{esc(work['location'])}</span>
-                </div>
-                <h2 class="work-card__title">{esc(work['title'])}</h2>
-                {f'<p>{caption_html(work)}</p>' if (work.get('caption') or '').strip() else ''}
-                <div class="work-card__footer">
-                  <span>{esc(work['year'])}</span>
-                  <a href="{series_path(work['series'])}">Open series</a>
-                </div>
-              </div>
-            </article>'''
-        )
-    return ' '.join(cards)
-
-def render_series_index_markup(store: dict[str, Any], active_slug: str) -> str:
-    items = []
-    for item in store['public_series_list']:
-        active_class = ' class="is-active"' if item['slug'] == active_slug else ''
-        type_badge = '<em class="series-index__badge">Stage Work</em>' if story_type_label(item) == 'Stage Work' else ''
-        items.append(
-            f'<li><a{active_class} href="{series_path(item["slug"])}"><span class="series-index__label"><span>{esc(item["title"])} </span>{type_badge}</span><small>{str(len(item["_work_ids"])).zfill(2)}</small></a></li>'
-        )
-    return ''.join(items)
-
-
-def story_type_label(series: dict[str, Any] | None) -> str:
-    kind = str((series or {}).get('projectType') or (series or {}).get('project_type') or '').strip().lower()
-    return 'Stage Work' if kind == 'performance' else 'Series'
-
-
 def summarize_story_text(text: str, *, fallback: str = '', limit: int = 190) -> str:
     cleaned = ' '.join(str(text or '').split())
     if not cleaned:
@@ -3106,1064 +2140,6 @@ def summarize_story_text(text: str, *, fallback: str = '', limit: int = 190) -> 
         return cleaned
     clipped = cleaned[:limit].rsplit(' ', 1)[0].rstrip(' ,;:.')
     return f"{clipped}…" if clipped else cleaned[:limit]
-
-
-def series_sequence_role(series: dict[str, Any], index: int, total: int) -> str:
-    if total <= 1:
-        return 'Single-image story'
-    kind = str(series.get('projectType') or series.get('project_type') or '').strip().lower()
-    if index == 0:
-        return 'Opening image'
-    if index == total - 1:
-        return 'Closing image'
-    if kind == 'performance':
-        if index == total // 2:
-            return 'Turning point'
-        return 'Building pressure' if index < total // 2 else 'Aftermath'
-    if index == total // 2:
-        return 'Pivot image'
-    return 'Middle movement' if index < total // 2 else 'Later movement'
-
-
-def render_series_story_map_markup(series: dict[str, Any], works: list[dict[str, Any]]) -> str:
-    if not series or not works:
-        return ''
-    first_work = works[0]
-    last_work = works[-1]
-    kind_label = story_type_label(series)
-    summary = summarize_story_text(series.get('cardSummary') or series.get('description') or series.get('mood') or '', fallback='This story is meant to be read through sequence rather than as a loose grid of images.', limit=220)
-    sequence_note = str(series.get('storySequenceText') or '').strip() or (
-        'This stage work keeps the pressure of the play intact: an opening threshold, a middle of accumulating tension, and a final image that decides what remains.'
-        if kind_label == 'Stage Work'
-        else 'This series is paced as a visual essay: the first image opens the threshold, the middle images deepen the pressure, and the ending image leaves the final residue.'
-    )
-    opening_text = str(series.get('storyOpeningText') or '').strip() or summarize_story_text(first_work.get('caption') or first_work.get('alt') or first_work.get('location') or '', fallback=first_work.get('year') or '', limit=140)
-    closing_text = str(series.get('storyClosingText') or '').strip() or summarize_story_text(last_work.get('caption') or last_work.get('alt') or last_work.get('location') or '', fallback=last_work.get('year') or '', limit=140)
-    return f'''<section class="series-story-map panel panel--soft reveal" data-series-story-map>
-      <div class="series-story-map__head">
-        <div>
-          <p class="eyebrow">How to read this story</p>
-          <h2 class="section-title">{esc(kind_label)} in sequence</h2>
-        </div>
-        <p class="section-intro">{esc(summary)}</p>
-      </div>
-      <div class="series-story-map__grid">
-        <article class="story-note">
-          <p class="eyebrow">Opening</p>
-          <h3>{esc(first_work.get('title') or 'Opening image')}</h3>
-          <p>{esc(opening_text or 'The first image opens the threshold of the story.')}</p>
-        </article>
-        <article class="story-note story-note--center">
-          <p class="eyebrow">Sequence logic</p>
-          <h3>{str(len(works)).zfill(2)} images · {esc(kind_label)}</h3>
-          <p>{esc(sequence_note)}</p>
-        </article>
-        <article class="story-note">
-          <p class="eyebrow">Ending</p>
-          <h3>{esc(last_work.get('title') or 'Closing image')}</h3>
-          <p>{esc(closing_text or 'The final image keeps the last emotional residue of the story.')}</p>
-        </article>
-      </div>
-    </section>'''
-
-
-def series_frame_layout_token(series: dict[str, Any], work: dict[str, Any], index: int, total: int) -> str:
-    override = work_layout_token(work, "series", "auto")
-    if override != "auto":
-        return override
-    if index == 0 or index == total - 1 or index % 5 == 0:
-        return "large"
-    if index == total // 2 or orientation(work) == "landscape":
-        return "medium"
-    return "standard"
-
-
-def series_card_sizes(layout: str) -> str:
-    return {
-        "quiet": "(min-width: 1100px) 24vw, (min-width: 760px) 42vw, 100vw",
-        "standard": "(min-width: 1100px) 29vw, (min-width: 760px) 48vw, 100vw",
-        "medium": "(min-width: 1100px) 38vw, (min-width: 760px) 58vw, 100vw",
-        "large": "(min-width: 1100px) 52vw, (min-width: 760px) 62vw, 100vw",
-        "wide": "(min-width: 1100px) 64vw, (min-width: 760px) 82vw, 100vw",
-        "full": "(min-width: 1100px) 78vw, (min-width: 760px) 92vw, 100vw",
-    }.get(layout, "(min-width: 1100px) 29vw, (min-width: 760px) 48vw, 100vw")
-
-
-def render_series_gallery_markup(store: dict[str, Any], series: dict[str, Any], works: list[dict[str, Any]]) -> str:
-    frames: list[str] = []
-    total = len(works)
-    for index, work in enumerate(works):
-        role_label = series_sequence_role(series, index, total)
-        layout_token = series_frame_layout_token(series, work, index, total)
-        large = layout_token in {'large', 'wide', 'full'}
-        role_class = (
-            ' series-frame--opening' if index == 0 else ' series-frame--closing' if index == total - 1 else ' series-frame--turning' if index == total // 2 else ''
-        )
-        large_class = ' series-frame--featured' if large else ''
-        layout_class = f' series-frame--layout-{layout_token}'
-        image_sizes = series_card_sizes(layout_token)
-        frame_text = str(work.get('caption') or work.get('alt') or work.get('year') or '').strip()
-        frames.append(
-            f'''<article class="series-frame panel reveal series-frame--{orientation(work)}{large_class}{role_class}{layout_class}" data-layout="{esc(layout_token)}" data-sequence-role="{esc(role_label.lower())}">
-              <figure
-                {media_attrs(work, 'series-frame__media', context='series')}{'' if index < 2 else ' data-priority-candidate="series"'}>
-                {responsive_image_html(work, image_sizes, loading='eager' if index < 2 else 'lazy', fetchpriority='high' if index < 2 else 'auto')}
-              </figure>
-              <div class="series-frame__body">
-                <p class="series-frame__eyebrow">{esc(role_label)}</p>
-                <div class="series-frame__meta">
-                  <span>{str(index + 1).zfill(2)}</span>
-                  <span>{esc(work['location'])}</span>
-                  <span>{esc(story_type_label(series))}</span>
-                </div>
-                <h2>{esc(work['title'])}</h2>
-                {f'<p>{esc(frame_text)}</p>' if frame_text else ''}
-              </div>
-            </article>'''
-        )
-    return ' '.join(frames)
-
-def render_related_series_markup(store: dict[str, Any], active_slug: str) -> str:
-    cards: list[str] = []
-    active_series = store['series_lookup'].get(active_slug) or {}
-    preferred_slugs = [str(item).strip() for item in (active_series.get('relatedSeriesSlugs') or []) if str(item).strip()]
-    if preferred_slugs:
-        candidates = [store['public_series_lookup'][slug] for slug in preferred_slugs if slug in store['public_series_lookup'] and slug != active_slug]
-    else:
-        candidates = [series for series in store['public_series_list'] if series['slug'] != active_slug][:3]
-    for item in candidates[:3]:
-        work = store['works_by_id'].get(item.get('cardCoverWorkId') or item['coverWorkId'])
-        if not work:
-            continue
-        cards.append(
-            f'''<article class="series-card panel reveal">
-              <a {media_attrs(work, 'series-card__media', context='cover')} href="{series_path(item['slug'])}">
-                {responsive_image_html(work, '(min-width: 1100px) 28vw, (min-width: 760px) 48vw, 100vw', loading='lazy')}
-              </a>
-              <div class="series-card__body">
-                <div class="series-card__meta">
-                  <span>{esc(story_type_label(item))}</span>
-                  <span>{str(len(item['_work_ids'])).zfill(2)} works</span>
-                </div>
-                <h3>{esc(item['title'])}</h3>
-                <p>{esc(summarize_story_text(item.get('cardSummary') or item.get('description') or item.get('mood') or '', fallback=item.get('mood') or '', limit=150))}</p>
-                <div class="series-card__footer">
-                  <span>{esc(item['years'])}</span>
-                  <a href="{series_path(item['slug'])}">Open story</a>
-                </div>
-              </div>
-            </article>'''
-        )
-    return ' '.join(cards)
-
-
-def render_series_pagination_markup(store: dict[str, Any], active_slug: str) -> str:
-    ordered = store['public_series_list']
-    if not ordered or len(ordered) < 2:
-        return ''
-    index = next((idx for idx, item in enumerate(ordered) if item['slug'] == active_slug), 0)
-    previous_series = ordered[index - 1] if index > 0 else None
-    next_series = ordered[index + 1] if index < len(ordered) - 1 else None
-    links: list[str] = []
-    if previous_series:
-        links.append(
-            f'''<a class="pagination-link panel panel--soft" href="{series_path(previous_series['slug'])}">
-        <span>Previous series</span>
-        <strong>{esc(previous_series['title'])}</strong>
-      </a>'''
-        )
-    if next_series:
-        links.append(
-            f'''<a class="pagination-link pagination-link--next panel panel--soft" href="{series_path(next_series['slug'])}">
-        <span>Next series</span>
-        <strong>{esc(next_series['title'])}</strong>
-      </a>'''
-        )
-    return ''.join(links)
-
-
-
-def render_portfolio(store: dict[str, Any]) -> str:
-    raw = store["raw"]
-    page = raw["pages"]["portfolio"]
-    portfolio_works = store['public_portfolio_works']
-    hero_config = page.get('hero', {}) if isinstance(page.get('hero'), dict) else {}
-    hero_work = store['works_by_id'].get(hero_config.get('feature_work_id')) if hero_config.get('feature_work_id') else None
-    preload_target = hero_work if hero_work else (portfolio_works[0] if portfolio_works else None)
-    initial_summary = f"{len(portfolio_works)} works · All series · Curated order"
-    portfolio_actions = render_actions(page.get('hero', {}).get('actions') or [
-        {'label': 'Browse the grid', 'href': '#portfolio-grid', 'style': 'primary'},
-        {'label': 'Explore series', 'href': 'series.html', 'style': 'secondary'},
-    ])
-    portfolio_notes = page.get('hero', {}).get('notes') or [
-        f"{str(len(portfolio_works)).zfill(2)} works on view",
-        f"{str(len(store['public_series_list'])).zfill(2)} series on view",
-        'Search, filter, and compare the sequence',
-    ]
-    grid_section = page.get('grid_section') if isinstance(page.get('grid_section'), dict) else {}
-    portfolio_tools = f'''<div class="portfolio-tools portfolio-tools--footer panel reveal"><div class="portfolio-tools__row"><label class="field field--search"><span>Search</span><input data-portfolio-search type="search" placeholder="Search title, location, or series"><button class="field__clear" data-portfolio-clear type="button" hidden aria-label="Clear search">×</button></label><label class="field"><span>Sort</span><select data-portfolio-sort><option value="curated">Curated order</option><option value="title">Title</option><option value="series">Series</option><option value="location">Location</option></select></label></div><div class="filter-row" data-filter-row>{render_portfolio_filter_row(store)}</div><div class="portfolio-tools__meta"><p class="toolbar-note" data-work-count>{esc(initial_summary)}</p><button class="button button--secondary" type="button" data-portfolio-reset hidden>Reset</button></div></div>'''
-    return f"""<!DOCTYPE html>
-<html lang="en">
-{page_head('portfolio', page['meta'], preload_work=preload_target, preload_sizes=portfolio_card_sizes('lead'))}
-  <body data-page="portfolio">
-    {google_analytics_body()}
-    <a class="skip-link" href="#main-content">Skip to content</a>
-    {render_nav(raw)}
-    <main id="main-content">
-      {render_protocol_notice()}
-      <section class="hero hero--portfolio">
-        <div class="container hero__layout">
-          <div class="hero__copy reveal">
-            <p class="eyebrow">{esc(page['hero']['eyebrow'])}</p>
-            <h1 class="display-title">{esc(page['hero']['title'])}</h1>
-            <p class="hero__lead">{esc(page['hero']['lead'])}</p>
-            <div class="hero__actions">{portfolio_actions}</div>
-            <ul class="hero__notes" aria-label="Portfolio tools summary">{''.join(f'<li>{esc(note)}</li>' for note in portfolio_notes)}</ul>
-          </div>
-          {f'''<figure class="hero-figure reveal"><div class="hero__visual" style="--media-ratio: {aspect_ratio(hero_work, 'hero')};" data-protect-media="true">{responsive_image_html(hero_work, '(min-width: 1100px) 42vw, (min-width: 760px) 52vw, calc(100vw - 2rem)', loading='eager', fetchpriority='high')}</div>{render_media_caption('Lead image', hero_work['title'], work_media_meta(hero_work, store['series_lookup']))}</figure>''' if hero_work else ''}
-        </div>
-      </section>
-      <section class="section section--compact" id="portfolio-grid" data-deferred="portfolio-grid">
-        <div class="container portfolio-shell">
-          <div class="section-head reveal section-head--portfolio">
-            <div class="section-head__copy">
-              <p class="eyebrow">{esc(str(grid_section.get('eyebrow') or 'Portfolio navigation'))}</p>
-              <h2 class="section-title">{esc(str(grid_section.get('title') or 'Search, sort, and compare the portfolio.'))}</h2>
-              <p class="section-intro">{esc(str(grid_section.get('intro') or 'Search across titles, places, and series, then move into individual sequences when a slower reading becomes necessary. The tools sit below the grid so the image field stays uninterrupted.'))}</p>
-            </div>
-          </div>
-          <div class="work-grid work-grid--portfolio" data-work-grid>{render_portfolio_grid(store, portfolio_works)}</div>
-        </div>
-      </section>
-      <section class="section section--compact section--bordered" data-deferred="portfolio-tools-bottom">
-        <div class="container">{portfolio_tools}</div>
-      </section>
-    </main>
-    {render_footer(raw)}
-    {render_lightbox()}
-    <script type="module" src="assets/js/app.js"></script>
-  </body>
-</html>
-"""
-def render_series(store: dict[str, Any], slug: str | None = None) -> str:
-    raw = store["raw"]
-    page = raw["pages"]["series"]
-    related_series = page.get('related_series') if isinstance(page.get('related_series'), dict) else {}
-    inquiry = page.get('inquiry') if isinstance(page.get('inquiry'), dict) else {}
-    public_series = store['public_series_list']
-    default_series = public_series[0] if public_series else None
-    if slug:
-        default_series = next((item for item in public_series if item['slug'] == slug), None)
-    works = [store['works_by_id'][work_id] for work_id in (default_series['_work_ids'] if default_series else []) if work_id in store['works_by_id']]
-    cover = None
-    if default_series and (default_series.get('cardCoverWorkId') or default_series.get('coverWorkId')) in store['works_by_id']:
-        cover = store['works_by_id'][default_series.get('cardCoverWorkId') or default_series['coverWorkId']]
-    elif works:
-        cover = works[0]
-    page_hero_id = '' if slug else str(((page.get('hero') or {}).get('feature_work_id') if isinstance(page.get('hero'), dict) else '') or '').strip()
-    public_work_ids = {item['id'] for item in store['site_data']['works']}
-    hero_work = store['works_by_id'].get(page_hero_id) if page_hero_id in public_work_ids else None
-    if hero_work is None and default_series and (default_series.get('heroWorkId') or default_series.get('coverWorkId')) in store['works_by_id']:
-        hero_work = store['works_by_id'][default_series.get('heroWorkId') or default_series.get('coverWorkId')]
-    if hero_work is None:
-        hero_work = cover
-    hero_caption = work_media_meta(hero_work, store['series_lookup'], include_series=False) if hero_work else ''
-    page_eyebrow = str(page.get('hero_eyebrow') or '').strip()
-    page_lead = str(page.get('hero_lead') or '').strip()
-    eyebrow_html = ((esc(page_eyebrow) + ' / ') if page_eyebrow else '') + f'<span data-series-title>{esc(default_series["title"])}</span>' if default_series else '<span data-series-title></span>'
-    return f"""<!DOCTYPE html>
-<html lang="en">
-{page_head('series', series_page_meta(store, page['meta'], default_series, works) if slug else page['meta'], preload_work=cover if cover else None, schema=series_schema(store, default_series, works) if slug else None)}
-  <body data-page="series"{f' data-series-slug="{esc(slug)}"' if slug else ''}>
-    {google_analytics_body()}
-    <a class="skip-link" href="#main-content">Skip to content</a>
-    {render_nav(raw)}
-    <main id="main-content">
-      {render_protocol_notice()}
-      {'<section class="section"><div class="container"><article class="panel reveal"><p class="eyebrow">Series</p><h1 class="display-title">No series on view are currently available</h1><p class="page-hero__lead">Private or draft series stay out of the generated public build until they are made public.</p></article></div></section>' if not default_series else ''}
-      <section class="page-hero page-hero--series"{' hidden' if not default_series else ''}>
-        <div class="container series-masthead">
-          <div class="series-masthead__copy reveal">
-            <p class="eyebrow" data-series-eyebrow-prefix="{esc(page_eyebrow)}">{eyebrow_html}</p>
-            <h1 class="display-title" data-series-heading>{esc(default_series['title'] or page.get('hero_title', 'Where Presence Meets Distance'))}</h1>
-            <p class="page-hero__lead" data-series-description data-series-lead-prefix="{esc(page_lead)}">{default_series.get('descriptionHtml') or esc(page_lead)}</p>
-            <div class="series-masthead__facts">
-              <span data-series-years>{esc(default_series['years'])}</span>
-              <span data-series-count>{str(len(works))} works</span>
-              <span data-series-mood>{esc(default_series['mood'])}</span>
-            </div>
-            <div class="hero__actions">
-              <a class="button" data-series-portfolio-link href="{portfolio_path(default_series['slug'])}">View {esc(default_series['title'])} in the portfolio grid</a>
-              <a class="button button--secondary" href="{esc(str(inquiry.get('href') or 'contact.html'))}">{esc(str(inquiry.get('label') or 'Inquire'))}</a>
-            </div>
-          </div>
-          <figure class="series-masthead__figure reveal" data-series-hero data-series-default-hero-id="{esc(page_hero_id)}">
-            <div class="series-masthead__visual" style="--media-ratio: {aspect_ratio(hero_work, 'hero')};">
-              {responsive_image_html(hero_work, '(min-width: 1100px) 42vw, (min-width: 760px) 52vw, 100vw', loading='eager', fetchpriority='high')}
-            </div>
-            {render_media_caption('Lead image', hero_work['title'], hero_caption)}
-          </figure>
-        </div>
-      </section>
-      <section class="section" data-deferred="series-main">
-        <div class="container series-layout">
-          <aside class="series-sidebar panel panel--soft reveal">
-            <p class="eyebrow">Story index</p>
-            <p class="series-sidebar__intro">Move through the stories one sequence at a time. Stage Works remain visible here because they belong to the same photographic world, even when their source is theatrical.</p>
-            <ul class="series-index" data-series-index>{render_series_index_markup(store, default_series['slug'])}</ul>
-          </aside>
-          <div class="series-main">
-            {render_series_story_map_markup(default_series, works)}
-            <div class="series-gallery" data-series-gallery>{render_series_gallery_markup(store, default_series, works)}</div>
-            <div class="section-head section-head--tight reveal related-head">
-              <div>
-                <p class="eyebrow">{esc(str(related_series.get('eyebrow') or 'Related series'))}</p>
-                <h2 class="section-title">{esc(str(related_series.get('title') or 'Other sequences in the archive.'))}</h2>
-              </div>
-            </div>
-            <div class="series-card-grid" data-related-series>{render_related_series_markup(store, default_series['slug'])}</div>
-            <div class="series-pagination" data-series-pagination>{render_series_pagination_markup(store, default_series['slug'])}</div>
-          </div>
-        </div>
-      </section>
-    </main>
-    {render_footer(raw)}
-    {render_lightbox()}
-    <script type="module" src="assets/js/app.js"></script>
-  </body>
-</html>
-"""
-
-def render_performance_project_cards(store: dict[str, Any], collection: dict[str, Any]) -> str:
-    cards: list[str] = []
-    for index, slug in enumerate(collection.get('seriesSlugs') or []):
-        item = store['public_series_lookup'].get(slug)
-        if not item:
-            continue
-        work = store['works_by_id'].get(item.get('cardCoverWorkId') or item.get('coverWorkId'))
-        if not work:
-            continue
-        project_works = [store['works_by_id'][work_id] for work_id in item.get('_work_ids', []) if work_id in store['works_by_id']]
-        opening_title = project_works[0]['title'] if project_works else work['title']
-        closing_title = project_works[-1]['title'] if project_works else work['title']
-        excerpt = summarize_story_text(item.get('cardSummary') or item.get('description') or item.get('mood') or '', fallback=item.get('mood') or '', limit=180)
-        storyline = f'Opens with “{opening_title}” and closes with “{closing_title}”.' if project_works else 'Read as a complete sequenced story.'
-        featured_class = ' series-card--story-featured' if index == 0 else ''
-        cards.append(
-            f'''<article class="series-card panel reveal series-card--performance{featured_class}">
-              <a {media_attrs(work, 'series-card__media', context='cover')} href="{series_path(item['slug'])}" aria-label="Open the {esc(item['title'])} stage work">
-                {responsive_image_html(work, '(min-width: 1100px) 28vw, (min-width: 760px) 48vw, 100vw', loading='lazy' if index else 'eager', fetchpriority='high' if index == 0 else 'auto')}
-              </a>
-              <div class="series-card__body">
-                <div class="series-card__meta">
-                  <span>Stage Work</span>
-                  <span>{str(len(item['_work_ids'])).zfill(2)} works</span>
-                </div>
-                <h3>{esc(item['title'])}</h3>
-                <p class="series-card__storyline">{esc(storyline)}</p>
-                <p>{esc(excerpt)}</p>
-                <div class="series-card__footer">
-                  <span>{esc(item['years'])}</span>
-                  <a href="{series_path(item['slug'])}">Read the sequence</a>
-                </div>
-              </div>
-            </article>'''
-        )
-    if cards:
-        return ''.join(cards)
-    return '''<article class="empty-state panel reveal performance-empty">
-      <p class="eyebrow">Stage Works</p>
-      <h2>No public stage works yet.</h2>
-      <p>The structure is ready. Create a stage-work series with <code>project_type: performance</code>, attach works to it, preserve the sequence order, and make the series public when it should appear here.</p>
-      <a class="button button--secondary" href="series.html">View current series</a>
-    </article>'''
-
-
-def render_performance_structure_cards(page: dict[str, Any]) -> str:
-    structure = page.get('structure') if isinstance(page.get('structure'), dict) else {}
-    cards = structure.get('cards') if isinstance(structure.get('cards'), list) else []
-    rendered: list[str] = []
-    for item in cards:
-        if not isinstance(item, dict):
-            continue
-        rendered.append(
-            f'''<article class="info-card panel reveal">
-              <p class="eyebrow">{esc(str(item.get('eyebrow') or 'Structure'))}</p>
-              <h2>{esc(str(item.get('title') or ''))}</h2>
-              <p>{esc(str(item.get('text') or ''))}</p>
-            </article>'''
-        )
-    return ''.join(rendered)
-
-
-def render_performance_guide_cards(page: dict[str, Any]) -> str:
-    guide = page.get('content_builder_guide') if isinstance(page.get('content_builder_guide'), dict) else {}
-    if guide.get('visible', False) is False:
-        return ''
-    cards = guide.get('items') if isinstance(guide.get('items'), list) else []
-    rendered: list[str] = []
-    for item in cards:
-        if not isinstance(item, dict):
-            continue
-        rendered.append(
-            f'''<article class="info-card panel reveal">
-              <p class="eyebrow">{esc(str(item.get('eyebrow') or 'Stage Work guide'))}</p>
-              <h2>{esc(str(item.get('title') or ''))}</h2>
-              <p>{esc(str(item.get('text') or ''))}</p>
-            </article>'''
-        )
-    return ''.join(rendered)
-
-
-def render_performance(store: dict[str, Any]) -> str:
-    raw = store["raw"]
-    page = raw["pages"].get("performance", {})
-    collection = store.get('collection_lookup', {}).get('performance') or {
-        'slug': 'performance',
-        'title': 'Stage Works',
-        'eyebrow': 'Story route',
-        'lead': '',
-        'description': '',
-        'seriesSlugs': [item['slug'] for item in store.get('public_series_list', []) if str(item.get('projectType') or '').strip() == 'performance'],
-        'seriesCount': 0,
-        'workCount': 0,
-        'coverWorkId': '',
-    }
-    hero = page.get('hero') if isinstance(page.get('hero'), dict) else {}
-    public_work_ids = {item['id'] for item in store['site_data']['works']}
-    hero_work_id = str(hero.get('feature_work_id') or collection.get('coverWorkId') or '').strip()
-    hero_work = store['works_by_id'].get(hero_work_id) if hero_work_id in public_work_ids else None
-    if hero_work is None:
-        for slug in collection.get('seriesSlugs') or []:
-            series_item = store['public_series_lookup'].get(slug)
-            candidate = store['works_by_id'].get(series_item.get('coverWorkId')) if series_item else None
-            if candidate and candidate['id'] in public_work_ids:
-                hero_work = candidate
-                break
-    if hero_work is None and store['public_portfolio_works']:
-        hero_work = store['public_portfolio_works'][0]
-
-    projects = page.get('projects') if isinstance(page.get('projects'), dict) else {}
-    guide = page.get('content_builder_guide') if isinstance(page.get('content_builder_guide'), dict) else {}
-    structure = page.get('structure') if isinstance(page.get('structure'), dict) else {}
-    cta = page.get('cta') if isinstance(page.get('cta'), dict) else {}
-    guide_cards = render_performance_guide_cards(page)
-    notes = list(hero.get('notes') or [])
-    if collection.get('seriesCount') or collection.get('workCount'):
-        notes = [f"{str(collection.get('seriesCount') or 0).zfill(2)} stage works", f"{str(collection.get('workCount') or 0).zfill(2)} works", *notes]
-
-    return f"""<!DOCTYPE html>
-<html lang="en">
-{page_head('performance', page['meta'], preload_work=hero_work if hero_work else None)}
-  <body data-page="performance">
-    {google_analytics_body()}
-    <a class="skip-link" href="#main-content">Skip to content</a>
-    {render_nav(raw)}
-    <main id="main-content">
-      {render_protocol_notice()}
-      <section class="hero hero--home hero--performance">
-        <div class="container hero__layout">
-          <div class="hero__copy reveal">
-            <p class="eyebrow">{esc(str(hero.get('eyebrow') or collection.get('title') or 'Stage Works'))}</p>
-            <h1 class="display-title">{esc(str(hero.get('title') or collection.get('title') or 'Stage Works'))}</h1>
-            <p class="hero__lead">{esc(str(hero.get('lead') or collection.get('lead') or collection.get('description') or ''))}</p>
-            {'<div class="hero__actions">' + render_actions(hero.get('actions') or []) + '</div>' if isinstance(hero.get('actions'), list) and hero.get('actions') else ''}
-            {'<ul class="hero__notes" aria-label="Performance structure summary">' + ''.join(f'<li>{esc(note)}</li>' for note in notes) + '</ul>' if notes else ''}
-          </div>
-          {f'''<figure class="hero-figure reveal">
-            <div {media_attrs(hero_work, 'hero__visual', context='hero')}>
-              {responsive_image_html(hero_work, '(min-width: 1100px) 42vw, (min-width: 760px) 52vw, calc(100vw - 2rem)', loading='eager', fetchpriority='high')}
-            </div>
-            {render_media_caption('Lead image', hero_work['title'], work_media_meta(hero_work, store['series_lookup']))}
-          </figure>''' if hero_work else ''}
-        </div>
-      </section>
-      <section class="section section--compact" id="performance-projects" data-deferred="performance-projects">
-        <div class="container">
-          <div class="section-head reveal section-head--tight">
-            <div>
-              <p class="eyebrow">{esc(str(projects.get('eyebrow') or 'Stage Works'))}</p>
-              <h2 class="section-title">{esc(str(projects.get('title') or 'Stage Works.'))}</h2>
-              <p class="section-intro">{esc(str(projects.get('intro') or collection.get('description') or ''))}</p>
-            </div>
-          </div>
-          <div class="series-card-grid series-card-grid--performance" data-scroll-dots="false">{render_performance_project_cards(store, collection)}</div>
-        </div>
-      </section>
-      {f'''<section class="section section--compact section--bordered" data-deferred="performance-guide">
-        <div class="container">
-          <div class="section-head reveal">
-            <div>
-              <p class="eyebrow">{esc(str(guide.get('eyebrow') or 'Guide scaffolds'))}</p>
-              <h2 class="section-title">{esc(str(guide.get('title') or 'Draft Stage Works'))}</h2>
-            </div>
-            <p class="section-intro">{esc(str(guide.get('intro') or 'Private guide cards for shaping theatre and performance stories before they become public.'))}</p>
-          </div>
-          <div class="card-grid performance-structure-grid">{guide_cards}</div>
-        </div>
-      </section>''' if guide_cards else ''}
-      <section class="section section--compact section--bordered" data-deferred="performance-structure">
-        <div class="container">
-          <div class="section-head reveal section-head--tight">
-            <div>
-              <p class="eyebrow">{esc(str(structure.get('eyebrow') or 'Structure'))}</p>
-              <h2 class="section-title">{esc(str(structure.get('title') or 'A story route with project-level sequencing.'))}</h2>
-              <p class="section-intro">{esc(str(structure.get('intro') or ''))}</p>
-            </div>
-          </div>
-          <div class="card-grid performance-structure-grid">{render_performance_structure_cards(page)}</div>
-        </div>
-      </section>
-      <section class="section section--bordered" data-deferred="performance-cta">
-        <div class="container-narrow panel reveal cta-band">
-          <p class="eyebrow">{esc(str(cta.get('eyebrow') or 'Inquiry'))}</p>
-          <h2 class="section-title">{esc(str(cta.get('title') or 'Stage Works inquiries.'))}</h2>
-          <p class="section-intro">{esc(str(cta.get('text') or ''))}</p>
-          <div class="hero__actions">{render_actions(cta.get('actions') or [{'label': 'Start an inquiry', 'href': 'contact.html', 'style': 'primary'}])}</div>
-        </div>
-      </section>
-    </main>
-    {render_footer(raw)}
-    {render_lightbox()}
-    <script type="module" src="assets/js/app.js"></script>
-  </body>
-</html>
-"""
-
-
-def render_about(store: dict[str, Any]) -> str:
-    raw = store["raw"]
-    page = raw["pages"]["about"]
-    hero_work = store["works_by_id"][page["hero"]["feature_work_id"]]
-    document_block = page.get('document_block') if isinstance(page.get('document_block'), dict) else {}
-
-    cards = []
-    for card in page["practice_cards"]:
-        if isinstance(card, dict) and card.get('visible', True) is False:
-            continue
-        cards.append(
-            f"""
-            <article class="info-card panel reveal">
-              <p class="eyebrow">{esc(card['eyebrow'])}</p>
-              <h2>{esc(card['title'])}</h2>
-              <p>{esc(card['text'])}</p>
-            </article>
-            """.strip()
-        )
-
-    return f"""<!DOCTYPE html>
-<html lang="en">
-{page_head('about', page['meta'])}
-  <body data-page="about">
-    {google_analytics_body()}
-    <a class="skip-link" href="#main-content">Skip to content</a>
-    {render_nav(raw)}
-    <main id="main-content">
-      {render_protocol_notice()}
-      <section class="page-hero">
-        <div class="container about-hero">
-          <div class="about-hero__copy reveal">
-            <p class="eyebrow">{esc(page['hero']['eyebrow'])}</p>
-            <h1 class="display-title">{esc(page['hero']['title'])}</h1>
-            <p class="page-hero__lead">{esc(page['hero']['lead'])}</p>
-            {'<div class="hero__actions">' + render_actions(page['hero']['actions']) + '</div>' if isinstance(page['hero'].get('actions'), list) and page['hero'].get('actions') else ''}
-            {'<ul class="hero__notes" aria-label="About page highlights">' + ''.join(f'<li>{esc(note)}</li>' for note in page['hero']['notes']) + '</ul>' if isinstance(page['hero'].get('notes'), list) and page['hero'].get('notes') else ''}
-          </div>
-          <figure class="about-hero__figure reveal">
-            <div class="about-hero__visual" style="--media-ratio: {aspect_ratio(hero_work, 'hero')};" data-protect-media="true">
-              {responsive_image_html(hero_work, '(min-width: 1100px) 42vw, (min-width: 760px) 52vw, calc(100vw - 2rem)', loading='eager', fetchpriority='high')}
-            </div>
-            {render_media_caption('Lead image', hero_work['title'], work_media_meta(hero_work, store['series_lookup']))}
-          </figure>
-        </div>
-      </section>
-      <section class="section section--compact" data-deferred="about-statement">
-        <div class="container statement-grid">
-          <article class="statement-card panel reveal">
-            <p class="eyebrow">{esc(page['statement']['eyebrow'])}</p>
-            <h2 class="section-title">{esc(page['statement']['title'])}</h2>
-            <p class="section-intro">{esc(page['statement']['text'])}</p>
-          </article>
-          <aside class="statement-card panel panel--soft reveal">
-            <p class="eyebrow">Availability</p>
-            <p>{esc(raw['artist']['status'])}</p>
-            <p><strong>Base:</strong> {esc(build_public_identity(raw)['location'])}</p>
-            <p><strong>Practice:</strong> {esc(raw['artist']['discipline'])}</p>
-          </aside>
-        </div>
-      </section>
-      <section class="section" data-deferred="about-cards">
-        <div class="container card-grid">{' '.join(cards)}</div>
-      </section>
-      <section class="section section--compact" data-deferred="about-downloads" id="about-documents">
-        <div class="container">
-          <div class="section-head reveal section-head--tight">
-            <div>
-              <p class="eyebrow">{esc(str(document_block.get('eyebrow') or 'Documents'))}</p>
-              <h2 class="section-title">{esc(str(document_block.get('title') or 'Press, exhibition, and profile PDFs.'))}</h2>
-              <p class="section-intro">{esc(str(document_block.get('intro') or 'These downloadable files are part of the public build so editors, curators, and collaborators can review the supporting material without leaving the site blind.'))}</p>
-            </div>
-          </div>
-          <div class="download-grid" data-downloads-static>{render_download_cards(resolve_page_downloads(store, document_block))}</div>
-        </div>
-      </section>
-      <section class="section section--bordered" data-deferred="about-cta">
-        <div class="container-narrow panel reveal cta-band">
-          <p class="eyebrow">{esc(page['cta']['eyebrow'])}</p>
-          <h2 class="section-title">{esc(page['cta']['title'])}</h2>
-          <p class="section-intro">{esc(str(page['cta'].get('text') or '').strip() or 'For editions, licensing, exhibitions, or collaborations, move from the archive into a direct message built around specific works or series.')}</p>
-          <div class="hero__actions">{render_actions(page['cta']['actions'])}</div>
-        </div>
-      </section>
-    </main>
-    {render_footer(raw)}
-    {render_lightbox()}
-    <script type="module" src="assets/js/app.js"></script>
-  </body>
-</html>
-"""
-
-
-def render_contact(store: dict[str, Any]) -> str:
-    raw = store["raw"]
-    page = raw["pages"]["contact"]
-    document_block = page.get('document_block') if isinstance(page.get('document_block'), dict) else {}
-    hero_config = page.get('hero', {}) if isinstance(page.get('hero'), dict) else {}
-    hero_work = store['works_by_id'].get(hero_config.get('feature_work_id')) if hero_config.get('feature_work_id') else None
-    options = "".join(f'<option>{esc(option)}</option>' for option in page['inquiry_types'])
-    form_endpoint = str(page.get('form_endpoint') or '').strip()
-    identity = build_public_identity(raw)
-    email_address = str(identity.get('email') or '').strip()
-    direct_email_block = ''
-    if has_public_contact_email(email_address):
-        direct_email_block = f'''
-            <div class="contact-escape panel panel--soft">
-              <p class="eyebrow">Direct email</p>
-              <strong class="contact-escape__address">{esc(email_address)}</strong>
-              <p class="muted-copy">If your mail client is blocked or the form cannot complete, use the email address directly.</p>
-              <div class="contact-escape__actions">
-                <a class="button button--secondary" href="mailto:{esc(email_address)}" data-contact-direct-email>Open email app</a>
-                <button class="button button--ghost" type="button" data-copy-artist-email>Copy email address</button>
-              </div>
-            </div>'''
-    return f"""<!DOCTYPE html>
-<html lang="en">
-{page_head('contact', page['meta'])}
-  <body data-page="contact">
-    {google_analytics_body()}
-    <a class="skip-link" href="#main-content">Skip to content</a>
-    {render_nav(raw)}
-    <main id="main-content">
-      {render_protocol_notice()}
-      <section class="page-hero">
-        <div class="container page-hero__layout">
-          <div class="page-hero__copy reveal">
-            <p class="eyebrow">{esc(page['hero']['eyebrow'])}</p>
-            <h1 class="display-title">{esc(page['hero']['title'])}</h1>
-            <p class="page-hero__lead">{esc(page['hero']['lead'])}</p>
-            {'<div class="hero__actions">' + render_actions(page['hero']['actions']) + '</div>' if isinstance(page['hero'].get('actions'), list) and page['hero'].get('actions') else ''}
-            {'<ul class="hero__notes" aria-label="Contact page highlights">' + ''.join(f'<li>{esc(note)}</li>' for note in page['hero']['notes']) + '</ul>' if isinstance(page['hero'].get('notes'), list) and page['hero'].get('notes') else ''}
-          </div>
-          {f'''<figure class="page-hero__figure reveal">
-            <div class="page-hero__visual" style="--media-ratio: {aspect_ratio(hero_work, 'hero')};" data-protect-media="true">
-              {responsive_image_html(hero_work, '(min-width: 1100px) 42vw, (min-width: 760px) 52vw, calc(100vw - 2rem)', loading='eager', fetchpriority='high')}
-            </div>
-            {render_media_caption('Lead image', hero_work['title'], work_media_meta(hero_work, store['series_lookup']))}
-          </figure>''' if hero_work else ''}
-        </div>
-      </section>
-      <section class="section section--compact" data-deferred="contact-main">
-        <div class="container contact-grid">
-          <article class="contact-card panel reveal">
-            <p class="eyebrow">Details</p>
-            <h2 class="section-title">{esc(page['details_title'])}</h2>
-            <dl class="contact-list">
-              <div>
-                <dt>Email</dt>
-                <dd>{f'<a href="mailto:{esc(identity['email'])}" data-artist-email>{esc(identity['email'])}</a>' if has_public_contact_email(identity.get('email')) else '<span data-artist-email-placeholder>Available on request</span>'}</dd>
-              </div>
-              <div>
-                <dt>Location</dt>
-                <dd>{esc(identity['location'])}</dd>
-              </div>
-              <div>
-                <dt>Instagram</dt>
-                <dd>{f'<a href="{esc(str(raw['artist'].get('instagram') or "").strip())}" data-artist-instagram target="_blank" rel="noreferrer">Instagram</a>' if has_public_profile_url(raw['artist'].get('instagram')) else '<span data-artist-instagram-placeholder>Not published on staging</span>'}</dd>
-              </div>
-              <div>
-                <dt>Availability</dt>
-                <dd>{esc(raw['artist']['status'])}</dd>
-              </div>
-            </dl>
-          </article>
-          <div class="contact-main-stack">
-            <aside class="contact-downloads panel reveal" data-downloads-static="true" id="contact-documents">
-              <p class="eyebrow">{esc(str(document_block.get('eyebrow') or 'Documents'))}</p>
-              <h2 class="section-title">{esc(str(document_block.get('title') or 'Useful PDFs before you write.'))}</h2>
-              <p class="section-intro">{esc(str(document_block.get('intro') or 'Press materials, exhibition details, and a short practice overview are gathered here so the essentials are easy to open before writing.'))}</p>
-              <div class="contact-downloads__list">{render_download_cards(resolve_page_downloads(store, document_block, limit=3), compact=True)}</div>
-            </aside>
-            <form class="form-shell panel reveal" id="contact-form" data-contact-form data-contact-endpoint="{esc(form_endpoint)}" method="post" novalidate>
-            <p class="eyebrow">Inquiry draft</p>
-            <h2 class="section-title">Build a precise message.</h2>
-            <p class="section-intro">{esc(str(page.get('form_intro') or '').strip() or 'Use the draft for precise requests. Editions, licensing context, exhibition timing, and collaboration scope are easiest to answer when the message is structured from the start.')}</p>
-            <div class="field-grid">
-              <label class="field">
-                <span>Name</span>
-                <input name="name" type="text" autocomplete="name" required>
-              </label>
-              <label class="field">
-                <span>Email</span>
-                <input name="email" type="email" inputmode="email" autocomplete="email" required>
-              </label>
-            </div>
-            <div class="field-grid">
-              <label class="field">
-                <span>Inquiry type</span>
-                <select name="inquiryType">{options}</select>
-              </label>
-              <label class="field">
-                <span>Timeline</span>
-                <input name="timeline" type="text" placeholder="Optional">
-              </label>
-            </div>
-            <label class="field">
-              <span>Message</span>
-              <textarea name="message" rows="7" required></textarea>
-            </label>
-            {direct_email_block}
-            <div class="form-actions">
-              <button class="button" type="submit">{esc(page['form_button_label'])}</button>
-              <p class="form-note" data-form-status aria-live="polite">{esc(page['form_note'])}</p>
-            </div>
-          </form>
-        </div>
-      </section>
-    </main>
-    <div class="mobile-contact-bar" data-mobile-contact-bar><a class="button" href="#contact-form">Send a message ↓</a></div>
-    {render_footer(raw)}
-    {render_lightbox()}
-    <script type="module" src="assets/js/app.js"></script>
-  </body>
-</html>
-"""
-
-
-def render_data_js(store: dict[str, Any]) -> str:
-    site_data_json = json.dumps(store["site_data"], ensure_ascii=False, indent=2)
-    return f'''/*
-  GENERATED FILE - do not edit manually.
-  Edit the YAML files in content/ and run: python build_site.py
-*/
-
-export const siteData = {site_data_json};
-
-const responsiveWidths = Object.freeze(
-  [...new Set((siteData.imagePipeline?.widths || [])
-    .map((width) => Number(width))
-    .filter((width) => Number.isFinite(width) && width > 0))]
-    .sort((a, b) => a - b)
-);
-const fallbackResponsiveWidth = responsiveWidths.at(-1) || 2048;
-
-const publicWorks = Array.isArray(siteData.works) ? siteData.works : [];
-const publicSeries = Array.isArray(siteData.series) ? siteData.series : [];
-const publicCollections = Array.isArray(siteData.collections) ? siteData.collections : [];
-const reviewWorks = Array.isArray(siteData.reviewWorks) ? siteData.reviewWorks : [];
-const reviewSeries = Array.isArray(siteData.reviewSeries) ? siteData.reviewSeries : [];
-const allWorks = [...publicWorks, ...reviewWorks.filter((work) => !publicWorks.some((item) => item.id === work.id))];
-const allSeries = [...publicSeries, ...reviewSeries.filter((series) => !publicSeries.some((item) => item.slug === series.slug))];
-const workById = new Map(allWorks.map((work) => [work.id, work]));
-const seriesBySlug = new Map(allSeries.map((series) => [series.slug, series]));
-const collectionBySlug = new Map(publicCollections.map((collection) => [collection.slug, collection]));
-
-function compareNumber(a, b, fallback = 9999) {{
-  const left = Number.isFinite(a) ? a : fallback;
-  const right = Number.isFinite(b) ? b : fallback;
-  return left - right;
-}}
-
-export const siteMetrics = Object.freeze({{
-  workCount: publicWorks.length,
-  seriesCount: publicSeries.length,
-  collectionCount: publicCollections.length,
-  inquiryPaths: 3
-}});
-
-export function escapeHtml(value = '') {{
-  return String(value)
-    .replaceAll('&', '&amp;')
-    .replaceAll('<', '&lt;')
-    .replaceAll('>', '&gt;')
-    .replaceAll('"', '&quot;')
-    .replaceAll("'", '&#39;');
-}}
-
-function getAvailableWidths(work) {{
-  const intrinsicWidth = Number(work?.width) || fallbackResponsiveWidth;
-  const widths = responsiveWidths.filter((width) => width <= intrinsicWidth);
-  const fallbackWidth = Math.min(intrinsicWidth, fallbackResponsiveWidth);
-
-  if (!widths.includes(fallbackWidth)) {{
-    widths.push(fallbackWidth);
-  }}
-
-  return [...new Set(widths)].sort((a, b) => a - b);
-}}
-
-function getPreferredWidth(work, preferred = 1200) {{
-  const widths = getAvailableWidths(work);
-  const match = [...widths].reverse().find((width) => width <= preferred);
-  return match || widths[widths.length - 1];
-}}
-
-function getLargestWidth(work) {{
-  const widths = getAvailableWidths(work);
-  return widths[widths.length - 1];
-}}
-
-function sourceSet(work, extension) {{
-  if (!work?.responsiveBase) return '';
-  const avifWidths = new Set(work.avifWidths || []);
-  return getAvailableWidths(work)
-    .filter((width) => extension !== 'avif' || avifWidths.has(width))
-    .map((width) => `${{work.responsiveBase}}-${{width}}.${{extension}} ${{width}}w`)
-    .join(', ');
-}}
-
-export function getImagePath(work, width, extension = 'jpg') {{
-  if (!work?.responsiveBase) return work?.src || '';
-  const resolvedWidth = width || getPreferredWidth(work);
-  return `${{work.responsiveBase}}-${{resolvedWidth}}.${{extension}}`;
-}}
-
-export function hasWorkImage(work) {{
-  return Boolean(work?.src || work?.responsiveBase);
-}}
-
-export function getImageSourceSet(work, extension = 'jpg') {{
-  return sourceSet(work, extension);
-}}
-
-export function getWorkOrientation(work) {{
-  const ratio = (Number(work?.width) || 1) / (Number(work?.height) || 1);
-  if (ratio > 1.12) return 'landscape';
-  if (ratio < 0.88) return 'portrait';
-  return 'square';
-}}
-
-export function getAspectRatioValue(work, context = 'default') {{
-  const fallback = `${{Number(work?.width) || 1}} / ${{Number(work?.height) || 1}}`;
-  const ratios = work?.displayRatios || {{}};
-  const candidate = String((ratios && (ratios[context] || ratios.default)) || '').trim();
-  return /^\\d+(?:\\.\\d+)?\\s*\\/\\s*\\d+(?:\\.\\d+)?$/.test(candidate) ? candidate : fallback;
-}}
-
-export function getFocalPoint(work) {{
-  return {{
-    x: Number.isFinite(Number(work?.focalPoint?.x)) ? Number(work.focalPoint.x) : 50,
-    y: Number.isFinite(Number(work?.focalPoint?.y)) ? Number(work.focalPoint.y) : 50
-  }};
-}}
-
-export function getObjectPosition(work) {{
-  const point = getFocalPoint(work);
-  return `${{point.x}}% ${{point.y}}%`;
-}}
-
-export function buildMediaShellAttributes(work, {{ className = '', context = 'default' }} = {{}}) {{
-  const classes = [className].filter(Boolean).join(' ');
-  const classAttr = classes ? ` class="${{classes}}"` : '';
-  return `${{classAttr}} style="--media-ratio: ${{getAspectRatioValue(work, context)}}; --media-position: ${{getObjectPosition(work)}};" data-orientation="${{getWorkOrientation(work)}}"`;
-}}
-
-export function buildResponsiveImage(
-  work,
-  {{
-    sizes = '(min-width: 1100px) 38vw, (min-width: 760px) 50vw, 100vw',
-    className = '',
-    loading = 'lazy',
-    fetchpriority = 'auto'
-  }} = {{}}
-) {{
-  const classAttr = className ? ` class="${{className}}"` : '';
-  const priorityAttr = fetchpriority !== 'auto' ? ` fetchpriority="${{fetchpriority}}"` : '';
-  const positionStyle = ` style="object-position: ${{getObjectPosition(work)}};"`;
-  const jpgSrcset = sourceSet(work, 'jpg');
-  const webpSrcset = sourceSet(work, 'webp');
-  const hasImage = Boolean((jpgSrcset && webpSrcset) || work?.src);
-
-  if (!hasImage) {{
-    return `
-      <div class="media-placeholder" role="img" aria-label="${{escapeHtml(work?.alt || work?.title || 'Image pending')}}">
-        <span>Image pending</span>
-        <strong>${{escapeHtml(work?.title || 'Untitled work')}}</strong>
-        <small>${{escapeHtml(work?.alt || 'No image assigned yet.')}}</small>
-      </div>
-    `;
-  }}
-
-  if (jpgSrcset && webpSrcset) {{
-    const avifSrcset = sourceSet(work, 'avif');
-    return `
-      <picture>
-        ${{avifSrcset ? `<source type="image/avif" srcset="${{avifSrcset}}" sizes="${{sizes}}">` : ''}}
-        <source type="image/webp" srcset="${{webpSrcset}}" sizes="${{sizes}}">
-        <img
-          ${{classAttr}}
-          src="${{getImagePath(work, getPreferredWidth(work), 'jpg')}}"
-          srcset="${{jpgSrcset}}"
-          sizes="${{sizes}}"
-          width="${{work.width}}"
-          height="${{work.height}}"
-          alt="${{escapeHtml(work.alt)}}"
-          loading="${{loading}}"
-          decoding="async"${{priorityAttr}}${{positionStyle}}>
-      </picture>
-    `;
-  }}
-
-  return `
-    <img
-      ${{classAttr}}
-      src="${{work.src || ''}}"
-      width="${{work.width}}"
-      height="${{work.height}}"
-      alt="${{escapeHtml(work.alt)}}"
-      loading="${{loading}}"
-      decoding="async"${{priorityAttr}}${{positionStyle}}>
-  `;
-}}
-
-export function buildLightboxMeta(work) {{
-  const caption = (work.caption || '').trim();
-  if (caption) return caption;
-  const series = getSeriesBySlug(work.series);
-  return `${{series?.title || 'Series'}} / ${{work.location}} / ${{work.year}}`;
-}}
-
-export function buildLightboxAttributes(
-  work,
-  {{
-    sizes = '(min-width: 1100px) 74vw, (min-width: 760px) 88vw, 96vw',
-    group = 'default'
-  }} = {{}}
-) {{
-  if (!hasWorkImage(work)) {{
-    return `
-      data-image-pending="true"
-      aria-label="${{escapeHtml(work?.alt || work?.title || 'Image pending')}}"
-    `;
-  }}
-
-  return `
-    data-lightbox-group="${{escapeHtml(group)}}"
-    data-lightbox-src="${{getImagePath(work, getLargestWidth(work), 'jpg')}}"
-    data-lightbox-jpg-srcset="${{sourceSet(work, 'jpg')}}"
-    data-lightbox-webp-srcset="${{sourceSet(work, 'webp')}}"
-    data-lightbox-sizes="${{sizes}}"
-    data-lightbox-alt="${{escapeHtml(work.alt)}}"
-    data-lightbox-title="${{escapeHtml(work.title)}}"
-    data-lightbox-meta="${{escapeHtml(buildLightboxMeta(work))}}"
-    data-lightbox-width="${{work.width}}"
-    data-lightbox-height="${{work.height}}"
-    data-lightbox-href="${{getWorkPath(work.id)}}"
-  `;
-}}
-
-export function buildAbsoluteUrl(path = '') {{
-  const base = siteData.site.siteUrl || siteData.site.displayUrl || window.location.href;
-  try {{
-    return new URL(path, base).href;
-  }} catch {{
-    return path;
-  }}
-}}
-
-export function getWorkPath(id) {{
-  return `/works/${{encodeURIComponent(id)}}/`;
-}}
-
-export function getSeriesPath(slug) {{
-  return `/series/${{encodeURIComponent(slug)}}/`;
-}}
-
-export function getPortfolioPath(slug = '') {{
-  return slug ? `/portfolio.html?series=${{encodeURIComponent(slug)}}` : '/portfolio.html';
-}}
-
-export function getWorkById(id) {{
-  return workById.get(id);
-}}
-
-
-export function getSeriesBySlug(slug, {{ includePrivate = true }} = {{}}) {{
-  const series = seriesBySlug.get(slug);
-  if (!series) return undefined;
-  if (!includePrivate && series.visibility === 'private') return undefined;
-  return series;
-}}
-
-export function getSortedSeries({{ includePrivate = false }} = {{}}) {{
-  const source = includePrivate ? allSeries : publicSeries;
-  return [...source].sort((a, b) => compareNumber(a.order, b.order) || a.title.localeCompare(b.title));
-}}
-
-export function getSeriesWorks(slug, {{ includePrivate = true }} = {{}}) {{
-  const source = includePrivate ? allWorks : publicWorks;
-  return source
-    .filter((work) => work.series === slug)
-    .sort(
-      (a, b) =>
-        compareNumber(a.seriesOrder, b.seriesOrder) ||
-        compareNumber(a.portfolioOrder, b.portfolioOrder) ||
-        a.title.localeCompare(b.title)
-    );
-}}
-
-export function getSeriesCover(series) {{
-  return getWorkById(series.cardCoverWorkId || series.coverWorkId) || getSeriesWorks(series.slug, {{ includePrivate: true }})[0] || null;
-}}
-
-export function getSeriesCount(slug, {{ includePrivate = true }} = {{}}) {{
-  return getSeriesWorks(slug, {{ includePrivate }}).length;
-}}
-
-export function getHeroWork() {{
-  return getWorkById(siteData.site.heroWorkId) || publicWorks[0];
-}}
-
-export function getFeaturedSeries() {{
-  return getSortedSeries().filter((series) => Number.isFinite(series.homeFeatureOrder));
-}}
-
-export function getHomeFeaturedWorks() {{
-  return [...publicWorks]
-    .filter((work) => Number.isFinite(work.homeFeatureOrder))
-    .sort((a, b) => compareNumber(a.homeFeatureOrder, b.homeFeatureOrder));
-}}
-
-export function getPortfolioWorks() {{
-  return [...publicWorks].sort(
-    (a, b) => compareNumber(a.portfolioOrder, b.portfolioOrder) || a.title.localeCompare(b.title)
-  );
-}}
-
-export function getSeriesNeighbors(slug, {{ includePrivate = false }} = {{}}) {{
-  const ordered = getSortedSeries({{ includePrivate }});
-  const index = ordered.findIndex((series) => series.slug === slug);
-  if (index === -1) {{
-    return {{ previous: ordered[0] || null, next: ordered[0] || null }};
-  }}
-
-  return {{
-    previous: ordered[(index - 1 + ordered.length) % ordered.length],
-    next: ordered[(index + 1) % ordered.length]
-  }};
-}}
-'''
-
-
 
 
 def render_sitemap_xml(extra_paths: list[str] | None = None) -> str:
@@ -4261,10 +2237,6 @@ def rootify_html(html_text: str) -> str:
             value = _rootify_url(value)
         return f'{name}="{value}"'
     return _URL_ATTR.sub(fix, html_text)
-
-
-def rootify_data_js(js_text: str) -> str:
-    return re.sub(r'"(assets/[^"]+)"', r'"/\1"', js_text)
 
 
 def json_ld(payload: dict[str, Any]) -> str:
@@ -4370,12 +2342,6 @@ def series_page_meta(store: dict[str, Any], base_meta: dict[str, Any], series: d
         'canonical_path': series_path(series['slug']).lstrip('/'),
     })
     return meta
-
-
-def series_redirect_script() -> str:
-    slugs = json.dumps(PUBLIC_SERIES_SLUGS)
-    return ("(function(){var q=new URLSearchParams(location.search).get('series');"
-            f"if(q&&{slugs}.indexOf(q)>-1){{location.replace('/series/'+encodeURIComponent(q)+'/');}}}})();")
 
 
 def work_inquiry_href(work: dict[str, Any]) -> str:
@@ -4496,10 +2462,15 @@ def render_home_v2(store: dict[str, Any]) -> str:
     lead = str(hero_raw.get('lead') or '')
     lead_paragraphs = _paragraphs(lead) if '\n\n' in lead else [part for part in split_home_hero_lead(lead) if part]
     actions = [action for action in (hero_raw.get('primary_action'), hero_raw.get('secondary_action')) if isinstance(action, dict) and action.get('href')]
-    programme = []
-    for series, works in public_series_works(store):
-        cover = works_by_id.get(series.get('cardCoverWorkId') or series.get('coverWorkId') or '')
-        programme.append({'title': series['title'], 'href': series_path(series['slug']), 'count': len(works), 'years': series.get('years') or '', 'cover': cover})
+    groups = series_groups(store)
+    programme_groups = [
+        {'id': 'series', 'title': 'Series', 'href': '/series.html',
+         'intro': md_plain((home.get('featured_series') or {}).get('intro')),
+         'rows': [series_row(store, series, works) for series, works in groups['series']]},
+        {'id': 'stage', 'title': 'Stage works', 'href': '/performance.html',
+         'intro': md_plain((store['raw']['pages'].get('performance') or {}).get('projects', {}).get('intro')),
+         'rows': [series_row(store, series, works) for series, works in groups['performance']]},
+    ]
     selected = []
     for work_id in (home.get('selected_works') or {}).get('work_ids') or []:
         work = works_by_id.get(work_id)
@@ -4520,8 +2491,7 @@ def render_home_v2(store: dict[str, Any]) -> str:
             'actions': actions,
             'series_title': (store['series_lookup'].get((hero_work or {}).get('series') or '') or {}).get('title', ''),
         },
-        programme=programme,
-        programme_intro=md_plain((home.get('featured_series') or {}).get('intro')),
+        programme_groups=programme_groups,
         selected=selected,
         selected_intro=md_plain((home.get('selected_works') or {}).get('intro')),
         statement=statement,
@@ -4557,6 +2527,186 @@ def render_work_v2(store: dict[str, Any], work: dict[str, Any], neighbours: tupl
         inquiry_href=work_inquiry_href(work),
         previous=previous,
         following=following,
+    )
+
+
+def series_groups(store: dict[str, Any]) -> dict[str, list[tuple[dict[str, Any], list[dict[str, Any]]]]]:
+    """Split public series into photographic series and stage works."""
+    stage_slugs: list[str] = []
+    for collection in store['site_data'].get('collections') or []:
+        if collection.get('slug') == 'performance':
+            stage_slugs = list(collection.get('seriesSlugs') or [])
+    rows = public_series_works(store)
+    by_slug = {series['slug']: (series, works) for series, works in rows}
+    stage = [by_slug[slug] for slug in stage_slugs if slug in by_slug]
+    photographic = [(series, works) for series, works in rows if series['slug'] not in stage_slugs]
+    return {'series': photographic, 'performance': stage}
+
+
+def series_row(store: dict[str, Any], series: dict[str, Any], works: list[dict[str, Any]]) -> dict[str, Any]:
+    cover = store['works_by_id'].get(series.get('cardCoverWorkId') or series.get('coverWorkId') or '')
+    summary = series.get('cardSummary') or summarize_story_text(series.get('description') or '', fallback=series.get('mood') or '', limit=170)
+    return {'slug': series['slug'], 'title': series['title'], 'href': series_path(series['slug']), 'count': len(works),
+            'years': series.get('years') or '', 'cover': cover, 'summary': md_plain(summary)}
+
+
+def lead_paragraphs(text: Any) -> list[Any]:
+    text = str(text or '')
+    return _paragraphs(text) if '\n\n' in text else [part for part in split_home_hero_lead(text) if part]
+
+
+def download_rows(store: dict[str, Any]) -> list[dict[str, Any]]:
+    rows = []
+    for item in store.get('public_downloads') or []:
+        path = ROOT / str(item.get('file') or '').lstrip('/')
+        size = ''
+        if path.exists():
+            kb = path.stat().st_size / 1024
+            size = f'{kb / 1024:.1f} MB' if kb >= 1024 else f'{kb:.0f} KB'
+        rows.append({'title': item.get('title'), 'file': item.get('file'), 'description': item.get('description') or '', 'size': size})
+    return rows
+
+
+SEQUENCE_SIZES = {
+    'wide': '(min-width: 48rem) 80vw, 100vw',
+    'left': '(min-width: 48rem) 48vw, 100vw',
+    'right': '(min-width: 48rem) 48vw, 100vw',
+    'solo-left': '(min-width: 48rem) 56vw, 100vw',
+    'solo-right': '(min-width: 48rem) 56vw, 100vw',
+}
+
+
+def sequence_layouts(count: int) -> list[str]:
+    """Hang a series as: one wide photograph, then a pair, repeating."""
+    layouts: list[str] = []
+    solo_turn = 0
+    while len(layouts) < count:
+        layouts.append('wide')
+        remaining = count - len(layouts)
+        if remaining >= 2:
+            layouts += ['left', 'right']
+        elif remaining == 1:
+            layouts.append('solo-right' if solo_turn % 2 else 'solo-left')
+            solo_turn += 1
+    return layouts[:count]
+
+
+def render_collection_v2(store: dict[str, Any], kind: str) -> str:
+    raw = store['raw']
+    page = raw['pages'][kind]
+    hero = page.get('hero') or {}
+    groups = series_groups(store)
+    rows = [series_row(store, series, works) for series, works in groups[kind]]
+    notes = None
+    if kind == 'performance':
+        structure = page.get('structure') or {}
+        if structure.get('visible', True) and structure.get('cards'):
+            notes = {'title': structure.get('title'), 'intro': md_plain(structure.get('intro')),
+                     'cards': [{'title': card.get('title'), 'text': md_plain(card.get('text'))} for card in structure['cards']]}
+        other = {'text': 'Looking for the landscape and street photographs?', 'label': 'See the series', 'href': '/series.html'}
+    else:
+        other = {'text': 'Theatre and performance projects are collected separately.', 'label': 'See the stage works', 'href': '/performance.html'}
+    title = hero.get('title') or page.get('hero_title') or kind.title()
+    return render_template(
+        'pages/collection.html',
+        page_key=kind,
+        head=head_context(kind, page['meta']),
+        **chrome_context(store, kind),
+        title=title,
+        lead=lead_paragraphs(hero.get('lead') or page.get('hero_lead')),
+        rows=rows,
+        notes=notes,
+        other=other,
+    )
+
+
+def render_series_v2(store: dict[str, Any], series: dict[str, Any], works: list[dict[str, Any]],
+                     neighbours: tuple[dict[str, Any] | None, dict[str, Any] | None], kind: str) -> str:
+    section = {'label': 'Stage works', 'href': '/performance.html'} if kind == 'performance' else {'label': 'Series', 'href': '/series.html'}
+    description = _paragraphs(RAW_SERIES_TEXT.get(series['slug'], {}).get('description') or series.get('description'))
+    layouts = sequence_layouts(len(works))
+    previous, following = neighbours
+    return render_template(
+        'pages/series.html',
+        page_key='series',
+        head=head_context('series', series_page_meta(store, store['raw']['pages']['series']['meta'], series, works),
+                          preload_work=works[0] if works else None, preload_sizes=SEQUENCE_SIZES['wide'],
+                          schema=series_schema(store, series, works)),
+        **chrome_context(store, kind),
+        section=section,
+        series=series,
+        works=works,
+        description=description,
+        opening=_paragraphs(series.get('storyOpeningText')),
+        closing=_paragraphs(' '.join(part for part in (series.get('storySequenceText'), series.get('storyClosingText')) if part)),
+        layouts=layouts,
+        sizes=SEQUENCE_SIZES,
+        inquiry_href=f"/contact.html?series={quote(series['slug'])}",
+        previous=previous,
+        following=following,
+    )
+
+
+def render_portfolio_v2(store: dict[str, Any]) -> str:
+    raw = store['raw']
+    page = raw['pages']['portfolio']
+    hero = page.get('hero') or {}
+    groups = series_groups(store)
+    works = [work for _kind in ('series', 'performance') for _series, items in groups[_kind] for work in items]
+    filter_groups = [
+        {'label': 'Series', 'entries': [{'slug': s['slug'], 'title': s['title'], 'count': len(w)} for s, w in groups['series']]},
+        {'label': 'Stage works', 'entries': [{'slug': s['slug'], 'title': s['title'], 'count': len(w)} for s, w in groups['performance']]},
+    ]
+    return render_template(
+        'pages/portfolio.html',
+        page_key='portfolio',
+        head=head_context('portfolio', page['meta']),
+        **chrome_context(store, 'portfolio'),
+        title=hero.get('title') or 'Portfolio',
+        lead=lead_paragraphs(hero.get('lead')),
+        works=works,
+        filter_groups=filter_groups,
+        series_titles={series['slug']: series['title'] for series in store['public_series_list']},
+    )
+
+
+def render_about_v2(store: dict[str, Any]) -> str:
+    raw = store['raw']
+    page = raw['pages']['about']
+    hero = page.get('hero') or {}
+    statement = page.get('statement') or {}
+    cta = page.get('cta') or {}
+    return render_template(
+        'pages/about.html',
+        page_key='about',
+        head=head_context('about', page['meta'], preload_work=store['works_by_id'].get(hero.get('feature_work_id') or ''), preload_sizes='(min-width: 60rem) 40vw, 100vw'),
+        **chrome_context(store, 'about'),
+        title=hero.get('title') or 'About',
+        lead=lead_paragraphs(hero.get('lead')),
+        work=store['works_by_id'].get(hero.get('feature_work_id') or ''),
+        statement={'title': statement.get('title'), 'text': _paragraphs(statement.get('text'))} if statement.get('title') else None,
+        practice=[{'title': card.get('title'), 'text': md_plain(card.get('text'))} for card in page.get('practice_cards') or []],
+        downloads=download_rows(store),
+        cta={'title': cta.get('title'), 'text': md_plain(cta.get('text'))} if cta.get('title') else None,
+    )
+
+
+def render_contact_v2(store: dict[str, Any]) -> str:
+    from markupsafe import Markup
+    raw = store['raw']
+    page = raw['pages']['contact']
+    hero = page.get('hero') or {}
+    return render_template(
+        'pages/contact.html',
+        page_key='contact',
+        head=head_context('contact', page['meta']),
+        **chrome_context(store, 'contact'),
+        title=hero.get('title') or 'Contact',
+        lead=lead_paragraphs(hero.get('lead')),
+        topics=list(page.get('inquiry_types') or ['General']),
+        downloads=download_rows(store),
+        work_titles=Markup(json_ld({work['id']: work['title'] for work in store['site_data']['works']})),
+        series_titles_json=Markup(json_ld({series['slug']: series['title'] for series in store['public_series_list']})),
     )
 
 
@@ -4618,25 +2768,27 @@ def write_all() -> None:
 
     PUBLIC_SERIES_SLUGS[:] = [series['slug'] for series in store['public_series_list']]
     prepare_dist()
-    write_dist_file('assets/js/data.js', rootify_data_js(render_data_js(store)))
+    groups = series_groups(store)
     pages = {
         'index.html': render_home_v2(store),
-        'portfolio.html': render_portfolio(store),
-        'series.html': render_series(store),
-        'performance.html': render_performance(store),
-        'about.html': render_about(store),
-        'contact.html': render_contact(store),
+        'portfolio.html': render_portfolio_v2(store),
+        'series.html': render_collection_v2(store, 'series'),
+        'performance.html': render_collection_v2(store, 'performance'),
+        'about.html': render_about_v2(store),
+        'contact.html': render_contact_v2(store),
         '404.html': render_404_v2(store),
     }
     extra_paths: list[str] = []
-    for series, works in public_series_works(store):
-        pages[f"series/{series['slug']}/index.html"] = render_series(store, series['slug'])
-        extra_paths.append(series_path(series['slug']))
-        for index, work in enumerate(works):
-            previous = works[index - 1] if index > 0 else None
-            following = works[index + 1] if index + 1 < len(works) else None
-            pages[f"works/{work['id']}/index.html"] = render_work_v2(store, work, (previous, following), (index + 1, len(works)))
-            extra_paths.append(work_path(work['id']))
+    for kind, rows in groups.items():
+        for position, (series, works) in enumerate(rows):
+            neighbours = (rows[position - 1][0] if position > 0 else None, rows[position + 1][0] if position + 1 < len(rows) else None)
+            pages[f"series/{series['slug']}/index.html"] = render_series_v2(store, series, works, neighbours, kind)
+            extra_paths.append(series_path(series['slug']))
+            for index, work in enumerate(works):
+                previous = works[index - 1] if index > 0 else None
+                following = works[index + 1] if index + 1 < len(works) else None
+                pages[f"works/{work['id']}/index.html"] = render_work_v2(store, work, (previous, following), (index + 1, len(works)))
+                extra_paths.append(work_path(work['id']))
     for relative, html_text in pages.items():
         write_dist_file(relative, rootify_html(html_text))
     write_dist_file('robots.txt', render_robots_txt())

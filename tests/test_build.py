@@ -17,14 +17,14 @@ def test_build_never_modifies_source_files(build):
 
 
 def test_nothing_generated_into_source_tree(build):
-    for name in PAGES + ['robots.txt', 'sitemap.xml', 'site.webmanifest', 'app.js', 'styles.css', 'data.js']:
+    for name in PAGES + ['robots.txt', 'sitemap.xml', 'site.webmanifest', 'app.js', 'styles.css', 'data.js', 'site.css']:
         assert not (ROOT / name).exists(), f'{name} was written to the project root; output belongs in dist/'
     assert not (ROOT / 'assets' / 'js' / 'data.js').exists(), 'data.js is generated and belongs in dist/ only'
     assert not (ROOT / 'public_upload').exists()
 
 
 def test_all_pages_and_files_exist(build):
-    for name in PAGES + ['robots.txt', 'sitemap.xml', 'site.webmanifest', 'upload-manifest.json', 'assets/js/data.js', 'assets/css/styles.css']:
+    for name in PAGES + ['robots.txt', 'sitemap.xml', 'site.webmanifest', 'upload-manifest.json', 'assets/js/site.js', 'assets/css/site.css']:
         path = DIST / name
         assert path.exists() and path.stat().st_size > 0, f'dist/{name} missing or empty'
 
@@ -83,10 +83,12 @@ def test_analytics_waits_for_consent(build):
     assert (DIST / 'assets' / 'js' / 'consent.js').exists()
 
 
-def test_no_access_hash_is_published(build):
-    data = (DIST / 'assets' / 'js' / 'data.js').read_text(encoding='utf-8')
-    hashes = re.findall(r'"accessHash":\s*"([^"]*)"', data)
-    assert hashes and all(value == '' for value in hashes)
+def test_no_access_hash_or_private_series_is_published(build):
+    for path in DIST.rglob('*'):
+        if path.suffix in {'.html', '.js', '.json'}:
+            text = path.read_text(encoding='utf-8')
+            assert 'accessHash' not in text, path
+            assert 'stage-presence' not in text or path.name == 'contact.html', f'private series leaked into {path}'
 
 
 def test_sitemap_and_manifest_are_valid(build):
@@ -106,16 +108,18 @@ def test_pages_have_core_metadata(build):
         assert 'name="viewport"' in html, page
 
 
-def _site_data():
-    import json as _json
-    text = (DIST / 'assets' / 'js' / 'data.js').read_text(encoding='utf-8')
-    start = text.index('export const siteData = ') + len('export const siteData = ')
-    obj, _ = _json.JSONDecoder().raw_decode(text[start:])
-    return obj
+def _public_content():
+    """Public series and works, as the build sees them (validation mode: no image work)."""
+    import build_site
+    build_site.IMAGE_MODE = 'validate'
+    store = build_site.normalize_content(build_site.SITE_CONTENT)
+    series = [{'slug': item['slug']} for item in store['public_series_list']]
+    works = [{'id': work_id} for item in store['public_series_list'] for work_id in item['_work_ids'] if work_id in store['works_by_id']]
+    return {'series': series, 'works': works}
 
 
 def test_every_public_series_and_work_has_its_own_page(build):
-    data = _site_data()
+    data = _public_content()
     sitemap = (DIST / 'sitemap.xml').read_text(encoding='utf-8')
     for series in data['series']:
         assert (DIST / 'series' / series['slug'] / 'index.html').exists(), series['slug']
@@ -136,15 +140,12 @@ def test_local_urls_are_root_relative(build):
                 continue
             offenders.append(f'{page}: {ref}')
     assert not offenders, '\n'.join(offenders[:20])
-    data_js = (DIST / 'assets' / 'js' / 'data.js').read_text(encoding='utf-8')
-    assert '"assets/' not in data_js
 
 
 def test_no_raw_markdown_in_output(build):
     pattern = re.compile(r'(?<![\w*])\*[A-Z][^*<>]{1,60}\*(?![\w*])')
     hits = [page for page in all_pages() if pattern.search(re.sub(r'<script.*?</script>', '', (DIST / page).read_text(encoding='utf-8'), flags=re.S))]
-    data_hits = pattern.findall((DIST / 'assets' / 'js' / 'data.js').read_text(encoding='utf-8'))
-    assert not hits and not data_hits, (hits[:5], data_hits[:5])
+    assert not hits, hits[:5]
 
 
 def test_structured_data_is_built_into_every_page(build):
@@ -165,7 +166,9 @@ def test_work_pages_describe_a_visual_artwork(build):
 
 def test_old_series_query_links_redirect(build):
     html = (DIST / 'series.html').read_text(encoding='utf-8')
-    assert "location.replace('/series/'" in html
+    script = (DIST / 'assets' / 'js' / 'site.js').read_text(encoding='utf-8')
+    assert '/assets/js/site.js' in html
+    assert 'redirectOldSeriesLinks' in script and "window.location.replace(`/series/${slug}/`)" in script
 
 
 def test_image_derivatives_are_capped_and_include_avif(build):
