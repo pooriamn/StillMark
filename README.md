@@ -42,6 +42,14 @@ tests/                   automated checks run locally and in CI
 dist/                    build output (git-ignored; upload or deploy this)
 ```
 
+Every public series has its own page at `/series/<slug>/` and every published
+photograph at `/works/<id>/`; old `series.html?series=<slug>` links redirect
+there. All site links start from the root (`/assets/...`), so preview the site
+through `preview_server.py` rather than opening HTML files from disk.
+
+Images are published at most 2,560 px wide, as AVIF (up to 1,600 px), WebP and
+JPEG. Captions and descriptions may use `*italics*` and `**bold**`.
+
 Generated files never go back into the source tree. Image derivatives and social
 cards are cached in `assets/images/generated` and `assets/images/social`, which
 git ignores.

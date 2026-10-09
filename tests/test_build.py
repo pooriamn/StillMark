@@ -55,9 +55,13 @@ class _Refs(HTMLParser):
                 self.refs.extend(part.strip().split(' ')[0] for part in value.split(',') if part.strip())
 
 
+def all_pages() -> list[str]:
+    return sorted(path.relative_to(DIST).as_posix() for path in DIST.rglob('*.html'))
+
+
 def test_every_local_link_and_asset_resolves(build):
     broken = []
-    for page in PAGES:
+    for page in all_pages():
         parser = _Refs()
         parser.feed((DIST / page).read_text(encoding='utf-8'))
         for ref in parser.refs:
@@ -65,6 +69,8 @@ def test_every_local_link_and_asset_resolves(build):
             if parsed.scheme or ref.startswith(('#', 'mailto:', 'tel:', '//', 'data:')):
                 continue
             target = DIST / unquote(parsed.path).lstrip('/')
+            if parsed.path.endswith('/'):
+                target = target / 'index.html'
             if not target.exists():
                 broken.append(f'{page}: {ref}')
     assert not broken, 'broken local references:\n' + '\n'.join(sorted(set(broken))[:50])
@@ -98,3 +104,73 @@ def test_pages_have_core_metadata(build):
         assert re.search(r'<title>[^<]+</title>', html), page
         assert '<html lang="en">' in html, page
         assert 'name="viewport"' in html, page
+
+
+def _site_data():
+    import json as _json
+    text = (DIST / 'assets' / 'js' / 'data.js').read_text(encoding='utf-8')
+    start = text.index('export const siteData = ') + len('export const siteData = ')
+    obj, _ = _json.JSONDecoder().raw_decode(text[start:])
+    return obj
+
+
+def test_every_public_series_and_work_has_its_own_page(build):
+    data = _site_data()
+    sitemap = (DIST / 'sitemap.xml').read_text(encoding='utf-8')
+    for series in data['series']:
+        assert (DIST / 'series' / series['slug'] / 'index.html').exists(), series['slug']
+        assert f"/series/{series['slug']}/" in sitemap
+    for work in data['works']:
+        assert (DIST / 'works' / work['id'] / 'index.html').exists(), work['id']
+        assert f"/works/{work['id']}/" in sitemap
+
+
+def test_local_urls_are_root_relative(build):
+    """Pages live at several depths, so a relative 'assets/...' URL would break."""
+    offenders = []
+    for page in all_pages():
+        parser = _Refs()
+        parser.feed((DIST / page).read_text(encoding='utf-8'))
+        for ref in parser.refs:
+            if ref.startswith(('/', '#', 'http:', 'https:', 'mailto:', 'tel:', 'data:', '?')):
+                continue
+            offenders.append(f'{page}: {ref}')
+    assert not offenders, '\n'.join(offenders[:20])
+    data_js = (DIST / 'assets' / 'js' / 'data.js').read_text(encoding='utf-8')
+    assert '"assets/' not in data_js
+
+
+def test_no_raw_markdown_in_output(build):
+    pattern = re.compile(r'(?<![\w*])\*[A-Z][^*<>]{1,60}\*(?![\w*])')
+    hits = [page for page in all_pages() if pattern.search(re.sub(r'<script.*?</script>', '', (DIST / page).read_text(encoding='utf-8'), flags=re.S))]
+    data_hits = pattern.findall((DIST / 'assets' / 'js' / 'data.js').read_text(encoding='utf-8'))
+    assert not hits and not data_hits, (hits[:5], data_hits[:5])
+
+
+def test_structured_data_is_built_into_every_page(build):
+    for page in all_pages():
+        html = (DIST / page).read_text(encoding='utf-8')
+        blocks = re.findall(r'<script type="application/ld\+json"[^>]*>(.*?)</script>', html, re.S)
+        assert len(blocks) == 2, page
+        for block in blocks:
+            assert block.strip(), f'{page}: empty JSON-LD'
+            json.loads(block)
+
+
+def test_work_pages_describe_a_visual_artwork(build):
+    html = (DIST / 'works' / 'mirror-shore' / 'index.html').read_text(encoding='utf-8')
+    assert '"@type":"VisualArtwork"' in html
+    assert '<link rel="canonical" href="https://stillmark.art/works/mirror-shore/">' in html
+
+
+def test_old_series_query_links_redirect(build):
+    html = (DIST / 'series.html').read_text(encoding='utf-8')
+    assert "location.replace('/series/'" in html
+
+
+def test_image_derivatives_are_capped_and_include_avif(build):
+    from PIL import Image
+    generated = ROOT / 'assets' / 'images' / 'generated'
+    widths = [int(p.stem.rsplit('-', 1)[-1]) for p in (DIST / 'assets' / 'images' / 'generated').rglob('*.jpg')]
+    assert widths and max(widths) <= 2560
+    assert list((DIST / 'assets' / 'images' / 'generated').rglob('*.avif'))
