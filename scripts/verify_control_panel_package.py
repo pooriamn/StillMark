@@ -35,10 +35,8 @@ REQUIRED = [
     ROOT / "scripts" / "control_panel_accessibility_audit.py",
     ROOT / "scripts" / "control_panel_performance_budgets.py",
     ROOT / "scripts" / "control_panel_release_gate.py",
-    ROOT / "scripts" / "control_panel_phase_20_25_regression_tests.py",
     ROOT / "scripts" / "package_control_panel_release.py",
     ROOT / "scripts" / "verify_control_panel_package.py",
-    ROOT / "scripts" / "control_panel_regression_tests.py",
     ROOT / "scripts" / "control_panel_backend_regression_tests.py",
     ROOT / "scripts" / "services" / "content_service.py",
     ROOT / "scripts" / "services" / "asset_service.py",
@@ -70,17 +68,10 @@ COMPILE_REQUIRED = [
     ROOT / "scripts" / "control_panel_accessibility_audit.py",
     ROOT / "scripts" / "control_panel_performance_budgets.py",
     ROOT / "scripts" / "control_panel_release_gate.py",
-    ROOT / "scripts" / "control_panel_phase_20_25_regression_tests.py",
     ROOT / "scripts" / "control_panel_tabs" / "registry.py",
 ]
 
-LEGACY_STUBS = [
-    ROOT / "scripts" / "control_panel_builder.py",
-    ROOT / "scripts" / "control_panel_forms.py",
-    ROOT / "scripts" / "control_panel_publish_ops.py",
-    ROOT / "scripts" / "control_panel_relationships.py",
-    ROOT / "scripts" / "control_panel_validation.py",
-]
+LEGACY_STUBS: list[Path] = []  # the archived Tk modules were deleted; git history keeps them
 
 CRITICAL_HASH_FILES = [
     ROOT / "scripts" / "control_panel.py",

@@ -170,7 +170,7 @@ BUILD_STATUS_PATH = BUILD_META_DIR / "build-status.json"
 RELEASE_REPORT_PATH = BUILD_META_DIR / "release-report.json"
 CONTENT_GRAPH_PATH = BUILD_META_DIR / "content-graph.json"
 VALIDATION_REPORT_PATH = BUILD_META_DIR / "validation-report.json"
-PUBLIC_UPLOAD_DIR = ROOT / "public_upload"
+PUBLIC_UPLOAD_DIR = ROOT / "dist"
 UPLOAD_MANIFEST_PATH = PUBLIC_UPLOAD_DIR / "upload-manifest.json"
 IMAGE_MANIFEST_DIR = ROOT / "assets/images/manifests"
 IMAGE_INDEX_PATH = IMAGE_MANIFEST_DIR / "image-index.json"
@@ -230,7 +230,7 @@ PERFORMANCE_BUDGETS_MS = {
     "works refresh": 1200,
     "validation refresh": 1200,
     "studio refresh": 1500,
-    "build task": 60000,
+    "build task": 30 * 60 * 1000,
 }
 
 DEFAULT_WORK_FILTER_PRESETS: dict[str, dict[str, str]] = {
@@ -5809,7 +5809,7 @@ def save_relationships(featured_series: list[str], selected_works: list[str]) ->
 
 
 def preview_target() -> Path:
-    public_index = ROOT / "public_upload" / "index.html"
+    public_index = ROOT / "dist" / "index.html"
     if public_index.exists():
         return public_index
     return ROOT / "index.html"
@@ -6103,68 +6103,66 @@ def import_workbook_bundle(workbook_path: str | Path, line_callback: Callable[[s
     return {"applied": applied, "workbook": str(workbook), "preview": preview, "rollback_available": True}
 
 
+# A cold build renders every image (about 2-3 minutes for ~120 works); a warm
+# build reuses the derivative cache and takes seconds. The timeout only guards
+# against a hung process, so it is deliberately generous.
+BUILD_TIMEOUT_SECONDS = 30 * 60
+
+
 def run_build(line_callback: Callable[[str], None] | None = None) -> int:
+    """Run build_site.py and stream every output line as it happens."""
     global _LAST_BUILD_RESULT
-    timeout_seconds = max(5, int(PERFORMANCE_BUDGETS_MS.get("build task", 60000)) // 1000)
+    timeout_seconds = BUILD_TIMEOUT_SECONDS
     started = time.perf_counter()
-    try:
-        completed = subprocess.run(
-            [sys.executable, str(ROOT / "build_site.py")],
-            cwd=ROOT,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            text=True,
-            timeout=timeout_seconds,
-        )
-        stdout = completed.stdout or ""
-        stderr = completed.stderr or ""
+    collected: list[str] = []
+    env = dict(os.environ, PYTHONUNBUFFERED="1")
+    process = subprocess.Popen(
+        [sys.executable, str(ROOT / "build_site.py")],
+        cwd=ROOT,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        text=True,
+        encoding="utf-8",
+        errors="replace",
+        bufsize=1,
+        env=env,
+    )
+    timed_out = False
+    assert process.stdout is not None
+    for raw in process.stdout:
+        line = raw.rstrip("\n")
+        collected.append(line)
         if line_callback:
-            for line in stdout.splitlines():
-                line_callback(line)
-            for line in stderr.splitlines():
-                line_callback(f"stderr: {line}")
-        elapsed_ms = int((time.perf_counter() - started) * 1000)
-        _LAST_BUILD_RESULT = {
-            "return_code": int(completed.returncode or 0),
-            "stdout": stdout,
-            "stderr": stderr,
-            "elapsed_ms": elapsed_ms,
-            "timeout_seconds": timeout_seconds,
-        }
-        _record_diagnostic_event(
-            "build-process",
-            "ok" if int(completed.returncode or 0) == 0 else "error",
-            f"Build process finished with exit code {int(completed.returncode or 0)}",
-            elapsed_ms=elapsed_ms,
-            return_code=int(completed.returncode or 0),
-            timeout_seconds=timeout_seconds,
-        )
-        if int(completed.returncode or 0) == 0:
-            invalidate_control_panel_caches()
-        return int(completed.returncode or 0)
-    except subprocess.TimeoutExpired as exc:
-        stdout = exc.stdout.decode("utf-8", errors="replace") if isinstance(exc.stdout, bytes) else str(exc.stdout or "")
-        stderr = exc.stderr.decode("utf-8", errors="replace") if isinstance(exc.stderr, bytes) else str(exc.stderr or "")
-        elapsed_ms = int((time.perf_counter() - started) * 1000)
-        _LAST_BUILD_RESULT = {
-            "return_code": -9,
-            "stdout": stdout,
-            "stderr": stderr,
-            "elapsed_ms": elapsed_ms,
-            "timeout_seconds": timeout_seconds,
-            "timeout": True,
-        }
-        _record_diagnostic_event(
-            "build",
-            "timeout",
-            f"Build timed out after {timeout_seconds}s",
-            elapsed_ms=elapsed_ms,
-            timeout_seconds=timeout_seconds,
-            return_code=-9,
-        )
-        if line_callback:
-            line_callback(f"Build timed out after {timeout_seconds} seconds.")
-        return -9
+            line_callback(line)
+        if time.perf_counter() - started > timeout_seconds:
+            timed_out = True
+            process.kill()
+            break
+    return_code = -9 if timed_out else int(process.wait() or 0)
+    elapsed_ms = int((time.perf_counter() - started) * 1000)
+    output = "\n".join(collected)
+    _LAST_BUILD_RESULT = {
+        "return_code": return_code,
+        "stdout": output,
+        "stderr": "",
+        "elapsed_ms": elapsed_ms,
+        "timeout_seconds": timeout_seconds,
+        "timeout": timed_out,
+    }
+    status = "timeout" if timed_out else ("ok" if return_code == 0 else "error")
+    _record_diagnostic_event(
+        "build-process",
+        status,
+        f"Build timed out after {timeout_seconds}s" if timed_out else f"Build process finished with exit code {return_code}",
+        elapsed_ms=elapsed_ms,
+        return_code=return_code,
+        timeout_seconds=timeout_seconds,
+    )
+    if timed_out and line_callback:
+        line_callback(f"Build stopped after {timeout_seconds // 60} minutes without finishing.")
+    if return_code == 0:
+        invalidate_control_panel_caches()
+    return return_code
 
 
 def last_build_result() -> dict[str, Any]:
@@ -7216,9 +7214,9 @@ def verify_preview_output() -> dict[str, Any]:
 
     manifest = load_upload_manifest()
     if manifest:
-        rows.append({"path": "public_upload/upload-manifest.json", "status": "ok", "detail": "Upload manifest present"})
+        rows.append({"path": "dist/upload-manifest.json", "status": "ok", "detail": "Upload manifest present"})
     else:
-        rows.append({"path": "public_upload/upload-manifest.json", "status": "warn", "detail": "Upload manifest is missing or unreadable"})
+        rows.append({"path": "dist/upload-manifest.json", "status": "warn", "detail": "Upload manifest is missing or unreadable"})
     source_issues = source_asset_issues()
     if source_issues:
         rows.append({"path": "assets/images", "status": "warn", "detail": f"{len(source_issues)} source image issue(s) remain"})
@@ -7491,9 +7489,9 @@ def prepare_publish_package(line_callback: Callable[[str], None] | None = None) 
     return_code = run_build(line_callback=line_callback)
     if int(return_code or 0) != 0:
         raise BackendError(f"Build failed with exit code {return_code}.")
-    public_dir = ROOT / "public_upload"
+    public_dir = ROOT / "dist"
     if not public_dir.exists():
-        raise BackendError("public_upload was not created by the build.")
+        raise BackendError("dist was not created by the build.")
     deploy_dir = ROOT / "deploy"
     deploy_dir.mkdir(exist_ok=True)
     stamp = datetime.now(timezone.utc).strftime("%Y%m%d-%H%M%S")
@@ -7553,7 +7551,7 @@ def public_upload_entries(limit: int = 200) -> list[dict[str, Any]]:
 
 def create_public_upload_archive(line_callback: Callable[[str], None] | None = None) -> dict[str, Any]:
     if not PUBLIC_UPLOAD_DIR.exists():
-        raise BackendError('public_upload folder does not exist yet. Run a build first.')
+        raise BackendError('dist folder does not exist yet. Run a build first.')
     deploy_dir = ROOT / 'deploy'
     deploy_dir.mkdir(exist_ok=True)
     stamp = datetime.now(timezone.utc).strftime('%Y%m%d-%H%M%S')

@@ -50,7 +50,6 @@ PATCH_INCLUDE_PREFIXES = (
     "scripts/control_panel",
     "scripts/qt_backend.py",
     "scripts/services/",
-    "scripts/_legacy_tk/",
     "scripts/package_control_panel_release.py",
     "scripts/verify_control_panel_package.py",
     "scripts/control_panel_scope_guard.py",

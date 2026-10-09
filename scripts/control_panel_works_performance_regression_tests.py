@@ -15,7 +15,7 @@ from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
 SCRIPTS = ROOT / "scripts"
-IGNORE_NAMES = {".git", ".venv", "venv", "node_modules", "__pycache__", ".pytest_cache", "deploy", "dist", "public_upload", ".stillmrk-build", ".quietlens-build"}
+IGNORE_NAMES = {".git", ".venv", "venv", "node_modules", "__pycache__", ".pytest_cache", "deploy", "dist", "dist", ".stillmrk-build", ".quietlens-build"}
 
 
 def _enable_venv_site_packages() -> None:
@@ -99,7 +99,7 @@ def _inside_fixture() -> dict[str, Any]:
     record("works list avoids source scan in fast mode", "fast_work_completeness_score" in backend_source and "No source-tree scan" in backend_source)
     record("work validation is debounced", "schedule_work_validation" in control_source and "_work_validation_timer" in control_source)
     record("work preview pixmaps are cached", "_work_preview_pixmap_cache" in control_source and "_scaled_work_preview_pixmap" in control_source)
-    record("public upload data.js is copied explicitly after build", "data_source = ROOT / 'assets/js/data.js'" in build_source and "data_target = PUBLIC_UPLOAD_DIR / 'assets/js/data.js'" in build_source and "Public upload integrity failed" in build_source)
+    record("dist data.js is written by the build and integrity-checked", "write_dist_file('assets/js/data.js'" in build_source and "Build integrity failed" in build_source)
     record("preview verification enforces live data.js path", 'PUBLIC_UPLOAD_DIR / "assets" / "js" / "data.js"' in backend_source and 'Build output integrity failed' in backend_source)
 
     record("works list uses QTableView model path", "QTableView" in control_source and "self.work_table.setModel(self._works_model)" in control_source and "_works_model_view_enabled" in control_source)

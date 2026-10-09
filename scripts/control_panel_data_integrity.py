@@ -185,7 +185,7 @@ def detect_orphaned_assets(root: Path = ROOT) -> list[dict[str, str]]:
     """Find likely image assets in source/generated folders with no active work stem."""
     known = _known_asset_stems(root)
     candidates: list[Path] = []
-    for base_name in ("assets", "public_upload", ".stillmrk-build"):
+    for base_name in ("assets", "dist", ".stillmrk-build"):
         base = root / base_name
         if not base.exists():
             continue

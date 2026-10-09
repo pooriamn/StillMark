@@ -32,7 +32,6 @@ EDITABLE_PATH_PREFIXES: tuple[str, ...] = (
     "scripts/control_panel_",
     "scripts/control_panel_tabs/",
     "scripts/services/",
-    "scripts/_legacy_tk/",
     "scripts/package_control_panel_release.py",
     "scripts/verify_control_panel_package.py",
     "scripts/control_panel_scope_guard.py",
@@ -48,7 +47,7 @@ EDITABLE_PATH_PREFIXES: tuple[str, ...] = (
 
 PROTECTED_PATH_PREFIXES: tuple[str, ...] = (
     "content/",
-    "public_upload/",
+    "dist/",
     "assets/css/",
     "assets/js/",
     "assets/icons/",
@@ -173,9 +172,9 @@ def iter_project_files(*, include_protected_only: bool = False) -> Iterable[Path
             for name in dirnames:
                 rel_dir = normalize_rel(current / name)
                 if (
-                    rel_dir in {"content", "public_upload", "assets", "assets/css", "assets/js", "assets/icons", "assets/documents"}
+                    rel_dir in {"content", "dist", "assets", "assets/css", "assets/js", "assets/icons", "assets/documents"}
                     or rel_dir.startswith("content/")
-                    or rel_dir.startswith("public_upload/")
+                    or rel_dir.startswith("dist/")
                     or rel_dir.startswith("assets/css/")
                     or rel_dir.startswith("assets/js/")
                     or rel_dir.startswith("assets/icons/")

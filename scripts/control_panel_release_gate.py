@@ -97,7 +97,7 @@ def run_final_release_gate(*, gui_smoke: bool = False, write_report: bool = True
         _python_command("scripts/verify_control_panel_package.py"),
         _python_command("scripts/control_panel_smoke_tests.py"),
         _python_command("scripts/control_panel_behavior_tests.py"),
-        _python_command("scripts/control_panel_phase_20_25_regression_tests.py"),
+        [sys.executable, "-m", "pytest", "-q"],
         _python_command("scripts/control_panel_work_gallery_stability_tests.py"),
     ]
     if gui_smoke:

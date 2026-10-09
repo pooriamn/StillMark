@@ -20,4 +20,4 @@ class AssetService:
         return self.root / ".stillmrk-build" / "meta"
 
     def public_image_dirs(self) -> list[Path]:
-        return [path for path in [self.assets_dir / "images", self.root / "public_upload" / "assets" / "images"] if path.exists()]
+        return [path for path in [self.assets_dir / "images", self.root / "dist" / "assets" / "images"] if path.exists()]

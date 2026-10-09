@@ -17,7 +17,7 @@ class PublishService:
 
     @property
     def public_upload_dir(self) -> Path:
-        return self.root / "public_upload"
+        return self.root / "dist"
 
     def release_report_path(self) -> Path:
         return self.build_dir / "meta" / "release-report.json"

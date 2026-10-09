@@ -1293,7 +1293,7 @@ class ReleaseAdminDialog(QDialog):
         open_target_btn.clicked.connect(self.open_selected_graph_target)
         open_file_btn = QPushButton("Open selected file")
         open_file_btn.clicked.connect(self.open_selected_upload_file)
-        open_folder_btn = QPushButton("Open public_upload folder")
+        open_folder_btn = QPushButton("Open dist folder")
         open_folder_btn.clicked.connect(self.open_public_upload_folder)
         make_zip_btn = QPushButton("Create upload zip")
         make_zip_btn.clicked.connect(self.create_upload_zip)
@@ -1472,7 +1472,7 @@ class ReleaseAdminDialog(QDialog):
     def update_upload_detail(self) -> None:
         item = self.upload_tree.currentItem()
         if item is None:
-            self.upload_detail.setPlainText('Select a public_upload file to inspect it.')
+            self.upload_detail.setPlainText('Select a dist file to inspect it.')
             return
         row = item.data(0, Qt.ItemDataRole.UserRole) or {}
         lines = [
@@ -1493,7 +1493,7 @@ class ReleaseAdminDialog(QDialog):
             webbrowser.open(path.resolve().as_uri())
 
     def open_public_upload_folder(self) -> None:
-        path = ROOT / 'public_upload'
+        path = ROOT / 'dist'
         path.mkdir(exist_ok=True)
         webbrowser.open(path.resolve().as_uri())
 
@@ -13244,7 +13244,7 @@ class ControlPanelWindow(QMainWindow):
     def studio_page_preview_target(self, page_key: str) -> Path:
         key = (page_key or "home").strip() or "home"
         filename = "index.html" if key == "home" else f"{key}.html"
-        public_target = ROOT / "public_upload" / filename
+        public_target = ROOT / "dist" / filename
         if public_target.exists():
             return public_target
         return ROOT / filename
@@ -13960,7 +13960,7 @@ class ControlPanelWindow(QMainWindow):
             self.publish_stepper.set_tooltips([
                 f"Cached check state · source blockers: {len(source_blockers)}",
                 "Package is enabled after Check passes." if not has_archive else f"Archive ready: {archive_hint}",
-                "Open or copy public_upload after packaging." if has_archive else "Locked until Package succeeds.",
+                "Open or copy dist after packaging." if has_archive else "Locked until Package succeeds.",
             ])
             if hasattr(self, "publish_package_btn"):
                 self.publish_package_btn.setEnabled(check_passed)
@@ -14026,7 +14026,7 @@ class ControlPanelWindow(QMainWindow):
             checklist = [
                 ("Check", "ok" if not errors and not source_blockers else "error", f"{len(errors)} validation blocker(s), {len(source_blockers)} source blocker(s), {len(warnings)} warning(s)"),
                 ("Package", "error" if build_failed else "ok" if has_build else "warning", f"{len(archives)} archive(s) available" if has_build else "Run Package after Check passes"),
-                ("Upload", "ok" if has_build else "locked", "Open or copy public_upload after packaging" if has_build else "Locked until Package succeeds"),
+                ("Upload", "ok" if has_build else "locked", "Open or copy dist after packaging" if has_build else "Locked until Package succeeds"),
             ]
             for label, state, detail in checklist:
                 item = QTreeWidgetItem([label, state, detail])
@@ -14794,10 +14794,10 @@ class ControlPanelWindow(QMainWindow):
             self.status_message("Publish check blocked")
 
     def copy_public_upload_path(self) -> None:
-        path = ROOT / "public_upload"
+        path = ROOT / "dist"
         path.mkdir(exist_ok=True)
         QApplication.clipboard().setText(str(path.resolve()))
-        self.status_message("Copied public_upload path")
+        self.status_message("Copied dist path")
         self.push_notification("success", "Upload path copied", str(path.resolve()), target_scope="publish")
 
     def run_build_site(self) -> None:
@@ -14881,7 +14881,7 @@ class ControlPanelWindow(QMainWindow):
         super().customEvent(event)
 
     def _snapshot_public_upload(self) -> dict[str, tuple[int, int]]:
-        root_path = ROOT / "public_upload"
+        root_path = ROOT / "dist"
         snapshot: dict[str, tuple[int, int]] = {}
         if not root_path.exists():
             return snapshot
@@ -14892,7 +14892,7 @@ class ControlPanelWindow(QMainWindow):
                     stat = path.stat()
                     snapshot[rel] = (int(stat.st_mtime_ns), int(stat.st_size))
                 except Exception as exc:
-                    self._log_warning(f"Could not snapshot public_upload file: {exc}")
+                    self._log_warning(f"Could not snapshot dist file: {exc}")
         return snapshot
 
     def _summarize_public_upload_diff(self) -> str:
@@ -14903,10 +14903,10 @@ class ControlPanelWindow(QMainWindow):
         self._last_public_upload_diff = {"changed": changed, "removed": removed}
         total = len(changed) + len(removed)
         if not total:
-            return "No public_upload file changes detected."
+            return "No dist file changes detected."
         sample = changed[:8] + [f"removed: {p}" for p in removed[:4]]
         suffix = "" if total <= len(sample) else f" … +{total - len(sample)} more"
-        return f"{total} public_upload file(s) changed: " + ", ".join(sample) + suffix
+        return f"{total} dist file(s) changed: " + ", ".join(sample) + suffix
 
     def set_build_triggers_enabled(self, enabled: bool) -> None:
         for action in list(getattr(self, "_build_trigger_actions", [])):
@@ -15211,10 +15211,10 @@ class ControlPanelWindow(QMainWindow):
         webbrowser.open(path.resolve().as_uri())
 
     def open_public_upload_folder(self) -> None:
-        path = ROOT / 'public_upload'
+        path = ROOT / 'dist'
         path.mkdir(exist_ok=True)
         webbrowser.open(path.resolve().as_uri())
-        self.status_message('Opened public_upload folder')
+        self.status_message('Opened dist folder')
 
     def show_release_gate_summary(self) -> None:
         try:
@@ -15302,7 +15302,7 @@ class ControlPanelWindow(QMainWindow):
             if archive:
                 self._last_publish_archive = archive
                 self.append_build_log_line(f"✓ Upload archive ready: {Path(archive).name}")
-            self.push_notification('success', 'Upload archive prepared', f"{Path(archive).name if archive else 'Archive ready'} · {count} public_upload file(s)", target_scope='publish')
+            self.push_notification('success', 'Upload archive prepared', f"{Path(archive).name if archive else 'Archive ready'} · {count} dist file(s)", target_scope='publish')
             self.refresh_release_artifacts()
             self._set_publish_workflow_state()
             self.status_message('Upload archive prepared')
@@ -16809,14 +16809,14 @@ class ControlPanelWindow(QMainWindow):
             "build": ("Build site", self.run_build_site, "Run build_site.py and stream the log."),
             "prepare_publish": ("Prepare publish", self.run_prepare_publish, "Generate OG images, build the site, and create a deploy zip."),
             "preview": ("Open preview", self.open_preview, "Open the generated public preview in a browser."),
-            "release_workspace": ("Open release workspace", self.open_release_workspace, "Inspect release report, content graph, upload manifest, and public_upload files."),
-            "create_upload_zip": ("Create upload zip", self.create_upload_zip, "Package the public_upload folder into a host-ready upload archive."),
+            "release_workspace": ("Open release workspace", self.open_release_workspace, "Inspect release report, content graph, upload manifest, and dist files."),
+            "create_upload_zip": ("Create upload zip", self.create_upload_zip, "Package the dist folder into a host-ready upload archive."),
             "release_gate": ("Release gate summary", self.show_release_gate_summary, "Show blocking errors, warnings, and publish readiness before packaging."),
-            "public_diff": ("Public output diff", self.show_public_output_diff, "Compare public_upload against the last saved output snapshot."),
+            "public_diff": ("Public output diff", self.show_public_output_diff, "Compare dist against the last saved output snapshot."),
             "release_snapshot": ("Create release snapshot", self.create_named_release_snapshot, "Create a named content/control metadata snapshot before risky release work."),
             "focus_next_zone": ("Focus next zone", self._focus_next_zone, "Cycle keyboard focus through toolbar, side nav, current editor, and status bar."),
             "focus_previous_zone": ("Focus previous zone", lambda: self._focus_next_zone(reverse=True), "Cycle keyboard focus backward through toolbar, side nav, current editor, and status bar."),
-            "open_public_upload": ("Open public_upload folder", self.open_public_upload_folder, "Open the generated upload folder that should be pushed to your host."),
+            "open_public_upload": ("Open dist folder", self.open_public_upload_folder, "Open the generated upload folder that should be pushed to your host."),
             "notifications": ("Open notification center", self.open_notification_center, "Review task results, errors, saves, and queued actions."),
             "validation": ("Refresh validation", self.refresh_validation, "Re-scan works, series, and pages for issues."),
             "open_validation_item": ("Open selected validation item", self.open_selected_validation_item, "Open the currently selected validation issue in its editor."),
@@ -17039,16 +17039,15 @@ class ControlPanelWindow(QMainWindow):
     def run_control_panel_regression_checks(self) -> None:
         """Phase 20: run sandbox-safe control-panel regression contracts."""
         commands = [
-            [sys.executable, "scripts/control_panel_regression_tests.py"],
+            [sys.executable, "-m", "pytest", "-q"],
             [sys.executable, "scripts/control_panel_backend_regression_tests.py"],
-            [sys.executable, "scripts/control_panel_phase_11_15_regression_tests.py"],
-            [sys.executable, "scripts/control_panel_batch_d_regression_tests.py"],
+            [sys.executable, "scripts/control_panel_smoke_tests.py"],
         ]
         output: list[str] = []
         ok = True
         for command in commands:
             try:
-                result = subprocess.run(command, cwd=ROOT, text=True, capture_output=True, timeout=45)
+                result = subprocess.run(command, cwd=ROOT, text=True, capture_output=True, timeout=900)
             except Exception as exc:
                 ok = False
                 output.append(f"{' '.join(command)}\n{exc}")
@@ -17266,7 +17265,7 @@ class ControlPanelWindow(QMainWindow):
         tips = {
             "Refresh": "Reload control-panel data from disk. Unsaved editor changes are checked first.",
             "Add image": "Ingest a new source image and create a work record.",
-            "Build site": "Regenerate the static website into public_upload.",
+            "Build site": "Regenerate the static website into dist.",
             "Prepare publish": "Run the publish preparation workflow and create release artifacts.",
             "Open preview": "Open the local generated preview in your browser.",
             "Search": "Search works, series, pages, and authority documents.",
