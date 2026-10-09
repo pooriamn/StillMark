@@ -1,2 +1,4 @@
-@echo off
-python preview_server.py
+@echo off
+cd /d "%~dp0"
+python preview_server.py %*
+pause

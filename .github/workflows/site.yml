@@ -1,0 +1,99 @@
+# Validate, build and test on every push and pull request.
+# On pushes to main the built site is deployed to Cloudflare Pages; other
+# branches and pull requests get their own preview URL.
+#
+# One-time setup (GitHub repo → Settings → Secrets and variables → Actions):
+#   CLOUDFLARE_API_TOKEN   token with "Cloudflare Pages: Edit" permission
+#   CLOUDFLARE_ACCOUNT_ID  your Cloudflare account ID
+#   and a variable CLOUDFLARE_PAGES_PROJECT (e.g. "stillmark")
+# Until those exist the deploy job is skipped and everything else still runs.
+name: Site
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: site-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: requirements*.txt
+
+      - name: Install dependencies
+        run: pip install -r requirements-dev.txt
+
+      # Rendering every derivative takes minutes; restoring the cache makes a
+      # normal content change build in seconds. The key changes whenever an
+      # original image or the image pipeline settings change.
+      - name: Restore image derivative cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            assets/images/generated
+            assets/images/social
+            .stillmrk-build/og-stamps.json
+          key: derivatives-${{ hashFiles('assets/images/originals/**', 'content/image-pipeline.yaml') }}
+          restore-keys: derivatives-
+
+      - name: Validate content
+        run: python build_site.py --validate-only
+
+      - name: Content doctor
+        run: python scripts/content_doctor.py --strict
+
+      - name: Build and test
+        run: python -m pytest -q
+
+      - name: Upload built site
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/
+          retention-days: 14
+
+  deploy:
+    needs: build
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      deployments: write
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      PROJECT: ${{ vars.CLOUDFLARE_PAGES_PROJECT }}
+    steps:
+      - name: Check deploy settings
+        id: settings
+        run: |
+          if [ -n "$CLOUDFLARE_API_TOKEN" ] && [ -n "$CLOUDFLARE_ACCOUNT_ID" ] && [ -n "$PROJECT" ]; then
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "::notice::Deploy skipped: add CLOUDFLARE_API_TOKEN, CLOUDFLARE_ACCOUNT_ID and CLOUDFLARE_PAGES_PROJECT to enable it."
+          fi
+
+      - uses: actions/download-artifact@v4
+        if: steps.settings.outputs.ready == 'true'
+        with:
+          name: dist
+          path: dist
+
+      - name: Deploy to Cloudflare Pages
+        if: steps.settings.outputs.ready == 'true'
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy dist --project-name=${{ vars.CLOUDFLARE_PAGES_PROJECT }} --branch=${{ github.head_ref || github.ref_name }}

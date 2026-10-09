@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
-set -e
+# Build the site into dist/. Upload the contents of dist/ to the host,
+# or push to GitHub and let the deploy workflow publish it.
+set -euo pipefail
+cd "$(dirname "$0")"
 python3 build_site.py
-printf '
-Upload the contents of ./public_upload to your host.
-'
+printf "\nUpload the contents of ./dist to your host.\n"

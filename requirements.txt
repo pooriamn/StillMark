@@ -1,0 +1,4 @@
+# Everything needed to build the public site (python build_site.py).
+PyYAML>=6.0,<7
+Pillow>=10.0,<13
+jsonschema>=4.18,<5

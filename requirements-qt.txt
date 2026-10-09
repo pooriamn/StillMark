@@ -1,3 +1,3 @@
+# The desktop control panel needs the site build dependencies plus Qt.
+-r requirements.txt
 PySide6>=6.8,<7
-PyYAML>=6.0,<7
-Pillow>=10.0,<12

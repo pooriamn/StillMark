@@ -1,4 +1,11 @@
-@echo off
-python build_site.py
-echo.
-echo Upload the contents of the public_upload folder to your host.
+@echo off
+cd /d "%~dp0"
+python build_site.py
+if errorlevel 1 (
+  echo Build failed. See the messages above.
+  pause
+  exit /b 1
+)
+echo.
+echo Upload the contents of the dist folder to your host.
+pause

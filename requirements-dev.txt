@@ -1,0 +1,3 @@
+# Tests and local quality checks.
+-r requirements.txt
+pytest>=8,<9

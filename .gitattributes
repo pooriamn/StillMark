@@ -1,0 +1,11 @@
+# Keep scripts runnable on every OS regardless of the editor's line endings.
+* text=auto
+*.sh  text eol=lf
+*.py  text eol=lf
+*.bat text eol=crlf
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.webp binary
+*.pdf binary
+*.ico binary
