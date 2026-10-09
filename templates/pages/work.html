@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% from "partials/picture.html" import picture %}
+{% block main %}
+<article class="work wrap">
+  <nav class="crumbs" aria-label="Breadcrumb">
+    <a href="/portfolio.html">Portfolio</a><span aria-hidden="true">/</span>
+    {%- if series %}<a href="{{ series_path(series.slug) }}">{{ series.title }}</a>{% endif %}
+  </nav>
+  <figure class="work__figure">
+    {%- if work.responsiveBase %}
+    <button class="work__open frame" type="button" style="--ratio: {{ work.width }} / {{ work.height }};" data-viewer-open data-viewer-src="{{ image_path(work, largest_available_width(work), 'jpg') }}" aria-label="View {{ work.title }} full screen">
+      {{ picture(work, "(min-width: 60rem) 72vw, 100vw", loading="eager", priority="high") }}
+    </button>
+    {%- else %}
+    {{ picture(work, "100vw") }}
+    {%- endif %}
+  </figure>
+  <div class="work__body">
+    <header>
+      {%- if series %}<p class="work__position">{{ position }} of {{ total }} in <a class="text-link" href="{{ series_path(series.slug) }}">{{ series.title }}</a></p>{% endif %}
+      <h1 class="work__title">{{ work.title }}</h1>
+    </header>
+    <div class="work__text">
+      {%- for paragraph in caption_paragraphs %}
+      <p>{{ paragraph }}</p>
+      {%- endfor %}
+      {%- if facts %}
+      <dl class="facts">
+        {%- for label, value in facts %}
+        <div><dt>{{ label }}</dt><dd>{{ value }}</dd></div>
+        {%- endfor %}
+      </dl>
+      {%- endif %}
+      <div class="actions">
+        <a class="button" href="{{ inquiry_href }}">Ask about this photograph</a>
+      </div>
+    </div>
+  </div>
+  {%- if previous or following %}
+  <nav class="pager" aria-label="More from {{ series.title if series else 'this series' }}">
+    {%- if previous %}
+    <a rel="prev" href="{{ work_path(previous.id) }}"><span class="pager__label">Previous</span><span class="pager__title">{{ previous.title }}</span></a>
+    {%- endif %}
+    {%- if following %}
+    <a rel="next" href="{{ work_path(following.id) }}"><span class="pager__label">Next</span><span class="pager__title">{{ following.title }}</span></a>
+    {%- endif %}
+  </nav>
+  {%- endif %}
+</article>
+{% endblock %}
+{% block after %}
+<dialog class="viewer" data-viewer aria-label="{{ work.title }}, full screen">
+  <button class="viewer__close" type="button" data-viewer-close>Close</button>
+  <img src="" alt="">
+</dialog>
+{% endblock %}

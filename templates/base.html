@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html lang="en">
+{% include "partials/head.html" %}
+<body data-page="{{ page_key }}">
+  <a class="skip-link" href="#main">Skip to content</a>
+  {% include "partials/header.html" %}
+  <main id="main">
+    {% block main %}{% endblock %}
+  </main>
+  {% include "partials/footer.html" %}
+  {% block after %}{% endblock %}
+  <script type="module" src="/assets/js/site.js"></script>
+</body>
+</html>

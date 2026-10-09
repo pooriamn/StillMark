@@ -1,0 +1,13 @@
+<header class="site-header" data-site-header>
+  <div class="wrap site-header__inner">
+    <a class="wordmark" href="/" aria-label="{{ site_name }}, home">{{ site_name }}</a>
+    <button class="menu-button" type="button" aria-expanded="false" aria-controls="site-nav" data-menu-button>Menu</button>
+    <nav class="site-nav" id="site-nav" aria-label="Main">
+      <ul>
+        {%- for item in nav %}
+        <li><a href="{{ item.href }}"{% if item.page == nav_section %} aria-current="page"{% endif %}>{{ item.label }}</a></li>
+        {%- endfor %}
+      </ul>
+    </nav>
+  </div>
+</header>

@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% from "partials/picture.html" import picture %}
+{% block main %}
+<section class="opening wrap" aria-labelledby="opening-title">
+  {%- if hero.work %}
+  <div class="opening__frame">
+    <figure class="frame" style="--ratio: {{ hero.work.width }} / {{ hero.work.height }};">
+      {{ picture(hero.work, "(min-width: 60rem) 70vw, 100vw", loading="eager", priority="high") }}
+    </figure>
+  </div>
+  {%- endif %}
+  <div class="opening__text">
+    <h1 class="opening__title" id="opening-title">{{ hero.title }}</h1>
+    <div class="opening__lead">
+      {%- for paragraph in hero.lead %}
+      <p>{{ paragraph }}</p>
+      {%- endfor %}
+      <div class="actions">
+        {%- for action in hero.actions %}
+        <a class="text-link" href="{{ action.href }}">{{ action.label }}</a>
+        {%- endfor %}
+      </div>
+      {%- if hero.work %}
+      <p class="opening__caption">Above: <a class="text-link" href="{{ work_path(hero.work.id) }}">{{ hero.work.title }}</a>, from {{ hero.series_title }}</p>
+      {%- endif %}
+    </div>
+  </div>
+</section>
+
+<section class="home-section wrap" aria-labelledby="series-title">
+  <div class="section-head">
+    <h2 id="series-title">Series</h2>
+    {%- if programme_intro %}<p>{{ programme_intro }}</p>{% endif %}
+  </div>
+  <ol class="programme">
+    {%- for row in programme %}
+    <li class="programme__row">
+      <a class="programme__link" href="{{ row.href }}">
+        <span class="programme__title">{{ row.title }}</span>
+        <span class="programme__slot" aria-hidden="true">
+          {%- if row.cover %}<span class="programme__cover frame">{{ picture(row.cover, "22rem") }}</span>{% endif -%}
+        </span>
+        <span class="programme__facts">{{ row.count }} photograph{{ "" if row.count == 1 else "s" }}{% if row.years %}<br>{{ row.years }}{% endif %}</span>
+      </a>
+    </li>
+    {%- endfor %}
+  </ol>
+</section>
+
+{%- if selected %}
+<section class="home-section wrap" aria-labelledby="selected-title">
+  <div class="section-head">
+    <h2 id="selected-title">Selected works</h2>
+    {%- if selected_intro %}<p>{{ selected_intro }}</p>{% endif %}
+  </div>
+  <ul class="wall">
+    {%- for item in selected %}
+    <li class="wall__item">
+      <a class="wall__link" href="{{ work_path(item.work.id) }}">
+        <figure class="frame">{{ picture(item.work, "(min-width: 48rem) 55vw, 100vw") }}</figure>
+        <span class="wall__title">{{ item.work.title }}</span>
+        <span class="wall__meta">{{ item.series_title }}</span>
+      </a>
+    </li>
+    {%- endfor %}
+  </ul>
+</section>
+{%- endif %}
+
+{%- if statement %}
+<section class="home-section wrap" aria-labelledby="statement-title">
+  <div class="statement">
+    <h2 id="statement-title">{{ statement.title }}</h2>
+    <p>{{ statement.text }}</p>
+    <div class="actions">
+      {%- for action in statement.actions %}
+      <a class="text-link" href="{{ action.href }}">{{ action.label }}</a>
+      {%- endfor %}
+    </div>
+  </div>
+</section>
+{%- endif %}
+{% endblock %}

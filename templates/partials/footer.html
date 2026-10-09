@@ -1,0 +1,10 @@
+<footer class="site-footer">
+  <div class="wrap site-footer__inner">
+    <p>© {{ year }} {{ artist_name }}</p>
+    <div class="site-footer__links">
+      {%- if email %}<a href="mailto:{{ email }}">{{ email }}</a>{% endif %}
+      {%- for link in social_links %}<a href="{{ link.href }}" rel="noreferrer">{{ link.label }}</a>{% endfor %}
+      {%- if analytics_id %}<button type="button" data-consent-settings>Cookie settings</button>{% endif %}
+    </div>
+  </div>
+</footer>
