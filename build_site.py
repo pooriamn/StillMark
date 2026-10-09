@@ -18,7 +18,7 @@ from typing import Any
 
 import yaml
 from jsonschema import Draft202012Validator
-from PIL import Image, ImageOps, ImageDraw, ImageFont
+from PIL import Image, ImageOps, ImageDraw, ImageFont, features as pil_features
 
 try:
     from scripts.og_images import ensure_og_images_from_content
@@ -45,7 +45,7 @@ SOURCE_EXTENSIONS = ('.jpg', '.jpeg', '.png', '.webp', '.tif', '.tiff')
 BUILD_STATE_DIR = ROOT / '.stillmrk-build'
 ASSET_MANIFEST_PATH = BUILD_STATE_DIR / 'responsive-assets.json'
 ASSET_QUARANTINE_ROOT = BUILD_STATE_DIR / 'quarantine' / 'generated-images'
-IMAGE_DERIVATIVE_EXTENSIONS = {'.jpg', '.jpeg', '.webp'}
+IMAGE_DERIVATIVE_EXTENSIONS = {'.jpg', '.jpeg', '.webp', '.avif'}
 BUILD_META_DIR = BUILD_STATE_DIR / 'meta'
 BUILD_STATUS_PATH = BUILD_META_DIR / 'build-status.json'
 CONTENT_GRAPH_PATH = BUILD_META_DIR / 'content-graph.json'
@@ -713,6 +713,30 @@ def validate_runtime_store(store: dict[str, Any]) -> None:
         bullet_list = '\n'.join(f'- {message}' for message in errors)
         raise ValueError(f'Content validation failed:\n{bullet_list}')
 
+_MD_STRONG = re.compile(r'\*\*(?=\S)(.+?)(?<=\S)\*\*')
+_MD_EM = re.compile(r'(?<![\w*])[*_](?=\S)(.+?)(?<=\S)[*_](?![\w*])')
+
+
+def md_inline(value: Any) -> str:
+    """Escape text, then render **strong** and *emphasis* (used for play titles)."""
+    text = esc(value)
+    text = _MD_STRONG.sub(r'<strong>\1</strong>', text)
+    return _MD_EM.sub(r'<em>\1</em>', text)
+
+
+RAW_CAPTIONS: dict[str, str] = {}
+
+
+def caption_html(work: dict[str, Any]) -> str:
+    return md_inline(RAW_CAPTIONS.get(work.get('id', ''), work.get('caption') or ''))
+
+
+def md_plain(value: Any) -> str:
+    """Strip markdown emphasis markers for meta tags and plain-text contexts."""
+    text = _MD_STRONG.sub(r'\1', str(value or ''))
+    return _MD_EM.sub(r'\1', text).strip()
+
+
 def esc(value: Any) -> str:
     return html.escape(str(value), quote=True)
 
@@ -1159,10 +1183,24 @@ def source_dimensions(source_path: Path) -> tuple[int, int]:
     return width, height
 
 
+# Public derivatives never exceed this width. Larger files add weight but no
+# visible detail on any screen, and they hand out near-original resolution.
+MAX_DERIVATIVE_WIDTH = 2560
+# AVIF is ~30% smaller than WebP at the same quality but slow to encode, so it
+# is produced for the widths browsers actually request in grids and heroes.
+AVIF_MAX_WIDTH = 1600
+AVIF_ENABLED = bool(pil_features.check('avif'))
+
+
 def derivative_widths(intrinsic_width: int) -> list[int]:
-    widths = [width for width in RESPONSIVE_WIDTHS if width < intrinsic_width]
-    widths.append(intrinsic_width)
+    top = min(int(intrinsic_width), MAX_DERIVATIVE_WIDTH)
+    widths = [width for width in RESPONSIVE_WIDTHS if width < top]
+    widths.append(top)
     return sorted(set(int(width) for width in widths))
+
+
+def avif_widths_for(widths: list[int]) -> list[int]:
+    return [width for width in widths if width <= AVIF_MAX_WIDTH] if AVIF_ENABLED else []
 
 
 def ensure_responsive_assets(work_entry: dict[str, Any], generated_assets: set[str]) -> dict[str, Any]:
@@ -1189,54 +1227,76 @@ def ensure_responsive_assets(work_entry: dict[str, Any], generated_assets: set[s
         )
         return build_empty_image_meta(work_entry, image_config, str(exc))
 
-    intrinsic_width, intrinsic_height = source_dimensions(source_path)
-    target_widths = derivative_widths(intrinsic_width)
-
     series_slug = str(image_config.get('series') or resolve_series_slug_for_work(work_entry) or 'unassigned').strip() or 'unassigned'
     render_slug = str(image_config.get("render_name") or work_entry.get('render_name') or work_entry["id"]).strip().replace("\\", "/").strip("/")
     render_name = render_slug.replace('/', '-') or work_entry['id']
     work_output_dir = current_generated_root() / series_slug / render_name
     responsive_base_path = work_output_dir / render_name
+    stamp_path = work_output_dir / IMAGE_STAMP_NAME
+    previous = _read_json(stamp_path) or {}
+    source_stat = source_path.stat()
+    same_file = (
+        previous.get('source') == relative_asset_path(source_path)
+        and previous.get('source_size') == source_stat.st_size
+        and previous.get('source_mtime_ns') == source_stat.st_mtime_ns
+    )
+    # Reading dimensions (and EXIF orientation) can force a full decode for
+    # PNGs, so unchanged files reuse the size recorded at the last render.
+    if same_file and isinstance(previous.get('width'), int) and isinstance(previous.get('height'), int):
+        intrinsic_width, intrinsic_height = previous['width'], previous['height']
+    else:
+        intrinsic_width, intrinsic_height = source_dimensions(source_path)
+    target_widths = derivative_widths(intrinsic_width)
 
     jpg_quality = int(IMAGE_PIPELINE.get("jpg_quality", DEFAULT_IMAGE_PIPELINE["jpg_quality"]))
     webp_quality = int(IMAGE_PIPELINE.get("webp_quality", DEFAULT_IMAGE_PIPELINE["webp_quality"]))
+    avif_quality = int(IMAGE_PIPELINE.get("avif_quality", 55))
     force_rebuild = bool(image_config.get("force_rebuild", False))
-    expected_files = [work_output_dir / f"{render_name}-{width}.{ext}" for width in target_widths for ext in ('jpg', 'webp')]
+    avif_target_widths = avif_widths_for(target_widths)
+    planned = [(width, 'jpg') for width in target_widths] + [(width, 'webp') for width in target_widths] + [(width, 'avif') for width in avif_target_widths]
 
     stamp = {
         'source': relative_asset_path(source_path),
-        'source_size': source_path.stat().st_size,
-        'source_mtime_ns': source_path.stat().st_mtime_ns,
-        'widths': target_widths,
+        'source_size': source_stat.st_size,
+        'source_mtime_ns': source_stat.st_mtime_ns,
         'jpg_quality': jpg_quality,
         'webp_quality': webp_quality,
+        'avif_quality': avif_quality,
     }
-    stamp_path = work_output_dir / IMAGE_STAMP_NAME
-    cache_hit = (
-        not force_rebuild
-        and all(path.exists() for path in expected_files)
-        and _read_json(stamp_path) == stamp
-    )
+    same_source = not force_rebuild and all(previous.get(key) == value for key, value in stamp.items())
+    # Same source and settings: only render files that are missing (for
+    # example when a new format or width is introduced). Otherwise re-render all.
+    todo = [(w, ext) for w, ext in planned if not same_source or not (work_output_dir / f"{render_name}-{w}.{ext}").exists()]
 
-    if IMAGE_MODE == 'build' and not cache_hit:
-        # Only decode the source when something actually needs rendering.
+    if IMAGE_MODE == 'build' and todo:
         prepared = prepare_source_image(source_path)
         work_output_dir.mkdir(parents=True, exist_ok=True)
-        for width in target_widths:
-            if width == intrinsic_width:
-                variant = prepared
+        variants: dict[int, Image.Image] = {}
+        for width, ext in todo:
+            variant = variants.get(width)
+            if variant is None:
+                if width == intrinsic_width:
+                    variant = prepared
+                else:
+                    height = max(1, round(intrinsic_height * width / intrinsic_width))
+                    variant = prepared.resize((width, height), Image.Resampling.LANCZOS)
+                variants[width] = variant
+            target = work_output_dir / f"{render_name}-{width}.{ext}"
+            if ext == 'jpg':
+                variant.save(target, format="JPEG", quality=jpg_quality, optimize=True, progressive=True)
+            elif ext == 'webp':
+                variant.save(target, format="WEBP", quality=webp_quality, method=6)
             else:
-                height = max(1, round(intrinsic_height * width / intrinsic_width))
-                variant = prepared.resize((width, height), Image.Resampling.LANCZOS)
-            variant.save(work_output_dir / f"{render_name}-{width}.jpg", format="JPEG", quality=jpg_quality, optimize=True, progressive=True)
-            variant.save(work_output_dir / f"{render_name}-{width}.webp", format="WEBP", quality=webp_quality, method=6)
-        stamp_path.write_text(json.dumps(stamp, indent=2) + "\n", encoding='utf-8')
+                variant.save(target, format="AVIF", quality=avif_quality, speed=6)
         IMAGE_STATS['rendered'] += 1
     else:
         IMAGE_STATS['cached'] += 1
+    if IMAGE_MODE == 'build' and (todo or previous.get('width') != intrinsic_width or previous.get('height') != intrinsic_height):
+        work_output_dir.mkdir(parents=True, exist_ok=True)
+        stamp_path.write_text(json.dumps({**stamp, 'width': intrinsic_width, 'height': intrinsic_height}, indent=2) + "\n", encoding='utf-8')
 
-    for path in expected_files:
-        generated_assets.add(relative_asset_path(path))
+    for width, ext in planned:
+        generated_assets.add(relative_asset_path(work_output_dir / f"{render_name}-{width}.{ext}"))
 
     largest_width = target_widths[-1]
     largest_jpg = work_output_dir / f"{render_name}-{largest_width}.jpg"
@@ -1250,6 +1310,7 @@ def ensure_responsive_assets(work_entry: dict[str, Any], generated_assets: set[s
         "renderName": render_name,
         "seriesSlug": series_slug,
         "imagePending": False,
+        "avifWidths": avif_target_widths,
     }
 
 def normalize_ratio_value(value: Any, fallback: str) -> str:
@@ -1301,6 +1362,7 @@ def normalize_content(raw: dict[str, Any]) -> dict[str, Any]:
         print(f"[STILLMRK build] Processing work {published_index} / {published_total}: {entry.get('id', 'unknown')}", flush=True)
 
         image_meta = ensure_responsive_assets(entry, generated_assets)
+        RAW_CAPTIONS[str(entry["id"])] = str(entry.get('caption') or '').strip()
 
         focal_point = entry.get('focal_point') if isinstance(entry.get('focal_point'), dict) else {}
         default_focal_point = default_focal_point_config()
@@ -1312,7 +1374,9 @@ def normalize_content(raw: dict[str, Any]) -> dict[str, Any]:
             "year": entry["year"],
             "location": entry["location"],
             "alt": entry["alt"],
-            "caption": str(entry.get('caption') or '').strip(),
+            # Plain text everywhere text is set as text (lightbox, summaries,
+            # meta tags); caption_html() renders *emphasis* where HTML is built.
+            "caption": md_plain(entry.get('caption')),
             "medium": str(entry.get('medium') or '').strip(),
             "edition": str(entry.get('edition') or '').strip(),
             "paletteTone": str(entry.get('palette_tone') or '').strip(),
@@ -1342,6 +1406,7 @@ def normalize_content(raw: dict[str, Any]) -> dict[str, Any]:
             "responsiveBase": image_meta.get("responsiveBase"),
             "sourceOriginal": image_meta.get("sourceOriginal"),
             "imagePending": bool(image_meta.get("imagePending", False)),
+            "avifWidths": list(image_meta.get("avifWidths") or []),
             "published": True,
             "declaredSeries": str(entry.get("series") or "").strip(),
         }
@@ -1400,7 +1465,8 @@ def normalize_content(raw: dict[str, Any]) -> dict[str, Any]:
                 "title": series["title"],
                 "years": series["years"],
                 "mood": series["mood"],
-                "description": series["description"],
+                "description": md_plain(series["description"]),
+                "descriptionHtml": md_inline(series["description"]),
                 "coverWorkId": (series.get("cover_work_id") if series.get("cover_work_id") in resolved_work_ids else None) or (resolved_work_ids[0] if resolved_work_ids else None),
                 "cardCoverWorkId": (series.get("card_cover_work_id") if series.get("card_cover_work_id") in resolved_work_ids else None) or ((series.get("cover_work_id") if series.get("cover_work_id") in resolved_work_ids else None) or (resolved_work_ids[0] if resolved_work_ids else None)),
                 "heroWorkId": (series.get("hero_work_id") if series.get("hero_work_id") in resolved_work_ids else None) or ((series.get("cover_work_id") if series.get("cover_work_id") in resolved_work_ids else None) or (resolved_work_ids[0] if resolved_work_ids else None)),
@@ -2068,11 +2134,15 @@ def compareable_title(value: str) -> str:
 
 
 def series_path(slug: str) -> str:
-    return f"series.html?series={slug}"
+    return f"/series/{quote(slug)}/"
+
+
+def work_path(work_id: str) -> str:
+    return f"/works/{quote(work_id)}/"
 
 
 def portfolio_path(slug: str | None = None) -> str:
-    return f"portfolio.html?series={slug}" if slug else "portfolio.html"
+    return f"/portfolio.html?series={quote(slug)}" if slug else "/portfolio.html"
 
 
 def collection_path(slug: str) -> str:
@@ -2113,6 +2183,14 @@ def source_set(work: dict[str, Any], extension: str) -> str:
     if not base:
         return ""
     return ", ".join(f"{base}-{width}.{extension} {width}w" for width in available_widths(work))
+
+
+def avif_source_set(work: dict[str, Any]) -> str:
+    base = work.get("responsiveBase")
+    widths = set(work.get("avifWidths") or [])
+    if not base or not widths:
+        return ""
+    return ", ".join(f"{base}-{width}.avif {width}w" for width in available_widths(work) if width in widths)
 
 
 def aspect_ratio(work: dict[str, Any], context: str = "default") -> str:
@@ -2157,8 +2235,11 @@ def responsive_image_html(work: dict[str, Any], sizes: str, loading: str = "lazy
         """.strip()
 
     if jpg_srcset and webp_srcset:
+        avif_srcset = avif_source_set(work)
+        avif_source = f'<source type="image/avif" srcset="{esc(avif_srcset)}" sizes="{esc(sizes)}">' if avif_srcset else ''
         return f"""
             <picture>
+              {avif_source}
               <source type=\"image/webp\" srcset=\"{esc(webp_srcset)}\" sizes=\"{esc(sizes)}\">
               <img
                 src=\"{esc(image_path(work, preferred_width(work), 'jpg'))}\"
@@ -2325,6 +2406,7 @@ def lightbox_attrs(work: dict[str, Any], series_lookup: dict[str, dict[str, Any]
             f'data-lightbox-caption="{esc(work.get("caption") or "")}"',
             f'data-lightbox-width="{work["width"]}"',
             f'data-lightbox-height="{work["height"]}"',
+            f'data-lightbox-href="{esc(work_path(work["id"]))}"',
         ]
     )
 
@@ -2543,6 +2625,7 @@ def render_lightbox() -> str:
           </div>
           <figcaption class="lightbox__caption" id="lightbox-caption" data-lightbox-caption>
             <strong id="lightbox-title" data-lightbox-title></strong>
+            <a class="lightbox__permalink" data-lightbox-permalink href="#" hidden>Open this photograph's page</a>
             <span id="lightbox-meta" data-lightbox-meta></span>
           </figcaption>
         </figure>
@@ -2624,7 +2707,7 @@ def critical_head_css() -> str:
     """.strip()
 
 
-def page_head(page_key: str, meta: dict[str, str], *, preload_work: dict[str, Any] | None = None, preload_sizes: str | None = None) -> str:
+def page_head(page_key: str, meta: dict[str, str], *, preload_work: dict[str, Any] | None = None, preload_sizes: str | None = None, schema: dict[str, Any] | None = None) -> str:
     preload = ""
     if preload_work:
         webp_srcset = source_set(preload_work, "webp")
@@ -2660,7 +2743,7 @@ def page_head(page_key: str, meta: dict[str, str], *, preload_work: dict[str, An
   <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <script>document.documentElement.classList.add('js'); if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {{ document.documentElement.classList.add('motion-ready'); window.STILLMRK_REVEAL_FALLBACK = window.setTimeout(function () {{ document.documentElement.classList.add('reveal-fallback'); }}, 2400); }} if ('{page_key}' === 'series' && new URLSearchParams(window.location.search).get('series')) {{ document.documentElement.classList.add('series-query-loading'); }}</script>
+    <script>document.documentElement.classList.add('js'); if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {{ document.documentElement.classList.add('motion-ready'); window.STILLMRK_REVEAL_FALLBACK = window.setTimeout(function () {{ document.documentElement.classList.add('reveal-fallback'); }}, 2400); }} {series_redirect_script() if page_key == 'series' else ''}</script>
     <title>{esc(meta['title'])}</title>
     <meta name="description" content="{esc(meta['description'])}">
     <meta name="author" content="Pooria Moozarm Nia, Pooria Mn, پوریا موزرم نیا">
@@ -2696,8 +2779,8 @@ def page_head(page_key: str, meta: dict[str, str], *, preload_work: dict[str, An
     {critical_head_css()}
     <link rel="stylesheet" href="assets/css/styles.css">
     {google_analytics_head()}
-    <script type="application/ld+json" data-base-schema></script>
-    <script type="application/ld+json" data-page-schema></script>
+    <script type="application/ld+json" data-base-schema>{json_ld(base_schema())}</script>
+    <script type="application/ld+json" data-page-schema>{json_ld(schema or page_schema(page_key, meta, canonical_url, social_image))}</script>
   </head>
     """.rstrip()
 
@@ -2760,7 +2843,7 @@ def render_home(store: dict[str, Any]) -> str:
                   <span>{str(count).zfill(2)} works</span>
                 </div>
                 <h3>{esc(series['title'])}</h3>
-                <p>{esc(series['description'])}</p>
+                <p>{series.get('descriptionHtml') or esc(series['description'])}</p>
                 <div class="series-card__footer">
                   <span>{esc(series['mood'])}</span>
                   <a href="{series_path(series['slug'])}">View series</a>
@@ -2989,7 +3072,7 @@ def render_portfolio_grid(store: dict[str, Any], works: list[dict[str, Any]]) ->
                   <span>{esc(work['location'])}</span>
                 </div>
                 <h2 class="work-card__title">{esc(work['title'])}</h2>
-                {f'<p>{esc(work.get("caption") or "")}</p>' if (work.get('caption') or '').strip() else ''}
+                {f'<p>{caption_html(work)}</p>' if (work.get('caption') or '').strip() else ''}
                 <div class="work-card__footer">
                   <span>{esc(work['year'])}</span>
                   <a href="{series_path(work['series'])}">Open series</a>
@@ -3262,20 +3345,22 @@ def render_portfolio(store: dict[str, Any]) -> str:
   </body>
 </html>
 """
-def render_series(store: dict[str, Any]) -> str:
+def render_series(store: dict[str, Any], slug: str | None = None) -> str:
     raw = store["raw"]
     page = raw["pages"]["series"]
     related_series = page.get('related_series') if isinstance(page.get('related_series'), dict) else {}
     inquiry = page.get('inquiry') if isinstance(page.get('inquiry'), dict) else {}
     public_series = store['public_series_list']
     default_series = public_series[0] if public_series else None
+    if slug:
+        default_series = next((item for item in public_series if item['slug'] == slug), None)
     works = [store['works_by_id'][work_id] for work_id in (default_series['_work_ids'] if default_series else []) if work_id in store['works_by_id']]
     cover = None
     if default_series and (default_series.get('cardCoverWorkId') or default_series.get('coverWorkId')) in store['works_by_id']:
         cover = store['works_by_id'][default_series.get('cardCoverWorkId') or default_series['coverWorkId']]
     elif works:
         cover = works[0]
-    page_hero_id = str(((page.get('hero') or {}).get('feature_work_id') if isinstance(page.get('hero'), dict) else '') or '').strip()
+    page_hero_id = '' if slug else str(((page.get('hero') or {}).get('feature_work_id') if isinstance(page.get('hero'), dict) else '') or '').strip()
     public_work_ids = {item['id'] for item in store['site_data']['works']}
     hero_work = store['works_by_id'].get(page_hero_id) if page_hero_id in public_work_ids else None
     if hero_work is None and default_series and (default_series.get('heroWorkId') or default_series.get('coverWorkId')) in store['works_by_id']:
@@ -3288,8 +3373,8 @@ def render_series(store: dict[str, Any]) -> str:
     eyebrow_html = ((esc(page_eyebrow) + ' / ') if page_eyebrow else '') + f'<span data-series-title>{esc(default_series["title"])}</span>' if default_series else '<span data-series-title></span>'
     return f"""<!DOCTYPE html>
 <html lang="en">
-{page_head('series', page['meta'], preload_work=cover if cover else None)}
-  <body data-page="series">
+{page_head('series', series_page_meta(store, page['meta'], default_series, works) if slug else page['meta'], preload_work=cover if cover else None, schema=series_schema(store, default_series, works) if slug else None)}
+  <body data-page="series"{f' data-series-slug="{esc(slug)}"' if slug else ''}>
     {google_analytics_body()}
     <a class="skip-link" href="#main-content">Skip to content</a>
     {render_nav(raw)}
@@ -3301,7 +3386,7 @@ def render_series(store: dict[str, Any]) -> str:
           <div class="series-masthead__copy reveal">
             <p class="eyebrow" data-series-eyebrow-prefix="{esc(page_eyebrow)}">{eyebrow_html}</p>
             <h1 class="display-title" data-series-heading>{esc(default_series['title'] or page.get('hero_title', 'Where Presence Meets Distance'))}</h1>
-            <p class="page-hero__lead" data-series-description data-series-lead-prefix="{esc(page_lead)}">{esc(default_series['description'] or page_lead)}</p>
+            <p class="page-hero__lead" data-series-description data-series-lead-prefix="{esc(page_lead)}">{default_series.get('descriptionHtml') or esc(page_lead)}</p>
             <div class="series-masthead__facts">
               <span data-series-years>{esc(default_series['years'])}</span>
               <span data-series-count>{str(len(works))} works</span>
@@ -3839,7 +3924,9 @@ function getLargestWidth(work) {{
 
 function sourceSet(work, extension) {{
   if (!work?.responsiveBase) return '';
+  const avifWidths = new Set(work.avifWidths || []);
   return getAvailableWidths(work)
+    .filter((width) => extension !== 'avif' || avifWidths.has(width))
     .map((width) => `${{work.responsiveBase}}-${{width}}.${{extension}} ${{width}}w`)
     .join(', ');
 }}
@@ -3917,8 +4004,10 @@ export function buildResponsiveImage(
   }}
 
   if (jpgSrcset && webpSrcset) {{
+    const avifSrcset = sourceSet(work, 'avif');
     return `
       <picture>
+        ${{avifSrcset ? `<source type="image/avif" srcset="${{avifSrcset}}" sizes="${{sizes}}">` : ''}}
         <source type="image/webp" srcset="${{webpSrcset}}" sizes="${{sizes}}">
         <img
           ${{classAttr}}
@@ -3978,6 +4067,7 @@ export function buildLightboxAttributes(
     data-lightbox-meta="${{escapeHtml(buildLightboxMeta(work))}}"
     data-lightbox-width="${{work.width}}"
     data-lightbox-height="${{work.height}}"
+    data-lightbox-href="${{getWorkPath(work.id)}}"
   `;
 }}
 
@@ -3990,12 +4080,16 @@ export function buildAbsoluteUrl(path = '') {{
   }}
 }}
 
+export function getWorkPath(id) {{
+  return `/works/${{encodeURIComponent(id)}}/`;
+}}
+
 export function getSeriesPath(slug) {{
-  return `series.html?series=${{encodeURIComponent(slug)}}`;
+  return `/series/${{encodeURIComponent(slug)}}/`;
 }}
 
 export function getPortfolioPath(slug = '') {{
-  return slug ? `portfolio.html?series=${{encodeURIComponent(slug)}}` : 'portfolio.html';
+  return slug ? `/portfolio.html?series=${{encodeURIComponent(slug)}}` : '/portfolio.html';
 }}
 
 export function getWorkById(id) {{
@@ -4072,7 +4166,7 @@ export function getSeriesNeighbors(slug, {{ includePrivate = false }} = {{}}) {{
 
 
 
-def render_sitemap_xml() -> str:
+def render_sitemap_xml(extra_paths: list[str] | None = None) -> str:
     site_settings = build_site_settings(SITE_CONTENT['site'])
     if not site_settings['allowIndexing'] or not site_settings['siteUrl']:
         return '<!-- STILLMRK sitemap is intentionally disabled for local or non-indexable builds. -->\n'
@@ -4090,6 +4184,8 @@ def render_sitemap_xml() -> str:
         f'  <url><loc>{esc(build_page_url(page_key, SITE_CONTENT["site"]))}</loc><lastmod>{lastmod}</lastmod><changefreq>monthly</changefreq><priority>{priority:.1f}</priority></url>'
         for page_key, priority in page_specs
     )
+    for path in extra_paths or []:
+        body += f'\n  <url><loc>{esc(absolute_url(path.lstrip("/"), site_settings["siteUrl"]))}</loc><lastmod>{lastmod}</lastmod><changefreq>monthly</changefreq><priority>0.6</priority></url>'
     return (
         '<?xml version="1.0" encoding="UTF-8"?>\n'
         '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
@@ -4130,6 +4226,261 @@ def render_robots_txt() -> str:
     return '\n'.join(lines) + '\n'
 
 
+# ─────────────────────────────────────────────────────────────
+# Phase 2: real URLs, build-time structured data, work pages
+# ─────────────────────────────────────────────────────────────
+PUBLIC_SERIES_SLUGS: list[str] = []
+_URL_ATTR = re.compile(r'(?P<name>\b[\w:-]*(?:href|src|srcset))="(?P<value>[^"]*)"', re.IGNORECASE)
+_NON_RELATIVE = ('/', '#', 'http:', 'https:', 'mailto:', 'tel:', 'data:', 'javascript:', 'blob:', '?', '{', '$')
+
+
+def _rootify_url(url: str) -> str:
+    url = url.strip()
+    if not url or url.startswith(_NON_RELATIVE) or '${' in url:
+        return url
+    return '/' + url
+
+
+def rootify_html(html_text: str) -> str:
+    """Make every local URL root-relative so pages work at any depth.
+
+    Pages now live at /series/<slug>/ and /works/<id>/ as well as the root, and
+    404.html is served for any missing path, so 'assets/...' must become
+    '/assets/...'. Absolute URLs, anchors and template placeholders are kept.
+    """
+    def fix(match: re.Match[str]) -> str:
+        name, value = match.group('name'), match.group('value')
+        if name.lower().endswith('srcset'):
+            parts = []
+            for candidate in value.split(','):
+                bits = candidate.strip().split(' ', 1)
+                if bits[0]:
+                    parts.append(' '.join([_rootify_url(bits[0])] + bits[1:]))
+            value = ', '.join(parts)
+        else:
+            value = _rootify_url(value)
+        return f'{name}="{value}"'
+    return _URL_ATTR.sub(fix, html_text)
+
+
+def rootify_data_js(js_text: str) -> str:
+    return re.sub(r'"(assets/[^"]+)"', r'"/\1"', js_text)
+
+
+def json_ld(payload: dict[str, Any]) -> str:
+    return json.dumps(payload, ensure_ascii=False, separators=(',', ':')).replace('</', '<\\/')
+
+
+def _site_url() -> str:
+    return build_site_settings(SITE_CONTENT['site'])['metadataBaseUrl']
+
+
+def base_schema() -> dict[str, Any]:
+    site_url = _site_url()
+    site = SITE_CONTENT['site']
+    artist = SITE_CONTENT['artist']
+    identity = build_public_identity(SITE_CONTENT)
+    person: dict[str, Any] = {
+        '@type': 'Person',
+        '@id': f'{site_url}#person',
+        'name': artist.get('name'),
+        'alternateName': list(artist.get('alternate_names') or site.get('search_names') or []),
+        'jobTitle': artist.get('discipline'),
+        'description': md_plain(artist.get('about')),
+        'url': site_url,
+    }
+    if identity.get('location'):
+        person['homeLocation'] = identity['location']
+    if has_public_contact_email(identity.get('email')):
+        person['email'] = identity['email']
+    if has_public_profile_url(artist.get('instagram')):
+        person['sameAs'] = [artist['instagram']]
+    return {
+        '@context': 'https://schema.org',
+        '@graph': [
+            {
+                '@type': 'WebSite',
+                '@id': f'{site_url}#website',
+                'name': site.get('name'),
+                'description': md_plain(site.get('description')),
+                'url': site_url,
+                'publisher': {'@id': f'{site_url}#person'},
+            },
+            person,
+        ],
+    }
+
+
+def page_schema(page_key: str, meta: dict[str, Any], canonical_url: str, image_url: str) -> dict[str, Any]:
+    site_url = _site_url()
+    page_types = {'home': 'CollectionPage', 'portfolio': 'CollectionPage', 'series': 'CollectionPage',
+                  'performance': 'CollectionPage', 'about': 'ProfilePage', 'contact': 'ContactPage'}
+    schema: dict[str, Any] = {
+        '@context': 'https://schema.org',
+        '@type': page_types.get(page_key, 'WebPage'),
+        'name': meta.get('title'),
+        'description': md_plain(meta.get('description')),
+        'url': canonical_url,
+        'inLanguage': 'en-GB',
+        'image': image_url,
+        'isPartOf': {'@id': f'{site_url}#website'},
+        'author': {'@id': f'{site_url}#person'},
+    }
+    if page_key == 'about':
+        schema['mainEntity'] = {'@id': f'{site_url}#person'}
+    return schema
+
+
+def _image_url(work: dict[str, Any], width: int | None = None) -> str:
+    return absolute_url(image_path(work, width or preferred_width(work, 1600), 'jpg'), _site_url())
+
+
+def series_schema(store: dict[str, Any], series: dict[str, Any] | None, works: list[dict[str, Any]]) -> dict[str, Any] | None:
+    if not series:
+        return None
+    site_url = _site_url()
+    url = absolute_url(series_path(series['slug']).lstrip('/'), site_url)
+    return {
+        '@context': 'https://schema.org',
+        '@type': 'CollectionPage',
+        'name': series['title'],
+        'description': series['description'],
+        'url': url,
+        'isPartOf': {'@id': f'{site_url}#website'},
+        'author': {'@id': f'{site_url}#person'},
+        'about': {'@type': 'CreativeWorkSeries', 'name': series['title'], 'description': series['description'], 'creator': {'@id': f'{site_url}#person'}},
+        'hasPart': [
+            {'@type': 'VisualArtwork', 'name': work['title'], 'url': absolute_url(work_path(work['id']).lstrip('/'), site_url),
+             'image': _image_url(work), 'description': work.get('alt') or ''}
+            for work in works if work.get('responsiveBase')
+        ],
+    }
+
+
+def series_page_meta(store: dict[str, Any], base_meta: dict[str, Any], series: dict[str, Any] | None, works: list[dict[str, Any]]) -> dict[str, Any]:
+    if not series:
+        return base_meta
+    site_name = str(SITE_CONTENT['site'].get('name') or 'STILLMRK')
+    description = summarize_story_text(series['description'], fallback=series.get('mood') or '', limit=158)
+    meta = dict(base_meta)
+    meta.update({
+        'title': f"{series['title']} - {site_name}",
+        'description': description,
+        'og_description': description,
+        'canonical_path': series_path(series['slug']).lstrip('/'),
+    })
+    return meta
+
+
+def series_redirect_script() -> str:
+    slugs = json.dumps(PUBLIC_SERIES_SLUGS)
+    return ("(function(){var q=new URLSearchParams(location.search).get('series');"
+            f"if(q&&{slugs}.indexOf(q)>-1){{location.replace('/series/'+encodeURIComponent(q)+'/');}}}})();")
+
+
+def work_inquiry_href(work: dict[str, Any]) -> str:
+    query = f"works={quote(work['id'])}"
+    if work.get('series'):
+        query += f"&series={quote(work['series'])}"
+    return f"/contact.html?{query}"
+
+
+def render_work_page(store: dict[str, Any], work: dict[str, Any], neighbours: tuple[dict[str, Any] | None, dict[str, Any] | None], position: tuple[int, int]) -> str:
+    raw = store['raw']
+    series = store['series_lookup'].get(work.get('series') or '')
+    site_name = str(SITE_CONTENT['site'].get('name') or 'STILLMRK')
+    site_url = _site_url()
+    caption = str(work.get('caption') or '').strip()
+    description = summarize_story_text(caption or work.get('alt') or '', fallback=work.get('alt') or '', limit=158)
+    meta = {
+        'title': f"{work['title']} - {site_name}",
+        'description': description,
+        'og_description': description,
+        'og_image': image_path(work, preferred_width(work, 1200), 'jpg') if work.get('responsiveBase') else SITE_CONTENT['site']['og_image'],
+        'og_image_alt': work.get('alt') or work['title'],
+        'canonical_path': work_path(work['id']).lstrip('/'),
+    }
+    schema = {
+        '@context': 'https://schema.org',
+        '@type': 'VisualArtwork',
+        'name': work['title'],
+        'description': md_plain(caption) or work.get('alt') or '',
+        'url': absolute_url(work_path(work['id']).lstrip('/'), site_url),
+        'image': _image_url(work) if work.get('responsiveBase') else None,
+        'artform': 'Photography',
+        'artMedium': work.get('medium') or 'Monochrome photograph',
+        'creator': {'@id': f'{site_url}#person'},
+        'dateCreated': str(work.get('year') or '') or None,
+        'contentLocation': work.get('location') or None,
+        'isPartOf': {'@type': 'CreativeWorkSeries', 'name': series['title'], 'url': absolute_url(series_path(series['slug']).lstrip('/'), site_url)} if series else None,
+    }
+    schema = {key: value for key, value in schema.items() if value}
+    paragraphs = ''.join(f'<p>{part.strip()}</p>' for part in re.split(r'\n\s*\n', caption_html(work)) if part.strip())
+    facts = [(label, value) for label, value in (('Year', work.get('year')), ('Location', work.get('location')), ('Medium', work.get('medium')), ('Edition', work.get('edition'))) if str(value or '').strip()]
+    facts_html = ''.join(f'<div><dt>{esc(label)}</dt><dd>{esc(value)}</dd></div>' for label, value in facts)
+    previous, following = neighbours
+    index, total = position
+    eyebrow = f"{esc(series['title'])} · {index} of {total}" if series else 'Photograph'
+    crumbs = f'<a href="{portfolio_path()}">Portfolio</a><span aria-hidden="true">/</span>' + (f'<a href="{series_path(series["slug"])}">{esc(series["title"])}</a>' if series else '')
+    def pager_link(target: dict[str, Any] | None, rel: str, label: str) -> str:
+        if not target:
+            return '<span class="work-pager__spacer"></span>'
+        return (f'<a class="work-pager__link work-pager__link--{rel}" rel="{rel}" href="{work_path(target["id"])}">'
+                f'<span class="work-pager__label">{label}</span><span class="work-pager__title">{esc(target["title"])}</span></a>')
+    series_link = f'<a class="button button--secondary" href="{series_path(series["slug"])}">View the full series</a>' if series else ''
+    lightbox = lightbox_attrs(work, store['series_lookup'], 'work-page', '96vw') if work.get('responsiveBase') else ''
+    return f"""<!DOCTYPE html>
+<html lang="en">
+{page_head('work', meta, preload_work=work if work.get('responsiveBase') else None, preload_sizes='(min-width: 1100px) 72vw, 100vw', schema=schema)}
+  <body data-page="work" data-work-id="{esc(work['id'])}">
+    <a class="skip-link" href="#main-content">Skip to content</a>
+    {render_nav(raw)}
+    <main id="main-content">
+      <article class="work-page">
+        <div class="container">
+          <nav class="work-page__crumbs" aria-label="Breadcrumb">{crumbs}</nav>
+          <figure class="work-page__figure">
+            <button type="button" class="work-page__media" style="--media-ratio: {work['width']} / {work['height']};" aria-label="View {esc(work['title'])} full screen" {lightbox} data-protect-media="true">
+              {responsive_image_html(work, '(min-width: 1100px) 72vw, 100vw', loading='eager', fetchpriority='high')}
+            </button>
+          </figure>
+          <div class="work-page__body">
+            <header class="work-page__heading">
+              <p class="eyebrow">{eyebrow}</p>
+              <h1 class="display-title work-page__title">{esc(work['title'])}</h1>
+            </header>
+            <div class="work-page__text">
+              {paragraphs}
+              {f'<dl class="work-page__facts">{facts_html}</dl>' if facts_html else ''}
+              <div class="work-page__actions">
+                <a class="button" href="{work_inquiry_href(work)}">Inquire about this work</a>
+                {series_link}
+              </div>
+            </div>
+          </div>
+          <nav class="work-pager" aria-label="More from this series">
+            {pager_link(previous, 'prev', 'Previous')}
+            {pager_link(following, 'next', 'Next')}
+          </nav>
+        </div>
+      </article>
+    </main>
+    {render_footer(raw)}
+    {render_lightbox()}
+    <script type="module" src="assets/js/app.js"></script>
+  </body>
+</html>
+"""
+
+
+def public_series_works(store: dict[str, Any]) -> list[tuple[dict[str, Any], list[dict[str, Any]]]]:
+    rows = []
+    for series in store['public_series_list']:
+        works = [store['works_by_id'][work_id] for work_id in series['_work_ids'] if work_id in store['works_by_id']]
+        rows.append((series, works))
+    return rows
+
+
 def write_all() -> None:
     started = time.perf_counter()
     store = normalize_content(SITE_CONTENT)
@@ -4142,17 +4493,32 @@ def write_all() -> None:
         except Exception as exc:  # social cards are optional; the site is not
             print(f"[STILLMRK build] Warning: social card generation failed: {exc}", flush=True)
 
+    PUBLIC_SERIES_SLUGS[:] = [series['slug'] for series in store['public_series_list']]
     prepare_dist()
-    write_dist_file('assets/js/data.js', render_data_js(store))
-    write_dist_file('index.html', render_home(store))
-    write_dist_file('portfolio.html', render_portfolio(store))
-    write_dist_file('series.html', render_series(store))
-    write_dist_file('performance.html', render_performance(store))
-    write_dist_file('about.html', render_about(store))
-    write_dist_file('contact.html', render_contact(store))
-    write_dist_file('404.html', render_404(store))
+    write_dist_file('assets/js/data.js', rootify_data_js(render_data_js(store)))
+    pages = {
+        'index.html': render_home(store),
+        'portfolio.html': render_portfolio(store),
+        'series.html': render_series(store),
+        'performance.html': render_performance(store),
+        'about.html': render_about(store),
+        'contact.html': render_contact(store),
+        '404.html': render_404(store),
+    }
+    extra_paths: list[str] = []
+    for series, works in public_series_works(store):
+        pages[f"series/{series['slug']}/index.html"] = render_series(store, series['slug'])
+        extra_paths.append(series_path(series['slug']))
+        for index, work in enumerate(works):
+            previous = works[index - 1] if index > 0 else None
+            following = works[index + 1] if index + 1 < len(works) else None
+            pages[f"works/{work['id']}/index.html"] = render_work_page(store, work, (previous, following), (index + 1, len(works)))
+            extra_paths.append(work_path(work['id']))
+    for relative, html_text in pages.items():
+        write_dist_file(relative, rootify_html(html_text))
     write_dist_file('robots.txt', render_robots_txt())
-    write_dist_file('sitemap.xml', render_sitemap_xml())
+    write_dist_file('sitemap.xml', render_sitemap_xml(extra_paths))
+    print(f"[STILLMRK build] Pages: {len(pages)} written ({len(store['public_series_list'])} series, {sum(1 for p in pages if p.startswith('works/'))} works).", flush=True)
     write_dist_file('site.webmanifest', render_site_manifest())
 
     report = write_build_metadata(store)

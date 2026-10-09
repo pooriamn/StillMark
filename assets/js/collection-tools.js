@@ -104,7 +104,7 @@ export function lockSeriesAccess(slug) {
 }
 
 export function buildInquiryUrl({ workIds = [], seriesSlug = '', inquiryType = '' } = {}) {
-  const url = new URL('contact.html', window.location.href);
+  const url = new URL('/contact.html', window.location.href);
   const ids = workIds.filter(Boolean);
   if (ids.length) url.searchParams.set('works', ids.join(','));
   if (seriesSlug) url.searchParams.set('series', seriesSlug);

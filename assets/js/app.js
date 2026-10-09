@@ -165,7 +165,9 @@ function hydrateSiteCopy() {
 function initActiveNav() {
   const pathName = window.location.pathname.split('/').pop() || 'index.html';
   const fallbackPage = pathName.replace(/\.html$/i, '') || 'home';
-  const page = document.body.dataset.page || (fallbackPage === 'index' ? 'home' : fallbackPage);
+  const rawPage = document.body.dataset.page || (fallbackPage === 'index' ? 'home' : fallbackPage);
+  // Work pages belong to the Portfolio section of the navigation.
+  const page = rawPage === 'work' ? 'portfolio' : rawPage;
   const links = [...document.querySelectorAll('.site-nav a')];
   if (!links.length) return;
 
@@ -525,7 +527,7 @@ function initContactEnhancements() {
     ${works.length ? `<ul class="contact-shortlist__list">${works.map((work) => `<li>${work.title}<span>${(work.caption || '').trim() || `${work.location} · ${work.year}`}</span></li>`).join('')}</ul>` : ''}
     <div class="contact-shortlist__actions">
       <button class="button button--ghost" type="button" data-contact-clear-shortlist ${requestedWorks.length ? 'hidden' : ''}>Clear shortlist</button>
-      <a class="button button--secondary" href="portfolio.html${series ? `?series=${encodeURIComponent(series.slug)}` : ''}">Back to archive</a>
+      <a class="button button--secondary" href="/portfolio.html${series ? `?series=${encodeURIComponent(series.slug)}` : ''}">Back to archive</a>
     </div>
   `;
 
@@ -919,6 +921,14 @@ function initLightbox() {
     if (source) {
       source.srcset = trigger.dataset.lightboxWebpSrcset || '';
       source.sizes = trigger.dataset.lightboxSizes || '92vw';
+    }
+
+    const permalink = dialog.querySelector('[data-lightbox-permalink]');
+    if (permalink) {
+      const href = trigger.dataset.lightboxHref || '';
+      const onThatPage = href && window.location.pathname === href;
+      permalink.hidden = !href || onThatPage;
+      if (href) permalink.setAttribute('href', href);
     }
 
     image.src = trigger.dataset.lightboxSrc || '';
@@ -1429,7 +1439,9 @@ function injectStructuredData() {
   const siteUrl = siteData.site.siteUrl || siteData.site.displayUrl || buildAbsoluteUrl('/');
   const pageUrl = window.location.href.split('#')[0];
 
-  if (baseScript) {
+  // The build writes both schemas into the HTML; only fill them in when a
+  // page was produced without them.
+  if (baseScript && !baseScript.textContent.trim()) {
     const person = {
       '@type': 'Person',
       '@id': `${siteUrl}#person`,

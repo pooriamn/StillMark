@@ -29,7 +29,10 @@ import {
 function currentSeries() {
   const params = new URLSearchParams(window.location.search);
   const ordered = getSortedSeries({ includePrivate: true });
-  return getSeriesBySlug(params.get('series'), { includePrivate: true }) || ordered[0] || null;
+  // Series pages live at /series/<slug>/ and name their series on <body>;
+  // the old ?series= query still works on /series.html.
+  const slug = params.get('series') || document.body.dataset.seriesSlug || '';
+  return getSeriesBySlug(slug, { includePrivate: true }) || ordered[0] || null;
 }
 
 function ensureHeadElement(selector, tagName, attributes = {}) {
@@ -369,8 +372,9 @@ function renderSeriesPage() {
   const descriptionNode = document.querySelector('[data-series-description]');
   if (descriptionNode) {
     const pageLead = descriptionNode.getAttribute('data-series-lead-prefix') || '';
-    const seriesDescription = String(series.description || '').trim();
-    descriptionNode.textContent = seriesDescription || pageLead;
+    const seriesDescriptionHtml = String(series.descriptionHtml || '').trim();
+    if (seriesDescriptionHtml) descriptionNode.innerHTML = seriesDescriptionHtml; // escaped at build time
+    else descriptionNode.textContent = String(series.description || '').trim() || pageLead;
   }
 
   renderSeriesActions(series, works);
