@@ -1,4 +1,4 @@
 # Everything needed to build the public site (python build_site.py).
 PyYAML>=6.0,<7
-Pillow>=10.0,<13
+Pillow>=11.3,<13  # 11.3+ wheels include AVIF support
 jsonschema>=4.18,<5

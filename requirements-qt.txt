@@ -1,3 +1,5 @@
 # The desktop control panel needs the site build dependencies plus Qt.
 -r requirements.txt
 PySide6>=6.8,<7
+# Keeps comments when the panel saves a YAML file you annotated by hand.
+ruamel.yaml>=0.18,<0.19

@@ -149,6 +149,7 @@ class NavStackedWidget(QStackedWidget):
         return self._hidden_tab_bar
 
 
+from helpers_content import write_yaml
 from qt_backend import (
     AUTHORITY_FILES,
     PUBLISH_STATES,
@@ -216,6 +217,7 @@ from qt_backend import (
     load_works_filtered,
     works_filter_series_values,
     preview_target,
+    preview_url,
     prepare_publish_package,
     refresh_image_manifests,
     release_checks,
@@ -12037,7 +12039,7 @@ class ControlPanelWindow(QMainWindow):
                 payload = {}
             payload["feature_work_id"] = work_id
             payload["cover_work_id"] = work_id
-            collection_path.write_text(yaml.safe_dump(payload, sort_keys=False, allow_unicode=True), encoding="utf-8")
+            write_yaml(collection_path, payload)  # atomic, snapshotted for undo
         except Exception as exc:
             self._log_warning(f"Could not sync Performance collection feature work: {exc}")
 
@@ -13520,7 +13522,7 @@ class ControlPanelWindow(QMainWindow):
     def open_studio_page_preview(self) -> None:
         page_key = getattr(self, "studio_page_combo", None).currentText().strip() if hasattr(self, "studio_page_combo") else "home"
         target = self.studio_page_preview_target(page_key)
-        webbrowser.open(target.as_uri())
+        webbrowser.open(preview_url(target))
         self.status_message(f"Opened preview: {target.name}")
 
     def refresh_studio_sequence_board(self) -> None:
@@ -15529,7 +15531,7 @@ class ControlPanelWindow(QMainWindow):
 
     def open_preview(self) -> None:
         target = preview_target()
-        webbrowser.open(target.as_uri())
+        webbrowser.open(preview_url(target))
         self.status_message("Opened preview")
 
     # ---------- global refresh / commands ----------

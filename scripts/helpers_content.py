@@ -307,12 +307,57 @@ def recent_transactions(limit: int = 10) -> list[dict[str, Any]]:
     return list(reversed(rows[-limit:]))
 
 
+_COMMENT_LINE = re.compile(r'(^|\s)#')
+
+
+def _merge_into(target: Any, source: Any) -> Any:
+    """Update a ruamel round-trip node in place so its comments survive."""
+    from collections.abc import Mapping
+    if isinstance(target, Mapping) and isinstance(source, Mapping):
+        for key in [key for key in list(target.keys()) if key not in source]:
+            del target[key]
+        for key, value in source.items():
+            target[key] = _merge_into(target[key], value) if key in target else value
+        return target
+    return source
+
+
+def render_yaml_preserving_comments(path: Path, data: Any) -> str | None:
+    """Return YAML text that keeps the file's comments, or None to use PyYAML.
+
+    Content files written by the panel are plain PyYAML output, and re-dumping
+    them with PyYAML changes nothing. Only files a person annotated with
+    comments need a round-trip writer; ruamel.yaml keeps those comments.
+    """
+    try:
+        original = Path(path).read_text(encoding='utf-8')
+    except OSError:
+        return None
+    if not any(_COMMENT_LINE.search(line) for line in original.splitlines() if line.lstrip().startswith('#') or ' #' in line):
+        return None
+    try:
+        from ruamel.yaml import YAML
+    except ImportError:
+        return None
+    import io
+    handler = YAML()
+    handler.preserve_quotes = True
+    handler.indent(mapping=2, sequence=2, offset=0)
+    document = handler.load(original)
+    merged = _merge_into(document, data)
+    buffer = io.StringIO()
+    handler.dump(merged, buffer)
+    return buffer.getvalue()
+
+
 def write_yaml(path: Path, data: Any) -> None:
     path = Path(path)
     existed = path.exists()
     if existed:
         snapshot_path(path)
-    rendered = yaml.safe_dump(data, sort_keys=False, allow_unicode=True)
+    rendered = render_yaml_preserving_comments(path, data) if existed else None
+    if rendered is None:
+        rendered = yaml.safe_dump(data, sort_keys=False, allow_unicode=True)
     atomic_write_text(path, rendered)
     try:
         rel_parent = path.parent.resolve(strict=False).relative_to(CONTENT_DIR.resolve(strict=False))

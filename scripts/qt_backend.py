@@ -171,6 +171,7 @@ RELEASE_REPORT_PATH = BUILD_META_DIR / "release-report.json"
 CONTENT_GRAPH_PATH = BUILD_META_DIR / "content-graph.json"
 VALIDATION_REPORT_PATH = BUILD_META_DIR / "validation-report.json"
 PUBLIC_UPLOAD_DIR = ROOT / "dist"
+DIST_DIR = PUBLIC_UPLOAD_DIR
 UPLOAD_MANIFEST_PATH = PUBLIC_UPLOAD_DIR / "upload-manifest.json"
 IMAGE_MANIFEST_DIR = ROOT / "assets/images/manifests"
 IMAGE_INDEX_PATH = IMAGE_MANIFEST_DIR / "image-index.json"
@@ -5806,6 +5807,43 @@ def load_relationships() -> dict[str, list[str]]:
 
 def save_relationships(featured_series: list[str], selected_works: list[str]) -> None:
     reorder_homepage_featured(featured_series=featured_series, selected_works=selected_works)
+
+
+_PREVIEW_SERVER: Any = None
+
+
+def preview_url(target: Path | None = None) -> str:
+    """Serve dist/ on a private local port and return the URL for target.
+
+    Pages use root-relative paths (/assets/...), so they must be opened over
+    HTTP like the real host, not from disk with file://.
+    """
+    global _PREVIEW_SERVER
+    if _PREVIEW_SERVER is None:
+        import threading
+        from functools import partial
+        from http.server import ThreadingHTTPServer
+        if str(ROOT) not in sys.path:
+            sys.path.insert(0, str(ROOT))
+        from preview_server import PreviewHandler
+
+        class QuietHandler(PreviewHandler):
+            def log_message(self, *args: Any) -> None:  # keep the panel log clean
+                return
+
+        server = ThreadingHTTPServer(("127.0.0.1", 0), partial(QuietHandler, directory=str(DIST_DIR)))
+        threading.Thread(target=server.serve_forever, name="stillmark-preview", daemon=True).start()
+        _PREVIEW_SERVER = server
+    port = _PREVIEW_SERVER.server_address[1]
+    relative = ""
+    if target is not None:
+        try:
+            relative = target.resolve().relative_to(DIST_DIR.resolve()).as_posix()
+        except ValueError:
+            relative = target.name
+    if relative == "index.html":
+        relative = ""
+    return f"http://127.0.0.1:{port}/{relative}"
 
 
 def preview_target() -> Path:
