@@ -159,6 +159,14 @@ def main() -> int:
         return 0
     before_hash = _hash_website_tree(ROOT)
     fixture = _copy_fixture()
+    try:
+        return _run_fixture(fixture, before_hash)
+    finally:
+        # The fixture is a full copy of the project (~450 MB); never leave it behind.
+        shutil.rmtree(fixture.parent, ignore_errors=True)
+
+
+def _run_fixture(fixture: Path, before_hash: dict[str, str]) -> int:
     cmd = [sys.executable, "-S", "scripts/control_panel_works_performance_regression_tests.py", "--inside-fixture"]
     env = dict(os.environ, PYTHONSAFEPATH="1", PYTHONNOUSERSITE="1")
     completed = subprocess.run(cmd, cwd=fixture, text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, timeout=180, env=env)
