@@ -1,0 +1,26 @@
+# The series slug should match the folder name under assets/images/originals/series/.
+# The order of work_ids is the source of truth for sequence ordering.
+slug: winter-silence
+title: Winter Silence
+years: 2025-2026
+mood: Distance, snow, and reduced form.
+description: |
+  A slow monochrome sequence built around weather, scale, and the reduction of the landscape in winter.
+card_summary: Snow, roads, and witness trees reduce the world until endurance becomes visible.
+story_opening_text: The opening image should establish the threshold of the story.
+story_sequence_text: The middle movement should explain how the sequence develops.
+story_closing_text: The final image should leave the last residue of the story.
+# Optional cover overrides when the best index/hero image is not the default cover_work_id.
+# card_cover_work_id: winter-silence-01
+# hero_work_id: winter-silence-01
+order: 2
+cover_work_id: winter-silence-01
+work_ids:
+  - winter-silence-01
+  - footsteps-winter-01
+  - winter-silence-02
+published: true
+
+# Per-image layout control lives on each work YAML:
+# portfolio_layout: auto | quiet | standard | medium | large | wide | full
+# series_layout: auto | quiet | standard | medium | large | wide | full

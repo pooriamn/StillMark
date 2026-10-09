@@ -1,0 +1,34 @@
+id: marriage-sentence
+title: The Marriage Sentence
+series: romeo-and-juliet
+year: '2026'
+location: Unspecified
+alt: Juliet crouches beside a bed in a dark room, burdened by the command to marry
+  Paris.
+caption: No parent needs to stand in the frame for power to be felt. The order has
+  already taken shape in the room, pressing the future down until every possible life
+  begins to look like confinement.
+tags:
+- romeo-and-juliet
+- juliet
+- family-pressure
+- marriage
+- paris
+- resistance
+- confinement
+- duty
+review_status: published
+published: true
+hero_safe: true
+grid_safe: true
+social_safe: false
+portfolio_layout: auto
+series_layout: auto
+display_layouts: {}
+display_ratios: {}
+focal_point:
+  x: 57
+  y: 32
+image:
+  master: marriage-sentence.png
+  render_name: marriage-sentence

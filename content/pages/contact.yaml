@@ -1,0 +1,40 @@
+meta:
+  title: Contact - STILLMRK
+  description: Contact STILLMRK for editions, exhibitions, editorial licensing, commissions,
+    and collaborations.
+  og_description: Contact STILLMRK for editions, exhibitions, editorial licensing,
+    commissions, and collaborations.
+  og_image: assets/images/social/quiet-lens-og-contact.jpg
+  og_image_alt: STILLMRK contact-page social card for editions, licensing, and exhibitions.
+hero:
+  eyebrow: Contact
+  title: For Editions and Collaborations
+  lead: Use this page for editions, licensing, exhibitions, and collaborations. Documents,
+    contact details, and a structured message draft are kept together so the conversation
+    can begin without friction.
+  feature_work_id: powder-heart
+  actions:
+  - label: Draft inquiry email
+    href: '#contact-form'
+  - label: Open documents
+    href: '#contact-documents'
+    style: secondary
+  notes:
+  - Direct contact route
+  - Editions, licensing, exhibitions
+  - Press kit and PDFs
+details_title: Contact
+inquiry_types:
+- Print inquiry
+- Editorial licensing
+- Exhibition or feature
+- Commission
+- Collaboration
+- General
+form_button_label: Draft inquiry email
+form_note: Use the draft when the request is specific. Include edition interest, licensing
+  use, exhibition context, or collaboration scope so the reply can move quickly.
+form_endpoint: ''
+form_intro: Use the draft for precise requests. Edition interest, licensing context,
+  exhibition timing, or collaboration scope are easiest to answer when the message
+  is specific from the start.

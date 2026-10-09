@@ -1,0 +1,26 @@
+id: passing-rain
+title: Passing Rain
+series: weather-of-presence
+year: Threshold sequence
+location: Canal bridge
+alt: A person under an umbrella moves through rain behind dark railings and large
+  windowed brick walls.
+caption: Weather passes through the frame, but distance was there first. Rain only
+  makes it visible, drawing a thin veil over brick, window, and motion. What continues
+  beneath it is not drama, only the quiet discipline of carrying on.
+tags:
+- rain
+- umbrella
+- street
+- city
+review_status: published
+published: true
+hero_safe: false
+grid_safe: true
+social_safe: false
+focal_point:
+  x: 79
+  y: 77
+image:
+  master: passing-rain.png
+  render_name: passing-rain

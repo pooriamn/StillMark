@@ -1,0 +1,34 @@
+id: answer-changes
+title: The Answer Changes
+series: constellations
+year: '2026'
+location: Unspecified
+alt: Marianne stands foregrounded while Roland remains behind her on a sparse stage
+  with a notebook and honey jar nearby.
+caption: The smallest hesitation can divide a life. One version leaves, another stays,
+  and somewhere between them the future waits without revealing which path will become
+  memory.
+tags:
+- constellations
+- choice
+- hesitation
+- multiverse
+- notebook
+- honey
+- possibility
+- relationship
+review_status: published
+published: true
+hero_safe: true
+grid_safe: true
+social_safe: false
+portfolio_layout: auto
+series_layout: auto
+display_layouts: {}
+display_ratios: {}
+focal_point:
+  x: 17
+  y: 10
+image:
+  master: answer-changes.png
+  render_name: answer-changes

@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://stillmrk.local/schema/page-blocks.schema.json",
+  "title": "STILLMRK page block schema (Phase 11)",
+  "type": "object",
+  "additionalProperties": true,
+  "properties": {
+    "schema_version": {"type": "integer"},
+    "page_kind": {"type": "string"},
+    "meta": {"type": "object"},
+    "hero": {"type": "object"},
+    "sections": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "type", "label"],
+        "properties": {
+          "id": {"type": "string"},
+          "type": {"type": "string"},
+          "label": {"type": "string"},
+          "visible": {"type": "boolean"},
+          "locked": {"type": "boolean"}
+        },
+        "additionalProperties": true
+      }
+    }
+  }
+}

@@ -1,0 +1,27 @@
+id: passing-through-silence
+title: Passing Through Silence
+series: urban-intervals
+year: Threshold sequence
+location: Untitled location
+alt: Blurred figure crossing an empty interior beneath a diagonal wall, with a potted
+  plant at the far edge.
+caption: Nothing in the room changes except the blur crossing it. Structure remains
+  exact, silence remains arranged, and stillness keeps its authority at the edge.
+  What passes through such order leaves almost no mark, only the brief evidence that
+  not everything consents to remain.
+tags:
+- interior
+- impermanence
+- motion
+- stillness
+review_status: published
+published: true
+hero_safe: true
+grid_safe: true
+social_safe: false
+focal_point:
+  x: 24
+  y: 44
+image:
+  master: passing-through-silence.png
+  render_name: passing-through-silence

@@ -1,0 +1,33 @@
+id: emilia-finds-weight
+title: Emilia Finds the Weight
+series: othello
+year: '2026'
+location: Unspecified
+alt: Emilia kneels near a fallen handkerchief in a narrow pool of stage light.
+caption: Some choices arrive disguised as small errands. Emilia pauses before an object
+  too light for the hand and too heavy for the conscience. Around that hesitation,
+  the tragedy tightens its knot.
+tags:
+- othello
+- emilia
+- handkerchief
+- hesitation
+- obedience
+- conscience
+- consequence
+- witness
+review_status: archived
+published: false
+hero_safe: true
+grid_safe: true
+social_safe: false
+portfolio_layout: auto
+series_layout: auto
+display_layouts: {}
+display_ratios: {}
+focal_point:
+  x: 63
+  y: 39
+image:
+  master: emilia-finds-weight.png
+  render_name: emilia-finds-weight

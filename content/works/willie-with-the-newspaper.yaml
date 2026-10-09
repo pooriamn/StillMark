@@ -1,0 +1,34 @@
+id: willie-with-the-newspaper
+title: Willie with the Newspaper
+series: happy-days
+year: '2026'
+location: Unspecified
+alt: Winnie is visible in the mound while Willie remains partly obscured behind it
+  with a newspaper.
+caption: Companionship exists here as a fragment. A rustle, a shoulder, a newspaper,
+  the possibility of another person still somewhere nearby. Later, even this partial
+  presence may seem almost generous.
+tags:
+- happy-days
+- winnie
+- willie
+- newspaper
+- companionship
+- partial-presence
+- silence
+- distance
+review_status: published
+published: true
+hero_safe: true
+grid_safe: true
+social_safe: false
+portfolio_layout: auto
+series_layout: auto
+display_layouts: {}
+display_ratios: {}
+focal_point:
+  x: 30
+  y: 36
+image:
+  master: willie-with-the-newspaper.png
+  render_name: willie-with-the-newspaper

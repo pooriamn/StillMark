@@ -1,0 +1,26 @@
+id: pale-road
+title: The Refusal to Walk Alone
+series: winter-silence
+year: Winter sequence
+location: Snow road
+alt: Two figures walk away along a snow-covered road beneath a bright winter moon.
+caption: 'The landscape offers exposure, not shelter. Frost gathers at the edges,
+  light hangs cold above the road, and the long way forward remains uncertain. Still,
+  beside such severity, companionship becomes visible in its simplest form: not as
+  promise, but as the refusal to walk the distance alone.'
+tags:
+- snow
+- road
+- moon
+- pair
+review_status: published
+published: true
+hero_safe: true
+grid_safe: true
+social_safe: false
+focal_point:
+  x: 52
+  y: 67
+image:
+  master: pale-road.png
+  render_name: pale-road

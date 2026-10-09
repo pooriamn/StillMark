@@ -1,0 +1,33 @@
+id: mirror-shore
+title: Nothing Unnecessary Remains
+series: witness-horizon
+year: Witness sequence
+location: Lakeside edge
+alt: A large bare tree stands beside still water while two distant figures face each
+  other at the shore.
+caption: 'The scene offers almost nothing that can be called excess: one tree, one
+  reflection, one pale horizon, two quiet figures at the edge. Still, the image feels
+  complete. Not because it contains much, but because nothing in it asks to be more
+  than it is.'
+tags:
+- reflection
+- tree
+- water
+- distance
+review_status: published
+published: true
+hero_safe: true
+grid_safe: true
+social_safe: false
+portfolio_layout: standard
+series_layout: standard
+display_layouts:
+  portfolio: standard
+  series: standard
+display_ratios: {}
+focal_point:
+  x: 77
+  y: 50
+image:
+  master: mirror-shore.png
+  render_name: mirror-shore

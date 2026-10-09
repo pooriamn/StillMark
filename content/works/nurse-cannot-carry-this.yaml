@@ -1,0 +1,32 @@
+id: nurse-cannot-carry-this
+title: The Nurse Cannot Carry This
+series: romeo-and-juliet
+year: '2026'
+location: Unspecified
+alt: The Nurse sits alone on a bed with Juliet's dress nearby in a sparse dark room.
+caption: Love asks more of her than fear will allow. What fails here is not affection
+  but courage, and that human weakness hurts more deeply than open cruelty ever could.
+tags:
+- romeo-and-juliet
+- nurse
+- abandonment
+- fear
+- loyalty
+- pressure
+- bed
+- betrayal
+review_status: archived
+published: false
+hero_safe: true
+grid_safe: true
+social_safe: false
+portfolio_layout: auto
+series_layout: auto
+display_layouts: {}
+display_ratios: {}
+focal_point:
+  x: 39
+  y: 34
+image:
+  master: nurse-cannot-carry-this.png
+  render_name: nurse-cannot-carry-this

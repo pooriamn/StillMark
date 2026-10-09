@@ -1,0 +1,26 @@
+id: intimacy-in-proportion
+title: Intimacy in Proportion
+series: witness-horizon
+year: Witness sequence
+location: Untitled location
+alt: Two small figures standing together beneath a large bare tree on a hillside.
+caption: 'The tree keeps its long architecture of endurance, while below it a smaller
+  bond enters the frame without disturbing its calm. What appears here is not romance,
+  but proportion: intimacy measured against weather, scale, and the slow patience
+  of things that outlast feeling.'
+tags:
+- tree
+- horizon
+- fragility
+- exposed nearness
+review_status: published
+published: true
+hero_safe: true
+grid_safe: true
+social_safe: false
+focal_point:
+  x: 78
+  y: 64
+image:
+  master: intimacy-in-proportion.png
+  render_name: intimacy-in-proportion

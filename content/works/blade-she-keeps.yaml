@@ -1,0 +1,34 @@
+id: blade-she-keeps
+title: The Blade She Keeps for Herself
+series: romeo-and-juliet
+year: '2026'
+location: Unspecified
+alt: Juliet stands beside the bed with Romeo fallen nearby, preparing for her final
+  act.
+caption: All night she has been handled by timing, custom, family, and chance. This
+  last movement belongs only to her. It is terrible, deliberate, and born from a world
+  that has left no livable future behind.
+tags:
+- romeo-and-juliet
+- juliet
+- blade
+- agency
+- grief
+- final-act
+- tragedy
+- death
+review_status: published
+published: true
+hero_safe: true
+grid_safe: true
+social_safe: false
+portfolio_layout: auto
+series_layout: auto
+display_layouts: {}
+display_ratios: {}
+focal_point:
+  x: 63
+  y: 12
+image:
+  master: blade-she-keeps.png
+  render_name: blade-she-keeps

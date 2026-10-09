@@ -1,0 +1,34 @@
+id: bench-after-the-cry
+title: Bench After the Cry
+series: woyzeck
+year: '2026'
+location: Unspecified
+alt: A bench and Marie’s partial body remain after the attack in a dark, stripped
+  stage environment.
+caption: The cry is over, but the place has not recovered. The body is no longer drama.
+  It is consequence. A bench, a cloth, a withheld form - enough for the stage to begin
+  remembering what cannot be undone.
+tags:
+- woyzeck
+- aftermath
+- marie
+- bench
+- consequence
+- violence
+- residue
+- stage
+review_status: archived
+published: false
+hero_safe: true
+grid_safe: true
+social_safe: false
+portfolio_layout: auto
+series_layout: auto
+display_layouts: {}
+display_ratios: {}
+focal_point:
+  x: 50
+  y: 50
+image:
+  master: bench-after-the-cry.png
+  render_name: bench-after-the-cry

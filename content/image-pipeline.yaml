@@ -1,0 +1,20 @@
+source_dir: assets/images/originals/series
+responsive_dir: assets/images/responsive
+generated_dir: assets/images/generated/series
+incoming_dir: assets/images/incoming
+manifest_dir: assets/images/manifests
+widths:
+  - 480
+  - 768
+  - 1200
+  - 1600
+  - 2048
+formats:
+  - jpg
+  - webp
+jpg_quality: 86
+webp_quality: 82
+lightbox_width: 1600
+default_focal_point:
+  x: 50
+  y: 50

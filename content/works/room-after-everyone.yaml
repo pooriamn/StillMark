@@ -1,0 +1,33 @@
+id: room-after-everyone
+title: The Room After Everyone
+series: othello
+year: '2026'
+location: Unspecified
+alt: An emptied bedroom stage holds abandoned linen, a cloak, a chair, and a handkerchief.
+caption: When speech, bodies, and certainty have failed, the objects remain. Linen,
+  cloak, belt, chair, and handkerchief keep the record without judgement. The room
+  is not empty. It has become the archive.
+tags:
+- othello
+- aftermath
+- room
+- objects
+- archive
+- handkerchief
+- memory
+- silence
+review_status: archived
+published: false
+hero_safe: true
+grid_safe: true
+social_safe: false
+portfolio_layout: auto
+series_layout: auto
+display_layouts: {}
+display_ratios: {}
+focal_point:
+  x: 48
+  y: 68
+image:
+  master: room-after-everyone.png
+  render_name: room-after-everyone

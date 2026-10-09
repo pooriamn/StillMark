@@ -1,0 +1,33 @@
+id: desdemona-waits
+title: Desdemona Waits Without Knowing
+series: othello
+year: '2026'
+location: Unspecified
+alt: Desdemona sits alone in white beside an empty chair on a dark stage.
+caption: Innocence does not know when the room has turned against it. She waits inside
+  a light that has not been warned, while elsewhere her name is being rearranged into
+  accusation. The silence around her is not peace. It is delay.
+tags:
+- othello
+- desdemona
+- innocence
+- waiting
+- accusation
+- silence
+- isolation
+- tragedy
+review_status: published
+published: true
+hero_safe: true
+grid_safe: true
+social_safe: false
+portfolio_layout: auto
+series_layout: auto
+display_layouts: {}
+display_ratios: {}
+focal_point:
+  x: 77
+  y: 37
+image:
+  master: desdemona-waits.png
+  render_name: desdemona-waits

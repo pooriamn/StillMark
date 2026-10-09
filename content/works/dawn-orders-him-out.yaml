@@ -1,0 +1,34 @@
+id: dawn-orders-him-out
+title: Dawn Orders Him Out
+series: romeo-and-juliet
+year: '2026'
+location: Unspecified
+alt: Romeo stands apart from Juliet and the bed as morning light begins to separate
+  them.
+caption: Morning does not arrive as beauty. It arrives as command. Even before the
+  bodies fully part, absence has already entered the bed and begun folding happiness
+  into memory.
+tags:
+- romeo-and-juliet
+- dawn
+- exile
+- separation
+- bed
+- loss
+- absence
+- tragedy
+review_status: published
+published: true
+hero_safe: true
+grid_safe: true
+social_safe: false
+portfolio_layout: auto
+series_layout: auto
+display_layouts: {}
+display_ratios: {}
+focal_point:
+  x: 21
+  y: 48
+image:
+  master: dawn-orders-him-out.png
+  render_name: dawn-orders-him-out

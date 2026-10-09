@@ -1,0 +1,27 @@
+id: the-same-silence
+title: The Same Silence
+series: witness-horizon
+year: Misty hillside
+location: Misty hillside
+alt: A lone figure walks across a misty hillside toward a bare tree beneath a pale
+  empty sky.
+caption: Both hold the same secret within. A life can be shaped by silence without
+  being emptied by it. Some forms of solitude do not ask to be relieved. They settle
+  deeper, lose the need for explanation, and remain. What endures after that is not
+  comfort, but a quieter way of standing inside one’s own weather.
+tags:
+- Solitude
+- Mist
+- Hillside
+- Tree
+review_status: published
+published: true
+hero_safe: true
+grid_safe: true
+social_safe: false
+focal_point:
+  x: 50
+  y: 74
+image:
+  master: the-same-silence.png
+  render_name: the-same-silence

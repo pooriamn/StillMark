@@ -1,0 +1,34 @@
+id: family-with-space-between
+title: The Family with Space Between
+series: curious-incident
+year: '2026'
+location: Unspecified
+alt: Christopher, Judy, and Ed occupy separate zones of light and shadow on the same
+  stage.
+caption: They are together, but not repaired. The same stage holds them without making
+  them whole, and the distance between each body tells the truth more honestly than
+  reunion would.
+tags:
+- curious-incident
+- family
+- distance
+- judy
+- ed
+- christopher
+- repair
+- aftermath
+review_status: published
+published: true
+hero_safe: true
+grid_safe: true
+social_safe: false
+portfolio_layout: auto
+series_layout: auto
+display_layouts: {}
+display_ratios: {}
+focal_point:
+  x: 57
+  y: 35
+image:
+  master: family-with-space-between.png
+  render_name: family-with-space-between

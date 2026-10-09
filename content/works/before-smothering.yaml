@@ -1,0 +1,30 @@
+id: before-smothering
+title: Before the Smothering
+series: othello
+year: '2026'
+location: Unspecified
+alt: Othello stands in shadow at the edge of a bedroom where Desdemona lies on the
+  bed.
+caption: 'The image refuses the act and holds the instant before it. Love and murder
+  still stand apart, barely. In that narrow delay, the tragedy shows its cruelest
+  form: a man about to destroy what he once came toward.'
+tags:
+- othello
+- desdemona
+- bedroom
+- violence
+- delay
+- love
+- murder
+- tragedy
+review_status: published
+published: true
+hero_safe: true
+grid_safe: true
+social_safe: false
+focal_point:
+  x: 92
+  y: 72
+image:
+  master: before-smothering.png
+  render_name: before-smothering

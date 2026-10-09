@@ -1,0 +1,30 @@
+id: river-they-cannot-reach
+title: The River They Cannot Reach
+series: blood-wedding
+year: '2026'
+location: Unspecified
+alt: The Beggar Woman stands beside a thin line of light and a small bowl on a dark
+  stage.
+caption: Freedom is visible only as a line that will not open. The crossing exists,
+  but not as rescue. What waits beside it is older than the lovers, quieter than the
+  chase, and patient enough to make escape feel like another name for arrival.
+tags:
+- blood-wedding
+- lorca
+- beggar-woman
+- river
+- death
+- threshold
+- escape
+- fate
+review_status: published
+published: true
+hero_safe: true
+grid_safe: true
+social_safe: false
+focal_point:
+  x: 68
+  y: 37
+image:
+  master: river-they-cannot-reach.png
+  render_name: river-they-cannot-reach

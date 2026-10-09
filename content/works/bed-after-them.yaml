@@ -1,0 +1,34 @@
+id: bed-after-them
+title: The Bed After Them
+series: romeo-and-juliet
+year: '2026'
+location: Unspecified
+alt: An empty stage room shows a bed with abandoned objects including a vial and blade
+  after the lovers are gone.
+caption: 'When the bodies are gone, the objects keep speaking. The bed has finished
+  its long work: omen, refuge, marriage chamber, deathbed, and evidence. The room
+  is no longer private. It has become the archive of love''s brief occupation.'
+tags:
+- romeo-and-juliet
+- bed
+- aftermath
+- evidence
+- objects
+- archive
+- memory
+- empty-room
+review_status: published
+published: true
+hero_safe: true
+grid_safe: true
+social_safe: false
+portfolio_layout: auto
+series_layout: auto
+display_layouts: {}
+display_ratios: {}
+focal_point:
+  x: 44
+  y: 39
+image:
+  master: bed-after-them.png
+  render_name: bed-after-them

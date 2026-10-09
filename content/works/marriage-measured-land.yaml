@@ -1,0 +1,34 @@
+id: marriage-measured-land
+title: A Marriage Measured in Land
+series: blood-wedding
+year: '2026'
+location: Unspecified
+alt: Two parental figures sit far apart on a minimal stage divided by a chalk line
+  and an empty chair.
+caption: Here, marriage is not only a vow. It is border, inheritance, bargain, and
+  old grief arranged into polite form. The families speak as though order can be negotiated,
+  but the ground between them remembers more than the contract allows.
+tags:
+- blood-wedding
+- lorca
+- marriage
+- land
+- inheritance
+- family
+- duty
+- social-order
+review_status: archived
+published: false
+hero_safe: true
+grid_safe: true
+social_safe: false
+portfolio_layout: auto
+series_layout: auto
+display_layouts: {}
+display_ratios: {}
+focal_point:
+  x: 83
+  y: 48
+image:
+  master: marriage-measured-land.png
+  render_name: marriage-measured-land

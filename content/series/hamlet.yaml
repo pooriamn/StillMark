@@ -1,0 +1,33 @@
+slug: hamlet
+title: Hamlet
+years: '2026'
+mood: Grief, inheritance, silence, power, absence, and the afterlife of loss.
+description: '*A Kingdom After Silence* approaches *Hamlet* not as a sequence of famous
+  scenes, but as a slow excavation of what remains after trust has been damaged beyond
+  repair. This project is less interested in spectacle than in residue — the objects
+  left behind, the moral pressure inside empty rooms, the silence that lingers after
+  words have failed. Each image belongs to a world where grief moves quietly, power
+  decays from within, and memory becomes its own form of haunting. Together, the series
+  reads as a visual elegy: a kingdom understood not through action alone, but through
+  absence, witness, and the long afterlife of loss.'
+cover_work_id: chair-kingdom
+work_ids:
+- chair-kingdom
+- father-beyond-reach
+- king-prayer
+- mother-sees-nothing
+- ophelia-without-water
+- skull-not-prop
+- grave-refuses-sons
+- cup-waits
+- horatio-after-noise
+- 2-the-father-beyond-reach
+- returned-tokens
+- curtain-witness
+- thought-and-act
+order: 10
+visibility: public
+project_type: performance
+review_mode: true
+allow_favorites: true
+allow_inquiry_basket: true

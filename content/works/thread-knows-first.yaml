@@ -1,0 +1,30 @@
+id: thread-knows-first
+title: The Thread Knows First
+series: blood-wedding
+year: '2026'
+location: Unspecified
+alt: A village group gathers around a small tangle of thread on the floor while an
+  older figure stands behind them.
+caption: Fate rarely announces itself as thunder. Sometimes it lies in a small knot
+  at the centre of a gathered room. Before anyone can say the dead aloud, the thread
+  has already made the pattern visible.
+tags:
+- blood-wedding
+- lorca
+- thread
+- fate
+- village
+- women
+- mourning
+- ritual
+review_status: published
+published: true
+hero_safe: true
+grid_safe: true
+social_safe: false
+focal_point:
+  x: 50
+  y: 50
+image:
+  master: thread-knows-first.png
+  render_name: thread-knows-first

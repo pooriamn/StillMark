@@ -1,0 +1,27 @@
+id: nearness-without-contact
+title: Nearness Without Contact
+series: urban-intervals
+year: Threshold sequence
+location: Untitled location
+alt: Two blurred figures walking past each other before a wall divided by diagonal
+  light and shadow.
+caption: 'Not every crossing becomes connection. Sometimes only the frame consents
+  to hold two directions at once, long enough for contrast to resemble meaning. Then
+  the lines remain, the figures move on, and the moment returns to what it always
+  was: brief, exact, and gone.'
+tags:
+- distance
+- parallel lives
+- crossing
+- urban alienation
+review_status: published
+published: true
+hero_safe: true
+grid_safe: true
+social_safe: false
+focal_point:
+  x: 53
+  y: 68
+image:
+  master: nearness-without-contact.png
+  render_name: nearness-without-contact

@@ -1,0 +1,34 @@
+id: genuine-pure
+title: Genuine Pure
+series: happy-days
+year: '2026'
+location: Unspecified
+alt: Winnie studies a toothbrush closely while trapped waist-deep in the dry mound,
+  with her bag beside her.
+caption: 'A small object becomes large because there is so little left to master.
+  The word, the label, the use of the thing: each one gives the morning a little structure
+  before the emptiness returns.'
+tags:
+- happy-days
+- winnie
+- toothbrush
+- language
+- ritual
+- object
+- routine
+- emptiness
+review_status: published
+published: true
+hero_safe: true
+grid_safe: true
+social_safe: false
+portfolio_layout: auto
+series_layout: auto
+display_layouts: {}
+display_ratios: {}
+focal_point:
+  x: 62
+  y: 40
+image:
+  master: genuine-pure.png
+  render_name: genuine-pure

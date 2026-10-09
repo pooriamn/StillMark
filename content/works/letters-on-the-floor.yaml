@@ -1,0 +1,34 @@
+id: letters-on-the-floor
+title: Letters on the Floor
+series: curious-incident
+year: '2026'
+location: Unspecified
+alt: Christopher sits near scattered letters on the floor after discovering hidden
+  family truths.
+caption: The letters no longer behave like paper. They have become the delayed voice
+  of a family story breaking open, louder in their silence than any explanation could
+  be.
+tags:
+- curious-incident
+- letters
+- floor
+- truth
+- family
+- grief
+- evidence
+- aftermath
+review_status: published
+published: true
+hero_safe: true
+grid_safe: true
+social_safe: false
+portfolio_layout: auto
+series_layout: auto
+display_layouts: {}
+display_ratios: {}
+focal_point:
+  x: 28
+  y: 19
+image:
+  master: letters-on-the-floor.png
+  render_name: letters-on-the-floor

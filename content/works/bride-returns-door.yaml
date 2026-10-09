@@ -1,0 +1,30 @@
+id: bride-returns-door
+title: The Bride Returns to the Door
+series: blood-wedding
+year: '2026'
+location: Unspecified
+alt: The Mother sits in the foreground while the Bride appears far behind in a bright
+  doorway.
+caption: The living return to rooms that have already decided how to remember them.
+  Explanation comes too late to soften grief, and survival itself becomes a kind of
+  accusation. Between the two women lies everything that cannot be restored.
+tags:
+- blood-wedding
+- lorca
+- bride
+- mother
+- return
+- blame
+- grief
+- aftermath
+review_status: published
+published: true
+hero_safe: true
+grid_safe: true
+social_safe: false
+focal_point:
+  x: 26
+  y: 47
+image:
+  master: bride-returns-door.png
+  render_name: bride-returns-door

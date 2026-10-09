@@ -1,0 +1,26 @@
+slug: urban-intervals
+title: Thresholds
+years: Crossings and walls of light
+mood: Crossings, railings, rain, walls of light, and brief urban appearances.
+description: 'These works begin at thresholds: walls of light, wet pavement, railings, doorways, and the brief moment when a figure crosses into view without settling there. The city is treated not as spectacle or crowd, but as a structure of passage. Openings appear, but rarely invite entrance.'
+card_summary: Walls of light, wet crossings, and brief urban appearances form a story of passage without arrival.
+story_opening_text: 'The opening frames place the viewer at urban thresholds: edges of light, crossings, and surfaces that allow only brief appearance.'
+story_sequence_text: As the sequence unfolds, the city becomes a structure of passage, where nearness flashes into view and then withdraws.
+story_closing_text: The ending leaves the threshold intact. The story closes not with arrival, but with the feeling that something has passed without settling.
+cover_work_id: threshold-walker
+work_ids:
+- threshold-walker
+- edge-of-the-stage
+- solitude
+- measured-light
+- nearness-without-contact
+- passing-through-silence
+- what-the-wall-kept
+- where-nothing-answers
+order: 3
+visibility: public
+review_mode: false
+allow_favorites: true
+allow_inquiry_basket: true
+project_type: fine-art
+download_ids: []

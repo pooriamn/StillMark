@@ -1,0 +1,26 @@
+id: by-remaining
+title: By Remaining
+series: witness-horizon
+year: Witness sequence
+location: Untitled location
+alt: Figure and dog standing beside a frozen lake between bare trees in a winter landscape.
+caption: 'No sound breaks the frame, yet the scene is not empty. Beside the frozen
+  water, companionship takes its simplest shape: no demand, no performance, only the
+  steady nearness that makes distance less absolute. Some bonds are proven not by
+  gesture, but by remaining through silence.'
+tags:
+- companionship
+- solitude
+- winter shore
+- silence
+review_status: published
+published: true
+hero_safe: true
+grid_safe: true
+social_safe: false
+focal_point:
+  x: 51
+  y: 87
+image:
+  master: by-remaining.jpg
+  render_name: by-remaining

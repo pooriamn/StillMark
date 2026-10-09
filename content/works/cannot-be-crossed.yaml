@@ -1,0 +1,26 @@
+id: cannot-be-crossed
+title: What Cannot Be Crossed
+series: witness-horizon
+year: Witness sequence
+location: Snow field
+alt: Solitary figure standing on a frozen lakeshore facing a leaning bare tree.
+caption: Reflection lengthens the tree into the ice, but cannot close the distance
+  around it. The lake remains suspended between hold and surrender, and the figure
+  at its edge inherits the same condition. There are moments when thought is only
+  another name for standing before what cannot be crossed.
+tags:
+- tree
+- endurance
+- solitude
+- winter silence
+review_status: published
+published: true
+hero_safe: true
+grid_safe: true
+social_safe: false
+focal_point:
+  x: 44
+  y: 49
+image:
+  master: cannot-be-crossed.jpg
+  render_name: cannot-be-crossed

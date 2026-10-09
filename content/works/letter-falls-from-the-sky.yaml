@@ -1,0 +1,34 @@
+id: letter-falls-from-the-sky
+title: The Letter Falls from the Sky
+series: eurydice
+year: '2026'
+location: Unspecified
+alt: Eurydice and her father sit inside the rough string room as a letter from Orpheus
+  begins to restore memory.
+caption: Memory does not return all at once. It arrives by paper, by voice, by a name
+  sounding less foreign than it did before. The letter is not a miracle. It is a small
+  tear in the water.
+tags:
+- eurydice
+- letter
+- orpheus
+- father
+- memory
+- recognition
+- language
+- underworld
+review_status: published
+published: true
+hero_safe: true
+grid_safe: true
+social_safe: false
+portfolio_layout: auto
+series_layout: auto
+display_layouts: {}
+display_ratios: {}
+focal_point:
+  x: 50
+  y: 50
+image:
+  master: letter-falls-from-the-sky.png
+  render_name: letter-falls-from-the-sky

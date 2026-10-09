@@ -1,0 +1,34 @@
+id: field-of-hissing-grass
+title: Field of Hissing Grass
+series: woyzeck
+year: '2026'
+location: Unspecified
+alt: Woyzeck and Andres stand apart in an exposed field-like stage space with sparse
+  grass under harsh light.
+caption: The field ought to be empty, but emptiness has already started talking. One
+  man still belongs to the visible world; the other has begun listening beneath it,
+  where fear and reality no longer keep their distance.
+tags:
+- woyzeck
+- andres
+- field
+- paranoia
+- fear
+- perception
+- distance
+- black-and-white
+review_status: published
+published: true
+hero_safe: true
+grid_safe: true
+social_safe: false
+portfolio_layout: auto
+series_layout: auto
+display_layouts: {}
+display_ratios: {}
+focal_point:
+  x: 68
+  y: 16
+image:
+  master: field-of-hissing-grass.png
+  render_name: field-of-hissing-grass

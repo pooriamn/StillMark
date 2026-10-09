@@ -1,0 +1,34 @@
+id: cup-waits
+title: The Cup Waits Longer Than the Body
+series: hamlet
+year: '2026'
+location: Unspecified
+alt: A cup sits at the centre of a tense duelling scene before the violence has fully
+  begun.
+caption: Tragedy often announces itself quietly. An object is placed, a design is
+  set, and the ending enters the room before anyone names it. By the time the body
+  understands danger, fate has already taken its seat at the table.
+tags:
+- hamlet
+- cup
+- poison
+- duel
+- fate
+- object
+- death
+- court
+review_status: archived
+published: false
+hero_safe: true
+grid_safe: true
+social_safe: false
+portfolio_layout: auto
+series_layout: auto
+display_layouts: {}
+display_ratios: {}
+focal_point:
+  x: 84
+  y: 30
+image:
+  master: cup-waits.png
+  render_name: cup-waits

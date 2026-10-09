@@ -1,0 +1,34 @@
+id: party-like-a-wound
+title: Party Like a Wound
+series: romeo-and-juliet
+year: '2026'
+location: Unspecified
+alt: Romeo and Juliet meet in a crowded modern stage setting while a bed sits dimly
+  in the background.
+caption: The noise of the room keeps going, but another silence has already begun
+  inside it. Two strangers recognise something they cannot yet name, and the world
+  around them becomes background to a danger that feels like grace.
+tags:
+- romeo-and-juliet
+- recognition
+- first-meeting
+- desire
+- fate
+- party
+- tragedy
+- intimacy
+review_status: archived
+published: false
+hero_safe: true
+grid_safe: true
+social_safe: false
+portfolio_layout: auto
+series_layout: auto
+display_layouts: {}
+display_ratios: {}
+focal_point:
+  x: 55
+  y: 30
+image:
+  master: party-like-a-wound.png
+  render_name: party-like-a-wound

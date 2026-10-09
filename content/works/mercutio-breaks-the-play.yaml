@@ -1,0 +1,34 @@
+id: mercutio-breaks-the-play
+title: Mercutio Breaks the Play
+series: romeo-and-juliet
+year: '2026'
+location: Unspecified
+alt: Mercutio is wounded while Romeo, Tybalt, and Benvolio stand in a tense stage
+  confrontation with a bed distant in the background.
+caption: This is where wit ends and consequence enters. The joke dies first, and with
+  it the fragile illusion that love might remain untouched by the violence men carry
+  into every public space.
+tags:
+- romeo-and-juliet
+- mercutio
+- tybalt
+- violence
+- rupture
+- honour
+- witness
+- tragedy
+review_status: archived
+published: false
+hero_safe: true
+grid_safe: true
+social_safe: false
+portfolio_layout: auto
+series_layout: auto
+display_layouts: {}
+display_ratios: {}
+focal_point:
+  x: 73
+  y: 56
+image:
+  master: mercutio-breaks-the-play.png
+  render_name: mercutio-breaks-the-play

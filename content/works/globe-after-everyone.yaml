@@ -1,0 +1,34 @@
+id: globe-after-everyone
+title: The Globe After Everyone
+series: eurydice
+year: '2026'
+location: Unspecified
+alt: An almost empty underworld stage holds a globe, chair, damp letter, string, water
+  pipe, and distant blurred figures.
+caption: 'After the return fails, the objects keep what the living and the dead cannot.
+  A globe, a letter, a thread, a stain of water: not symbols arranged for beauty,
+  but the remains of care after memory has come apart again.'
+tags:
+- eurydice
+- globe
+- aftermath
+- underworld
+- memory
+- objects
+- father
+- residue
+review_status: published
+published: true
+hero_safe: true
+grid_safe: true
+social_safe: false
+portfolio_layout: auto
+series_layout: auto
+display_layouts: {}
+display_ratios: {}
+focal_point:
+  x: 60
+  y: 62
+image:
+  master: globe-after-everyone.png
+  render_name: globe-after-everyone

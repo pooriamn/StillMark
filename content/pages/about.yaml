@@ -1,0 +1,72 @@
+meta:
+  title: About - STILLMRK
+  description: Read the narrative practice behind STILLMRK, a monochrome photography
+    portfolio built around recurrence, distance, and restrained storytelling.
+  og_description: 'Read the practice behind STILLMRK: a paced monochrome sequence
+    of thresholds, witness, reflection, winter passage, and nearness.'
+  og_image: assets/images/social/quiet-lens-og-about.jpg
+  og_image_alt: STILLMRK about-page social card about recurrence, reduction, and return.
+hero:
+  eyebrow: About
+  title: Return, Reduce, Recur, Refine
+  lead: Stillmark moves through roads, shorelines, winter fields, and thresholds where
+    a person can appear small without disappearing. The work stays monochrome so repetition,
+    weather, and relation can carry the weight.
+  feature_work_id: framed-silence
+  actions:
+  - label: View portfolio
+    href: portfolio.html
+    style: primary
+  - label: Open documents
+    href: '#about-documents'
+    style: secondary
+  notes:
+  - Series-led narrative
+  - Press kit and documents
+  - Across places and seasons
+  primary_action:
+    label: View portfolio
+    href: portfolio.html
+    style: primary
+  secondary_action:
+    label: Open documents
+    href: '#about-documents'
+    style: secondary
+statement:
+  eyebrow: Statement
+  title: The work returns to the same structures until they begin to speak across
+    one another.
+  text: 'Across the archive, certain forms return with insistence: a road, a tree,
+    a wall, a shoreline, an opening, a passing figure, a field of snow, a dark reflection.
+    These are not subjects collected for variety. They are the grammar of the practice.
+    Repetition is used to test how meaning changes under weather, distance, scale,
+    and relation. The writing remains brief and restrained, not to explain the image,
+    but to tighten it - to add pressure, lateness, memory, hesitation, or silence
+    without closing the frame.'
+practice_cards:
+- eyebrow: Language
+  title: Text is used as pressure, not decoration
+  text: Captions stay to a single line and dates are usually suppressed, so language
+    can tighten the image without turning into explanation or biography.
+- eyebrow: Series rhythm
+  title: Series are built by recurrence, not chronology
+  text: A new work enters only when it extends an existing movement with a clear role
+    - opener, turn, witness, or close - rather than merely repeating a subject already
+    present.
+- eyebrow: Archive
+  title: The archive can grow without losing coherence
+  text: New photographs enter only when they extend the same atmosphere of distance,
+    witness, weather, or nearness without weakening the coherence of the whole.
+cta:
+  eyebrow: Inquiry
+  title: Editions, Licensing, Exhibitions, Collaborations
+  text: For editions, licensing, exhibitions, or collaborations, move from the work
+    to a direct message. The exchange is strongest when it begins with a photograph,
+    a series, or a specific need.
+  actions:
+  - label: Get in touch
+    href: contact.html
+    style: primary
+  - label: View the work
+    href: portfolio.html
+    style: secondary

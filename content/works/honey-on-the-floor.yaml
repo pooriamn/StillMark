@@ -1,0 +1,34 @@
+id: honey-on-the-floor
+title: Honey on the Floor
+series: constellations
+year: '2026'
+location: Unspecified
+alt: A honey jar, beekeeper veil, and worn jacket sit on the stage floor while the
+  performers remain blurred at the edges.
+caption: 'Love often survives inside ordinary things longer than it survives in speech.
+  A jar, a veil, a coat: nothing precious, nothing grand, only the quiet evidence
+  of a life offered and not fully understood.'
+tags:
+- constellations
+- honey
+- beekeeper
+- evidence
+- tenderness
+- object
+- roland
+- memory
+review_status: published
+published: true
+hero_safe: true
+grid_safe: true
+social_safe: false
+portfolio_layout: auto
+series_layout: auto
+display_layouts: {}
+display_ratios: {}
+focal_point:
+  x: 50
+  y: 80
+image:
+  master: honey-on-the-floor.png
+  render_name: honey-on-the-floor

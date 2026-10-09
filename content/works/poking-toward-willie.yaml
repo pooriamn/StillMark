@@ -1,0 +1,34 @@
+id: poking-toward-willie
+title: Poking Toward Willie
+series: happy-days
+year: '2026'
+location: Unspecified
+alt: Winnie reaches awkwardly with a parasol toward Willie, who is barely visible
+  behind the mound.
+caption: Contact has become indirect, almost comic, almost cruel. She reaches with
+  what the body can no longer manage by itself, and even the smallest answer from
+  the dark would be enough to prove she is not speaking into nothing.
+tags:
+- happy-days
+- winnie
+- willie
+- parasol
+- contact
+- silence
+- distance
+- endurance
+review_status: published
+published: true
+hero_safe: true
+grid_safe: true
+social_safe: false
+portfolio_layout: auto
+series_layout: auto
+display_layouts: {}
+display_ratios: {}
+focal_point:
+  x: 29
+  y: 45
+image:
+  master: poking-toward-willie.png
+  render_name: poking-toward-willie

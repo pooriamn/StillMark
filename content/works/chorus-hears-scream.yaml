@@ -1,0 +1,34 @@
+id: chorus-hears-scream
+title: The Chorus Hears the Scream
+series: blood-wedding
+year: '2026'
+location: Unspecified
+alt: Three woodcutters react in a dark forest-like space, with an axe handle lying
+  unused on the floor.
+caption: The fatal moment arrives without spectacle. It passes through the bodies
+  of those who hear it before it becomes news, grief, or blame. The village receives
+  the ending first as a change in the air.
+tags:
+- blood-wedding
+- lorca
+- chorus
+- woodcutters
+- scream
+- forest
+- witness
+- aftermath
+review_status: archived
+published: false
+hero_safe: true
+grid_safe: true
+social_safe: false
+portfolio_layout: auto
+series_layout: auto
+display_layouts: {}
+display_ratios: {}
+focal_point:
+  x: 56
+  y: 53
+image:
+  master: chorus-hears-scream.png
+  render_name: chorus-hears-scream

@@ -1,0 +1,34 @@
+id: feigned-death
+title: Feigned Death on the Bed
+series: romeo-and-juliet
+year: '2026'
+location: Unspecified
+alt: Juliet lies motionless on a bed while blurred figures stand nearby, believing
+  she is dead.
+caption: The false ending becomes convincing enough to summon the real one. Around
+  the stillness of her body, the room begins repeating the wrong story with complete
+  sincerity.
+tags:
+- romeo-and-juliet
+- juliet
+- feigned-death
+- bed
+- misrecognition
+- mourning
+- irony
+- tragedy
+review_status: published
+published: true
+hero_safe: true
+grid_safe: true
+social_safe: false
+portfolio_layout: auto
+series_layout: auto
+display_layouts: {}
+display_ratios: {}
+focal_point:
+  x: 66
+  y: 48
+image:
+  master: feigned-death.png
+  render_name: feigned-death

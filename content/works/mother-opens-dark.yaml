@@ -1,0 +1,31 @@
+id: mother-opens-dark
+title: The Mother Opens the Dark
+series: blood-wedding
+year: '2026'
+location: Unspecified
+alt: The Mother grips a chair in the foreground while the Bridegroom stands far behind
+  in a doorway of light.
+caption: Some mothers do not send sons forward; history takes them from their hands.
+  The old wound opens quietly, almost without gesture, and the house becomes a threshold
+  between fear and repetition. Love cannot hold back what blood has already learned
+  to demand.
+tags:
+- blood-wedding
+- lorca
+- mother
+- bridegroom
+- grief
+- feud
+- inheritance
+- pursuit
+review_status: published
+published: true
+hero_safe: true
+grid_safe: true
+social_safe: false
+focal_point:
+  x: 41
+  y: 30
+image:
+  master: mother-opens-dark.png
+  render_name: mother-opens-dark

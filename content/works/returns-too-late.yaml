@@ -1,0 +1,33 @@
+id: returns-too-late
+title: Romeo Returns Too Late
+series: romeo-and-juliet
+year: '2026'
+location: Unspecified
+alt: Romeo enters a severe tomb-like room and sees Juliet lying on a bed in the distance.
+caption: He crosses the room carrying grief as if it were knowledge. The bed waits
+  at the far end like a verdict, and every step toward it closes the distance while
+  deepening the mistake.
+tags:
+- romeo-and-juliet
+- romeo
+- tomb
+- misrecognition
+- grief
+- return
+- fate
+- distance
+review_status: published
+published: true
+hero_safe: true
+grid_safe: true
+social_safe: false
+portfolio_layout: auto
+series_layout: auto
+display_layouts: {}
+display_ratios: {}
+focal_point:
+  x: 23
+  y: 18
+image:
+  master: returns-too-late.png
+  render_name: returns-too-late

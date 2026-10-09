@@ -1,0 +1,34 @@
+id: raining-elevator
+title: The Raining Elevator
+series: eurydice
+year: '2026'
+location: Unspecified
+alt: Eurydice steps from a crude raining elevator into the underworld, with water,
+  pipes, and dim stage light around her.
+caption: Death arrives not as grandeur, but as bad plumbing, wet fabric, and a room
+  that has forgotten how to welcome the living. Water begins its work quietly, loosening
+  language, balance, and name.
+tags:
+- eurydice
+- raining-elevator
+- underworld
+- water
+- death
+- memory-loss
+- stage
+- arrival
+review_status: published
+published: true
+hero_safe: true
+grid_safe: true
+social_safe: false
+portfolio_layout: auto
+series_layout: auto
+display_layouts: {}
+display_ratios: {}
+focal_point:
+  x: 40
+  y: 24
+image:
+  master: raining-elevator.png
+  render_name: raining-elevator

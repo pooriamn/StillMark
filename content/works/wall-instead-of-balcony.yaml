@@ -1,0 +1,34 @@
+id: wall-instead-of-balcony
+title: Wall Instead of Balcony
+series: romeo-and-juliet
+year: '2026'
+location: Unspecified
+alt: Romeo and Juliet remain separated by height and darkness in a stripped modern
+  balcony scene with a bed below.
+caption: Love first appears here as a problem of distance. They are close enough to
+  hear each other and far enough to be shaped by the space between them. Fate begins
+  not with thunder, but with an unreachable mouth.
+tags:
+- romeo-and-juliet
+- balcony-scene
+- distance
+- threshold
+- desire
+- fate
+- separation
+- stage
+review_status: published
+published: true
+hero_safe: true
+grid_safe: true
+social_safe: false
+portfolio_layout: auto
+series_layout: auto
+display_layouts: {}
+display_ratios: {}
+focal_point:
+  x: 80
+  y: 13
+image:
+  master: wall-instead-of-balcony.png
+  render_name: wall-instead-of-balcony

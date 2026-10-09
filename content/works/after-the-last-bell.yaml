@@ -1,0 +1,34 @@
+id: after-the-last-bell
+title: After the Last Bell
+series: happy-days
+year: '2026'
+location: Unspecified
+alt: The stage remains after the final bell, with the mound, black bag, parasol, hat,
+  newspaper, and traces of Winnie and Willie.
+caption: 'When the speaking drains away, the objects remain obedient. The mound, the
+  bag, the parasol, the newspaper: nothing resolves, nothing explains. The stage keeps
+  the habit after the bodies have nearly vanished from it.'
+tags:
+- happy-days
+- aftermath
+- last-bell
+- mound
+- objects
+- residue
+- silence
+- ending
+review_status: published
+published: true
+hero_safe: true
+grid_safe: true
+social_safe: false
+portfolio_layout: auto
+series_layout: auto
+display_layouts: {}
+display_ratios: {}
+focal_point:
+  x: 61
+  y: 21
+image:
+  master: after-the-last-bell.png
+  render_name: after-the-last-bell

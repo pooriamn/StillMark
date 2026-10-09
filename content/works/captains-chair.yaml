@@ -1,0 +1,34 @@
+id: captains-chair
+title: The Captain’s Chair
+series: woyzeck
+year: '2026'
+location: Unspecified
+alt: Woyzeck stands beside the Captain seated in a chair during a shaving scene on
+  a bare black stage.
+caption: 'Before the knife, before jealousy, before the pond, there is this quieter
+  cruelty: one man must stand close enough to serve and still remain beneath regard.
+  The chair holds more than a body. It holds the arrangement of the world.'
+tags:
+- woyzeck
+- captain
+- class
+- humiliation
+- service
+- authority
+- stage
+- tragedy
+review_status: published
+published: true
+hero_safe: true
+grid_safe: true
+social_safe: false
+portfolio_layout: auto
+series_layout: auto
+display_layouts: {}
+display_ratios: {}
+focal_point:
+  x: 64
+  y: 32
+image:
+  master: captains-chair.png
+  render_name: captains-chair

@@ -1,0 +1,27 @@
+id: world-declines-intimacy
+title: When the World Declines Intimacy
+series: witness-horizon
+year: Witness sequence
+location: Snow field
+alt: Lone figure with a backpack standing before a frozen lake between bare winter
+  trees.
+caption: Under that hard white sky, smallness loses all disguise. The open ground
+  keeps no memory, the horizon offers no reply, and the trees at the edges remain
+  occupied with their own silence. Some forms of solitude are not tragic. They are
+  simply what remains when the world declines intimacy.
+tags:
+- winter
+- distance
+- suspension
+- exposure
+review_status: published
+published: true
+hero_safe: true
+grid_safe: true
+social_safe: false
+focal_point:
+  x: 52
+  y: 79
+image:
+  master: world-declines-intimacy.jpg
+  render_name: world-declines-intimacy

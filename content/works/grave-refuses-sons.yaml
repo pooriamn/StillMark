@@ -1,0 +1,34 @@
+id: grave-refuses-sons
+title: The Grave Refuses Both Sons
+series: hamlet
+year: '2026'
+location: Unspecified
+alt: A grave opens between Hamlet, Laertes, and surrounding witnesses as grief begins
+  to turn into violence.
+caption: Grief seldom remains pure when pride enters beside it. The grave should have
+  closed around one loss, yet it opens instead into rivalry, accusation, and wounded
+  love. Even mourning is not spared from becoming a battlefield.
+tags:
+- hamlet
+- laertes
+- ophelia
+- grave
+- mourning
+- rivalry
+- grief
+- violence
+review_status: archived
+published: false
+hero_safe: true
+grid_safe: true
+social_safe: false
+portfolio_layout: auto
+series_layout: auto
+display_layouts: {}
+display_ratios: {}
+focal_point:
+  x: 73
+  y: 19
+image:
+  master: grave-refuses-sons.png
+  render_name: grave-refuses-sons

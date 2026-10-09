@@ -1,0 +1,34 @@
+id: toby-escapes
+title: Toby Escapes
+series: curious-incident
+year: '2026'
+location: Unspecified
+alt: Christopher reaches toward Toby the rat during a moment of panic on a minimal
+  stage.
+caption: A small animal becomes the whole world for a moment. When control has already
+  been stripped away, even the smallest loss can feel like the final thread coming
+  loose.
+tags:
+- curious-incident
+- toby
+- rat
+- panic
+- control
+- loss
+- urgency
+- journey
+review_status: published
+published: true
+hero_safe: true
+grid_safe: true
+social_safe: false
+portfolio_layout: auto
+series_layout: auto
+display_layouts: {}
+display_ratios: {}
+focal_point:
+  x: 53
+  y: 31
+image:
+  master: toby-escapes.png
+  render_name: toby-escapes

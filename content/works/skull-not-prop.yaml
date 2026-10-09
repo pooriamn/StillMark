@@ -1,0 +1,29 @@
+id: skull-not-prop
+title: The Skull Is Not a Prop
+series: hamlet
+year: '2026'
+location: Unspecified
+alt: Hamlet bends toward a skull on a bare stage, pausing before contact.
+caption: At last, thought meets something that will not yield to thought. Death appears
+  stripped of theatre, and therefore more absolute. What was once abstract becomes
+  intimate, and time acquires a face that cannot be reasoned away.
+tags:
+- hamlet
+- skull
+- death
+- mortality
+- time
+- philosophy
+- grave
+- yorrick
+review_status: published
+published: true
+hero_safe: true
+grid_safe: true
+social_safe: false
+focal_point:
+  x: 44
+  y: 53
+image:
+  master: skull-not-prop.png
+  render_name: skull-not-prop

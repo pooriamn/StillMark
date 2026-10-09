@@ -1,0 +1,33 @@
+id: bed-holds-breath
+title: The Bed Holds Its Breath
+series: othello
+year: '2026'
+location: Unspecified
+alt: Desdemona sits awake on a plain bed under a small pool of stage light.
+caption: The room has narrowed to linen, lamp, and breath. There is no defence here
+  except truth, and truth has lost its audience. Innocence remains present, but presence
+  is not protection.
+tags:
+- othello
+- desdemona
+- bed
+- innocence
+- vulnerability
+- truth
+- silence
+- tragedy
+review_status: published
+published: true
+hero_safe: true
+grid_safe: true
+social_safe: false
+portfolio_layout: auto
+series_layout: auto
+display_layouts: {}
+display_ratios: {}
+focal_point:
+  x: 61
+  y: 32
+image:
+  master: bed-holds-breath.png
+  render_name: bed-holds-breath

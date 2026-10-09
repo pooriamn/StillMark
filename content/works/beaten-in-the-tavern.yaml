@@ -1,0 +1,26 @@
+id: beaten-in-the-tavern
+title: Beaten in the Tavern
+series: woyzeck
+year: '2026'
+location: Unspecified
+alt: A tavern fight blurs across a stage as Woyzeck is overpowered before others.
+caption: Humiliation moves faster than dignity can recover. In the blur of bodies
+  and watching faces, private injury becomes public fact, and what was already breaking
+  inside him is driven further toward violence.
+published: true
+hero_safe: true
+grid_safe: true
+social_safe: false
+tags:
+- woyzeck
+- tavern
+- humiliation
+- drum-major
+- violence
+- public-shame
+- motion
+- defeat
+focal_point:
+  x: 50
+  y: 50
+review_status: published

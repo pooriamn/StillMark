@@ -1,0 +1,34 @@
+id: earrings-in-the-cracked-mirror
+title: Earrings in the Cracked Mirror
+series: woyzeck
+year: '2026'
+location: Unspecified
+alt: Marie studies herself in a cracked mirror while wearing earrings in a dim poor
+  room.
+caption: 'A little shine enters the room and nothing remains light. The mirror does
+  not offer vanity so much as division: the self that wants, the self that doubts,
+  and the self already aware that wanting has its cost.'
+tags:
+- woyzeck
+- marie
+- mirror
+- earrings
+- guilt
+- desire
+- poverty
+- evidence
+review_status: published
+published: true
+hero_safe: true
+grid_safe: true
+social_safe: false
+portfolio_layout: auto
+series_layout: auto
+display_layouts: {}
+display_ratios: {}
+focal_point:
+  x: 39
+  y: 24
+image:
+  master: earrings-in-the-cracked-mirror.png
+  render_name: earrings-in-the-cracked-mirror

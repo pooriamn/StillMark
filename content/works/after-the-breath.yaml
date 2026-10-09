@@ -1,0 +1,30 @@
+id: after-the-breath
+title: After the Breath
+series: othello
+year: '2026'
+location: Unspecified
+alt: Othello sits beside the bed after Desdemona's death, with the handkerchief on
+  the floor nearby.
+caption: After violence, certainty does not look victorious. It sits beside what it
+  has ended and finds no language large enough to cover the damage. The handkerchief
+  remains, no longer proof, no longer token, only accusation.
+tags:
+- othello
+- desdemona
+- handkerchief
+- aftermath
+- guilt
+- death
+- accusation
+- silence
+review_status: published
+published: true
+hero_safe: true
+grid_safe: true
+social_safe: false
+focal_point:
+  x: 92
+  y: 37
+image:
+  master: after-the-breath.png
+  render_name: after-the-breath

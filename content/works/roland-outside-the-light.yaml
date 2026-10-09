@@ -1,0 +1,34 @@
+id: roland-outside-the-light
+title: Roland Outside the Light
+series: constellations
+year: '2026'
+location: Unspecified
+alt: Roland stands near the edge of a light pool while a chair and Marianne’s coat
+  sit behind him in darkness.
+caption: There are forms of devotion that look like helplessness. He remains near
+  the light without entering it, close enough to stay and too far away to save what
+  is changing.
+tags:
+- constellations
+- roland
+- waiting
+- care
+- helplessness
+- illness
+- distance
+- devotion
+review_status: published
+published: true
+hero_safe: true
+grid_safe: true
+social_safe: false
+portfolio_layout: auto
+series_layout: auto
+display_layouts: {}
+display_ratios: {}
+focal_point:
+  x: 71
+  y: 13
+image:
+  master: roland-outside-the-light.png
+  render_name: roland-outside-the-light

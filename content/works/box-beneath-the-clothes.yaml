@@ -1,0 +1,33 @@
+id: box-beneath-the-clothes
+title: The Box Beneath the Clothes
+series: curious-incident
+year: '2026'
+location: Unspecified
+alt: Christopher discovers a hidden box of letters inside a domestic room.
+caption: A hidden box changes the size of the mystery. What began outside the house
+  now enters the family itself, and the room becomes a place where love has been stored
+  incorrectly.
+tags:
+- curious-incident
+- letters
+- hidden-box
+- family
+- truth
+- discovery
+- domestic-space
+- rupture
+review_status: published
+published: true
+hero_safe: true
+grid_safe: true
+social_safe: false
+portfolio_layout: auto
+series_layout: auto
+display_layouts: {}
+display_ratios: {}
+focal_point:
+  x: 49
+  y: 32
+image:
+  master: box-beneath-the-clothes.png
+  render_name: box-beneath-the-clothes

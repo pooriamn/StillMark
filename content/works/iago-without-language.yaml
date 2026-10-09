@@ -1,0 +1,33 @@
+id: iago-without-language
+title: Iago Without Language
+series: othello
+year: '2026'
+location: Unspecified
+alt: Iago stands isolated in darkness while the handkerchief lies blurred in the foreground.
+caption: 'Exposure does not make him confess. It only removes the usefulness of speech.
+  What remains is not emptiness, but refusal: the lie withdrawing into silence after
+  it has done its work.'
+tags:
+- othello
+- iago
+- silence
+- refusal
+- exposure
+- deception
+- handkerchief
+- darkness
+review_status: archived
+published: false
+hero_safe: true
+grid_safe: true
+social_safe: false
+portfolio_layout: auto
+series_layout: auto
+display_layouts: {}
+display_ratios: {}
+focal_point:
+  x: 31
+  y: 20
+image:
+  master: iago-without-language.png
+  render_name: iago-without-language

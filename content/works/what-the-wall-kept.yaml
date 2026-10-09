@@ -1,0 +1,26 @@
+id: what-the-wall-kept
+title: What the Wall Kept
+series: urban-intervals
+year: Threshold sequence
+location: Untitled location
+alt: Two elderly people with canes walking past a cracked wall with the word DREAM
+  painted across it.
+caption: Dream above. Age below. Between them, a wall already returning to dust. The
+  word asks for ascent, but the street answers with weight, slowness, and the long
+  discipline of remaining. Not every ruin belongs to stone. Some begin in expectation.
+tags:
+- ruin
+- age
+- memory
+- disillusion
+review_status: published
+published: true
+hero_safe: true
+grid_safe: true
+social_safe: false
+focal_point:
+  x: 65
+  y: 64
+image:
+  master: what-the-wall-kept.png
+  render_name: what-the-wall-kept

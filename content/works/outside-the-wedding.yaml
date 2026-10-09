@@ -1,0 +1,34 @@
+id: outside-the-wedding
+title: Outside the Wedding
+series: eurydice
+year: '2026'
+location: Unspecified
+alt: Eurydice stands alone outside the wedding light holding a glass, with a folded
+  letter barely visible nearby.
+caption: A wedding can be full of people and still leave someone alone. The glass
+  is almost forgotten, the dress already tired, and somewhere near the edge of the
+  room a letter waits to open another kind of love.
+tags:
+- eurydice
+- wedding
+- glass
+- letter
+- solitude
+- father
+- unease
+- threshold
+review_status: published
+published: true
+hero_safe: true
+grid_safe: true
+social_safe: false
+portfolio_layout: auto
+series_layout: auto
+display_layouts: {}
+display_ratios: {}
+focal_point:
+  x: 36
+  y: 24
+image:
+  master: outside-the-wedding.png
+  render_name: outside-the-wedding

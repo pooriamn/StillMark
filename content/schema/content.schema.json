@@ -1,0 +1,1342 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://stillmrk.local/schema/content.schema.json",
+  "type": "object",
+  "required": [
+    "site",
+    "artist",
+    "navigation",
+    "pages",
+    "series",
+    "works",
+    "image_pipeline",
+    "resources",
+    "release"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "site": {
+      "type": "object",
+      "required": [
+        "name",
+        "short_description",
+        "description",
+        "og_image"
+      ],
+      "additionalProperties": true,
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "short_description": {
+          "type": "string",
+          "minLength": 1
+        },
+        "description": {
+          "type": "string",
+          "minLength": 1
+        },
+        "og_image": {
+          "type": "string",
+          "minLength": 1
+        },
+        "site_url": {
+          "type": "string",
+          "minLength": 1
+        },
+        "display_url": {
+          "type": "string",
+          "minLength": 1
+        },
+        "environment": {
+          "type": "string",
+          "enum": [
+            "local",
+            "staging",
+            "production"
+          ]
+        },
+        "allow_indexing": {
+          "type": "boolean"
+        }
+      }
+    },
+    "artist": {
+      "type": "object",
+      "required": [
+        "name",
+        "discipline",
+        "tagline",
+        "intro",
+        "about",
+        "statement",
+        "status",
+        "email",
+        "instagram",
+        "location"
+      ],
+      "additionalProperties": true,
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "discipline": {
+          "type": "string",
+          "minLength": 1
+        },
+        "tagline": {
+          "type": "string",
+          "minLength": 1
+        },
+        "intro": {
+          "type": "string",
+          "minLength": 1
+        },
+        "about": {
+          "type": "string",
+          "minLength": 1
+        },
+        "statement": {
+          "type": "string",
+          "minLength": 1
+        },
+        "status": {
+          "type": "string",
+          "minLength": 1
+        },
+        "email": {
+          "type": "string",
+          "minLength": 0
+        },
+        "instagram": {
+          "type": "string",
+          "minLength": 0
+        },
+        "location": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "navigation": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": [
+          "label",
+          "href",
+          "page"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "label": {
+            "type": "string",
+            "minLength": 1
+          },
+          "href": {
+            "type": "string",
+            "minLength": 1
+          },
+          "page": {
+            "type": "string",
+            "minLength": 1
+          },
+          "visible": {
+            "type": "boolean"
+          }
+        }
+      }
+    },
+    "pages": {
+      "type": "object",
+      "required": [
+        "home",
+        "portfolio",
+        "series",
+        "performance",
+        "about",
+        "contact"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "home": {
+          "type": "object",
+          "required": [
+            "meta",
+            "hero",
+            "metrics",
+            "featured_series",
+            "selected_works",
+            "modules"
+          ],
+          "additionalProperties": true,
+          "properties": {
+            "meta": {
+              "$ref": "#/$defs/meta"
+            },
+            "hero": {
+              "type": "object",
+              "required": [
+                "eyebrow",
+                "title",
+                "lead",
+                "feature_work_id",
+                "feature_label",
+                "primary_action",
+                "secondary_action",
+                "notes"
+              ],
+              "additionalProperties": true,
+              "properties": {
+                "eyebrow": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "title": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "lead": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "feature_work_id": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "feature_label": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "primary_action": {
+                  "$ref": "#/$defs/action"
+                },
+                "secondary_action": {
+                  "$ref": "#/$defs/action"
+                },
+                "notes": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                }
+              }
+            },
+            "metrics": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": [
+                  "value",
+                  "label"
+                ],
+                "additionalProperties": false,
+                "properties": {
+                  "value": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "label": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                }
+              }
+            },
+            "featured_series": {
+              "type": "object",
+              "required": [
+                "eyebrow",
+                "title",
+                "intro",
+                "series_slugs"
+              ],
+              "additionalProperties": true,
+              "properties": {
+                "eyebrow": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "title": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "intro": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "series_slugs": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                }
+              }
+            },
+            "selected_works": {
+              "type": "object",
+              "required": [
+                "eyebrow",
+                "title",
+                "intro",
+                "work_ids"
+              ],
+              "additionalProperties": true,
+              "properties": {
+                "eyebrow": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "title": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "intro": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "work_ids": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                }
+              }
+            },
+            "modules": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": [
+                  "type",
+                  "eyebrow",
+                  "title",
+                  "text"
+                ],
+                "additionalProperties": true,
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "eyebrow": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "title": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "text": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "work_id": {
+                    "type": "string"
+                  },
+                  "actions": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/$defs/action"
+                    }
+                  },
+                  "action": {
+                    "$ref": "#/$defs/action"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "portfolio": {
+          "$ref": "#/$defs/basicPage"
+        },
+        "series": {
+          "type": "object",
+          "required": [
+            "meta"
+          ],
+          "additionalProperties": true,
+          "properties": {
+            "meta": {
+              "$ref": "#/$defs/meta"
+            }
+          }
+        },
+        "about": {
+          "type": "object",
+          "required": [
+            "meta",
+            "hero",
+            "statement",
+            "practice_cards",
+            "cta"
+          ],
+          "additionalProperties": true,
+          "properties": {
+            "meta": {
+              "$ref": "#/$defs/meta"
+            },
+            "hero": {
+              "type": "object",
+              "required": [
+                "eyebrow",
+                "title",
+                "lead",
+                "feature_work_id"
+              ],
+              "additionalProperties": true,
+              "properties": {
+                "eyebrow": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "title": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "lead": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "feature_work_id": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              }
+            },
+            "statement": {
+              "type": "object",
+              "required": [
+                "eyebrow",
+                "title",
+                "text"
+              ],
+              "additionalProperties": true,
+              "properties": {
+                "eyebrow": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "title": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "text": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              }
+            },
+            "practice_cards": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": [
+                  "eyebrow",
+                  "title",
+                  "text"
+                ],
+                "additionalProperties": false,
+                "properties": {
+                  "eyebrow": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "title": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "text": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "visible": {
+                    "type": "boolean"
+                  }
+                }
+              }
+            },
+            "cta": {
+              "type": "object",
+              "required": [
+                "eyebrow",
+                "title",
+                "actions"
+              ],
+              "additionalProperties": true,
+              "properties": {
+                "eyebrow": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "title": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "actions": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/$defs/action"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "contact": {
+          "type": "object",
+          "required": [
+            "meta",
+            "hero",
+            "details_title",
+            "inquiry_types",
+            "form_button_label",
+            "form_note"
+          ],
+          "additionalProperties": true,
+          "properties": {
+            "meta": {
+              "$ref": "#/$defs/meta"
+            },
+            "hero": {
+              "type": "object",
+              "required": [
+                "eyebrow",
+                "title",
+                "lead"
+              ],
+              "additionalProperties": true,
+              "properties": {
+                "eyebrow": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "title": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "lead": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              }
+            },
+            "details_title": {
+              "type": "string",
+              "minLength": 1
+            },
+            "inquiry_types": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "form_button_label": {
+              "type": "string",
+              "minLength": 1
+            },
+            "form_note": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        },
+        "performance": {
+          "type": "object",
+          "required": [
+            "meta",
+            "hero"
+          ],
+          "additionalProperties": true,
+          "properties": {
+            "meta": {
+              "$ref": "#/$defs/meta"
+            },
+            "hero": {
+              "type": "object",
+              "required": [
+                "eyebrow",
+                "title",
+                "lead",
+                "feature_work_id"
+              ],
+              "additionalProperties": true,
+              "properties": {
+                "eyebrow": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "title": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "lead": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "feature_work_id": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "actions": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/$defs/action"
+                  }
+                },
+                "notes": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "series": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": [
+          "slug",
+          "title",
+          "years",
+          "mood",
+          "description",
+          "work_ids",
+          "visibility"
+        ],
+        "additionalProperties": true,
+        "properties": {
+          "slug": {
+            "type": "string",
+            "minLength": 1
+          },
+          "title": {
+            "type": "string",
+            "minLength": 1
+          },
+          "years": {
+            "type": "string",
+            "minLength": 1
+          },
+          "mood": {
+            "type": "string",
+            "minLength": 1
+          },
+          "description": {
+            "type": "string",
+            "minLength": 1
+          },
+          "cover_work_id": {
+            "type": "string"
+          },
+          "order": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "published": {
+            "type": "boolean"
+          },
+          "work_ids": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "visibility": {
+            "type": "string",
+            "enum": [
+              "public",
+              "private"
+            ]
+          },
+          "client_name": {
+            "type": "string"
+          },
+          "access_code": {
+            "type": "string"
+          },
+          "access_note": {
+            "type": "string"
+          },
+          "review_mode": {
+            "type": "boolean"
+          },
+          "allow_favorites": {
+            "type": "boolean"
+          },
+          "allow_inquiry_basket": {
+            "type": "boolean"
+          },
+          "project_type": {
+            "type": "string",
+            "enum": [
+              "fine-art",
+              "editorial",
+              "commission",
+              "archive",
+              "performance"
+            ]
+          },
+          "download_ids": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "works": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "title",
+          "year",
+          "location",
+          "alt"
+        ],
+        "additionalProperties": true,
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "title": {
+            "type": "string",
+            "minLength": 1
+          },
+          "year": {
+            "type": "string",
+            "minLength": 1
+          },
+          "location": {
+            "type": "string",
+            "minLength": 1
+          },
+          "alt": {
+            "type": "string",
+            "minLength": 1
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "image": {
+            "oneOf": [
+              {
+                "type": "string",
+                "minLength": 1
+              },
+              {
+                "type": "object",
+                "additionalProperties": true,
+                "properties": {
+                  "source": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "original": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "render_name": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "force_rebuild": {
+                    "type": "boolean"
+                  },
+                  "master": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                }
+              }
+            ]
+          },
+          "published": {
+            "type": "boolean"
+          },
+          "caption": {
+            "type": "string"
+          },
+          "medium": {
+            "type": "string"
+          },
+          "edition": {
+            "type": "string"
+          },
+          "palette_tone": {
+            "type": "string"
+          },
+          "print_available": {
+            "type": "boolean"
+          },
+          "hero_safe": {
+            "type": "boolean"
+          },
+          "grid_safe": {
+            "type": "boolean"
+          },
+          "social_safe": {
+            "type": "boolean"
+          },
+          "render_name": {
+            "type": "string"
+          },
+          "force_rebuild": {
+            "type": "boolean"
+          },
+          "focal_point": {
+            "type": "object",
+            "additionalProperties": true,
+            "properties": {
+              "x": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 100
+              },
+              "y": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 100
+              }
+            }
+          },
+          "project_type": {
+            "type": "string",
+            "enum": [
+              "fine-art",
+              "editorial",
+              "commission",
+              "archive",
+              "performance"
+            ]
+          },
+          "licensing_available": {
+            "type": "boolean"
+          },
+          "price_note": {
+            "type": "string"
+          },
+          "portfolio_layout": {
+            "type": "string",
+            "enum": [
+              "auto",
+              "quiet",
+              "standard",
+              "medium",
+              "large",
+              "wide",
+              "full",
+              "small",
+              "compact",
+              "normal",
+              "default",
+              "regular",
+              "feature",
+              "featured",
+              "hero",
+              "cinematic",
+              "span"
+            ]
+          },
+          "series_layout": {
+            "type": "string",
+            "enum": [
+              "auto",
+              "quiet",
+              "standard",
+              "medium",
+              "large",
+              "wide",
+              "full",
+              "small",
+              "compact",
+              "normal",
+              "default",
+              "regular",
+              "feature",
+              "featured",
+              "hero",
+              "cinematic",
+              "span"
+            ]
+          },
+          "portfolio_ratio": {
+            "type": "string"
+          },
+          "series_ratio": {
+            "type": "string"
+          },
+          "display_layouts": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "portfolio": {
+                "type": "string",
+                "enum": [
+                  "auto",
+                  "quiet",
+                  "standard",
+                  "medium",
+                  "large",
+                  "wide",
+                  "full",
+                  "small",
+                  "compact",
+                  "normal",
+                  "default",
+                  "regular",
+                  "feature",
+                  "featured",
+                  "hero",
+                  "cinematic",
+                  "span"
+                ]
+              },
+              "series": {
+                "type": "string",
+                "enum": [
+                  "auto",
+                  "quiet",
+                  "standard",
+                  "medium",
+                  "large",
+                  "wide",
+                  "full",
+                  "small",
+                  "compact",
+                  "normal",
+                  "default",
+                  "regular",
+                  "feature",
+                  "featured",
+                  "hero",
+                  "cinematic",
+                  "span"
+                ]
+              }
+            }
+          },
+          "display_ratios": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "default": {
+                "type": "string"
+              },
+              "portfolio": {
+                "type": "string"
+              },
+              "series": {
+                "type": "string"
+              },
+              "hero": {
+                "type": "string"
+              },
+              "cover": {
+                "type": "string"
+              },
+              "about": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    "image_pipeline": {
+      "type": "object",
+      "required": [
+        "source_dir",
+        "responsive_dir",
+        "widths",
+        "jpg_quality",
+        "webp_quality",
+        "lightbox_width",
+        "generated_dir",
+        "incoming_dir",
+        "manifest_dir",
+        "formats",
+        "default_focal_point"
+      ],
+      "additionalProperties": true,
+      "properties": {
+        "source_dir": {
+          "type": "string",
+          "minLength": 1
+        },
+        "responsive_dir": {
+          "type": "string",
+          "minLength": 1
+        },
+        "widths": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "integer",
+            "minimum": 100
+          }
+        },
+        "jpg_quality": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100
+        },
+        "webp_quality": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100
+        },
+        "lightbox_width": {
+          "type": "integer",
+          "minimum": 100
+        },
+        "generated_dir": {
+          "type": "string",
+          "minLength": 1
+        },
+        "incoming_dir": {
+          "type": "string",
+          "minLength": 1
+        },
+        "manifest_dir": {
+          "type": "string",
+          "minLength": 1
+        },
+        "formats": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "enum": [
+              "jpg",
+              "webp"
+            ]
+          }
+        },
+        "default_focal_point": {
+          "type": "object",
+          "additionalProperties": true,
+          "properties": {
+            "x": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 100
+            },
+            "y": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 100
+            }
+          }
+        }
+      }
+    },
+    "resources": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "downloads": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "id",
+              "title",
+              "file",
+              "kind"
+            ],
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "title": {
+                "type": "string"
+              },
+              "description": {
+                "type": "string"
+              },
+              "file": {
+                "type": "string"
+              },
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "press",
+                  "cv",
+                  "exhibitions",
+                  "tearsheet",
+                  "licensing",
+                  "client"
+                ]
+              },
+              "audience": {
+                "type": "string",
+                "enum": [
+                  "public",
+                  "client",
+                  "press"
+                ]
+              },
+              "featured": {
+                "type": "boolean"
+              }
+            }
+          }
+        }
+      },
+      "required": [
+        "downloads"
+      ]
+    },
+    "release": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "preview_url": {
+          "type": "string"
+        },
+        "staging_url": {
+          "type": "string"
+        },
+        "production_url": {
+          "type": "string"
+        },
+        "preview_branch": {
+          "type": "string"
+        },
+        "production_branch": {
+          "type": "string"
+        },
+        "production_backend": {
+          "type": "string",
+          "enum": [
+            "github",
+            "git-gateway"
+          ]
+        },
+        "repo": {
+          "type": "string"
+        },
+        "auth_note": {
+          "type": "string"
+        },
+        "admin_access_policy": {
+          "type": "string"
+        },
+        "commit_message_template": {
+          "type": "string"
+        },
+        "change_note_template": {
+          "type": "string"
+        },
+        "required_checks": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": []
+    },
+    "collections": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "slug",
+          "title",
+          "description",
+          "series_slugs",
+          "visibility"
+        ],
+        "additionalProperties": true,
+        "properties": {
+          "slug": {
+            "type": "string",
+            "minLength": 1
+          },
+          "title": {
+            "type": "string",
+            "minLength": 1
+          },
+          "eyebrow": {
+            "type": "string"
+          },
+          "lead": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string",
+            "minLength": 1
+          },
+          "project_type": {
+            "type": "string",
+            "enum": [
+              "fine-art",
+              "editorial",
+              "commission",
+              "archive",
+              "performance"
+            ]
+          },
+          "auto_include_project_type": {
+            "type": "boolean"
+          },
+          "feature_work_id": {
+            "type": "string"
+          },
+          "cover_work_id": {
+            "type": "string"
+          },
+          "order": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "published": {
+            "type": "boolean"
+          },
+          "visibility": {
+            "type": "string",
+            "enum": [
+              "public",
+              "private"
+            ]
+          },
+          "series_slugs": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "meta": {
+      "type": "object",
+      "required": [
+        "title",
+        "description",
+        "og_description"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "title": {
+          "type": "string",
+          "minLength": 1
+        },
+        "description": {
+          "type": "string",
+          "minLength": 1
+        },
+        "og_description": {
+          "type": "string",
+          "minLength": 1
+        },
+        "og_image": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "og_image_alt": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "canonical_path": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "twitter_image_alt": {
+          "minLength": 1,
+          "type": "string"
+        }
+      }
+    },
+    "action": {
+      "type": "object",
+      "required": [
+        "label",
+        "href",
+        "style"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "label": {
+          "type": "string",
+          "minLength": 1
+        },
+        "href": {
+          "type": "string",
+          "minLength": 1
+        },
+        "style": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "basicPage": {
+      "type": "object",
+      "required": [
+        "meta",
+        "hero"
+      ],
+      "additionalProperties": true,
+      "properties": {
+        "meta": {
+          "$ref": "#/$defs/meta"
+        },
+        "hero": {
+          "type": "object",
+          "required": [
+            "eyebrow",
+            "title",
+            "lead"
+          ],
+          "additionalProperties": true,
+          "properties": {
+            "eyebrow": {
+              "type": "string",
+              "minLength": 1
+            },
+            "title": {
+              "type": "string",
+              "minLength": 1
+            },
+            "lead": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,34 @@
+id: friar-with-the-bed-behind-him
+title: Friar with the Bed Behind Him
+series: romeo-and-juliet
+year: '2026'
+location: Unspecified
+alt: Friar Laurence stands in the foreground while Romeo and Juliet stand together
+  behind him with a bed further back.
+caption: What looks like blessing can also be a form of haste. An older hand tries
+  to shelter young love, yet the room already knows that secrecy has married itself
+  to risk.
+tags:
+- romeo-and-juliet
+- friar-laurence
+- secret-marriage
+- risk
+- blessing
+- bed
+- secrecy
+- tragedy
+review_status: published
+published: true
+hero_safe: true
+grid_safe: true
+social_safe: false
+portfolio_layout: auto
+series_layout: auto
+display_layouts: {}
+display_ratios: {}
+focal_point:
+  x: 34
+  y: 38
+image:
+  master: friar-with-the-bed-behind-him.png
+  render_name: friar-with-the-bed-behind-him

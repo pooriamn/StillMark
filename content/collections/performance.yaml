@@ -1,0 +1,17 @@
+slug: performance
+title: Stage Works
+eyebrow: Story route
+lead: Theatre and performance projects translated into ordered photographic stories
+  of body, gesture, silence, and consequence.
+description: A story-first collection for theatre and performance projects. Each stage
+  work remains its own series/project, and each photograph remains a work with its
+  own caption, position, and narrative role.
+project_type: performance
+auto_include_project_type: true
+series_slugs:
+- stage-presence
+feature_work_id: skull-not-prop
+order: 2
+visibility: public
+guide_series_slugs: []
+cover_work_id: skull-not-prop

@@ -1,0 +1,30 @@
+id: first-gap
+title: The First Gap
+series: othello
+year: '2026'
+location: Unspecified
+alt: Othello turns away from Desdemona across an empty black stage, with a chair standing
+  between them.
+caption: A tragedy can begin before betrayal has a name. One body turns away, another
+  remains inside a light that still believes in love, and the floor between them starts
+  to gather meaning. The space is not empty. It is where suspicion will learn to live.
+tags:
+- othello
+- desdemona
+- distance
+- suspicion
+- love
+- isolation
+- black-stage
+- tragedy
+review_status: published
+published: true
+hero_safe: true
+grid_safe: true
+social_safe: false
+focal_point:
+  x: 50
+  y: 50
+image:
+  master: first-gap.png
+  render_name: first-gap

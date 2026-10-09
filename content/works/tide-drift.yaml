@@ -1,0 +1,27 @@
+id: tide-drift
+title: Near Enough for Relation
+series: witness-horizon
+year: Witness sequence
+location: Urban waterfront
+alt: Two paddleboarders glide across calm water before a dark waterfront skyline at
+  the edge of dusk.
+caption: Shared direction does not require sameness. One body of water, two boards,
+  two reflections, two widening traces behind them. What travels together here does
+  so without surrendering difference. That may be the most durable form of closeness
+  the world allows.
+tags:
+- water
+- urban
+- horizon
+- movement
+review_status: review
+published: false
+hero_safe: false
+grid_safe: true
+social_safe: false
+focal_point:
+  x: 18
+  y: 72
+image:
+  master: tide-drift.jpg
+  render_name: tide-drift

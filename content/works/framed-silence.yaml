@@ -1,0 +1,26 @@
+id: framed-silence
+title: Where Nothing Resolves
+series: winter-silence
+year: Winter sequence
+location: Forest edge
+alt: A single figure stands at the edge of a frozen lake framed by snow-covered branches.
+caption: Framed by frost and branch, the world appears briefly arranged for meaning.
+  A path reaches the opening, the lake lies still, the far line of trees remains beyond
+  touch. Yet nothing resolves. Some silences do not withhold an answer; they reveal
+  that none was ever coming.
+tags:
+- snow
+- forest
+- lake
+- solitude
+review_status: published
+published: true
+hero_safe: true
+grid_safe: true
+social_safe: false
+focal_point:
+  x: 52
+  y: 75
+image:
+  master: framed-silence.png
+  render_name: framed-silence

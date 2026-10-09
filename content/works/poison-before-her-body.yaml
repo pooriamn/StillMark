@@ -1,0 +1,34 @@
+id: poison-before-her-body
+title: Poison Before Her Body
+series: romeo-and-juliet
+year: '2026'
+location: Unspecified
+alt: Romeo sits on the floor below the bed and drinks poison while Juliet lies above
+  him.
+caption: Decision turns suddenly calm once it believes there is no other road. Beneath
+  the bed that once held refuge, he chooses an ending that feels like reunion and
+  becomes the final error.
+tags:
+- romeo-and-juliet
+- romeo
+- poison
+- bed
+- fatal-choice
+- silence
+- death
+- tragedy
+review_status: published
+published: true
+hero_safe: true
+grid_safe: true
+social_safe: false
+portfolio_layout: auto
+series_layout: auto
+display_layouts: {}
+display_ratios: {}
+focal_point:
+  x: 47
+  y: 31
+image:
+  master: poison-before-her-body.png
+  render_name: poison-before-her-body

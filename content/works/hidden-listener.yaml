@@ -1,0 +1,29 @@
+id: hidden-listener
+title: The Hidden Listener
+series: othello
+year: '2026'
+location: Unspecified
+alt: Othello watches from the foreground while Cassio and Iago speak in the background.
+caption: Sight is easy to corrupt when it is given the wrong angle. The scene offers
+  fragments, gestures, and distance; suspicion supplies the rest. Iago does not need
+  to invent a world from nothing. He only teaches the eye how to betray the heart.
+tags:
+- othello
+- iago
+- cassio
+- hidden-listener
+- suspicion
+- misreading
+- jealousy
+- deception
+review_status: published
+published: true
+hero_safe: true
+grid_safe: true
+social_safe: false
+focal_point:
+  x: 73
+  y: 14
+image:
+  master: hidden-listener.png
+  render_name: hidden-listener

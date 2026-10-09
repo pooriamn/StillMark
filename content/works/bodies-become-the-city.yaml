@@ -1,0 +1,34 @@
+id: bodies-become-the-city
+title: Bodies Become the City
+series: curious-incident
+year: '2026'
+location: Unspecified
+alt: An ensemble surrounds Christopher, forming a city-like architecture of bodies
+  and movement.
+caption: The city does not need walls. It has bodies, directions, voices, and rules
+  that will not hold still. Around him, people become architecture; through them,
+  he has to find a line.
+tags:
+- curious-incident
+- city
+- ensemble
+- bodies
+- architecture
+- anxiety
+- movement
+- isolation
+review_status: published
+published: true
+hero_safe: true
+grid_safe: true
+social_safe: false
+portfolio_layout: auto
+series_layout: auto
+display_layouts: {}
+display_ratios: {}
+focal_point:
+  x: 72
+  y: 20
+image:
+  master: bodies-become-the-city.png
+  render_name: bodies-become-the-city

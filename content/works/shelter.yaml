@@ -1,0 +1,27 @@
+id: shelter
+title: Shelter
+series: weather-of-presence
+year: Weather sequence
+location: Tree line
+alt: Two figures stand under an umbrella beside a tree during heavy rain against a
+  bright sky.
+caption: 'Standing alone is often mistaken for strength. This image suggests something
+  quieter and more difficult: exposure without collapse, smallness without disappearance,
+  presence without claim. The trees remain as measure, the snow as silence, and the
+  distance between them as the place where solitude becomes visible.'
+tags:
+- rain
+- umbrella
+- tree
+- silhouette
+review_status: published
+published: true
+hero_safe: true
+grid_safe: true
+social_safe: false
+focal_point:
+  x: 60
+  y: 68
+image:
+  master: shelter.png
+  render_name: shelter

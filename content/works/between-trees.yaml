@@ -1,0 +1,26 @@
+id: between-trees
+title: Where Solitude Becomes Visible
+series: winter-silence
+year: Winter sequence
+location: Snow field
+alt: A lone figure approaches two tall bare trees standing apart on a snowy rise.
+caption: 'Standing alone is often mistaken for strength. This image suggests something
+  quieter and more difficult: exposure without collapse, smallness without disappearance,
+  presence without claim. The trees remain as measure, the snow as silence, and the
+  distance between them as the place where solitude becomes visible.'
+tags:
+- snow
+- trees
+- distance
+- solitude
+review_status: published
+published: true
+hero_safe: true
+grid_safe: true
+social_safe: false
+focal_point:
+  x: 50
+  y: 86
+image:
+  master: between-trees.png
+  render_name: between-trees

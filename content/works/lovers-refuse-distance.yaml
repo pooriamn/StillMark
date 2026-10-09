@@ -1,0 +1,30 @@
+id: lovers-refuse-distance
+title: The Lovers Refuse Distance
+series: blood-wedding
+year: '2026'
+location: Unspecified
+alt: The Bride and Leonardo stand close together in a pool of light, surrounded by
+  deep darkness.
+caption: They choose each other too late for innocence and too early for survival.
+  Love has brought them near, but not outside consequence. The darkness around them
+  does not separate them from the world; it is the world arriving in another form.
+tags:
+- blood-wedding
+- lorca
+- bride
+- leonardo
+- lovers
+- choice
+- consequence
+- forest
+review_status: published
+published: true
+hero_safe: true
+grid_safe: true
+social_safe: false
+focal_point:
+  x: 47
+  y: 26
+image:
+  master: lovers-refuse-distance.png
+  render_name: lovers-refuse-distance

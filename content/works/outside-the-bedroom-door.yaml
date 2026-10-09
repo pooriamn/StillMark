@@ -1,0 +1,33 @@
+id: outside-the-bedroom-door
+title: Outside the Bedroom Door
+series: curious-incident
+year: '2026'
+location: Unspecified
+alt: Ed waits outside a bedroom door, separated from Christopher by the boundary of
+  the room.
+caption: Love can remain real after permission has been lost. He waits outside the
+  boundary he cannot cross, learning too late that repair begins with restraint.
+tags:
+- curious-incident
+- ed
+- father
+- bedroom-door
+- apology
+- restraint
+- distance
+- repair
+review_status: published
+published: true
+hero_safe: true
+grid_safe: true
+social_safe: false
+portfolio_layout: auto
+series_layout: auto
+display_layouts: {}
+display_ratios: {}
+focal_point:
+  x: 55
+  y: 41
+image:
+  master: outside-the-bedroom-door.png
+  render_name: outside-the-bedroom-door

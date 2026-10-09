@@ -1,0 +1,34 @@
+id: a-bed-before-dawn
+title: A Bed Before Dawn
+series: romeo-and-juliet
+year: '2026'
+location: Unspecified
+alt: Romeo and Juliet share a quiet moment together on a bed in low early-morning
+  stage light.
+caption: For one brief night, love succeeds in making a room of its own. The world
+  waits outside, unable to enter yet, and that temporary safety is what makes the
+  tenderness unbearable.
+tags:
+- romeo-and-juliet
+- wedding-night
+- tenderness
+- bed
+- refuge
+- intimacy
+- calm
+- doomed-love
+review_status: archived
+published: false
+hero_safe: true
+grid_safe: true
+social_safe: false
+portfolio_layout: auto
+series_layout: auto
+display_layouts: {}
+display_ratios: {}
+focal_point:
+  x: 25
+  y: 54
+image:
+  master: a-bed-before-dawn.png
+  render_name: a-bed-before-dawn

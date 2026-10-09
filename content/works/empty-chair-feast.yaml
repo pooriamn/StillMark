@@ -1,0 +1,34 @@
+id: empty-chair-feast
+title: The Empty Chair at the Feast
+series: blood-wedding
+year: '2026'
+location: Unspecified
+alt: Wedding guests sit around a long table while an empty chair and fallen wreath
+  dominate the foreground.
+caption: A celebration can become an autopsy through one missing place. The feast
+  remains, but its meaning has changed. What was prepared for continuity now gathers
+  around absence, and the room begins to understand that joy has opened into pursuit.
+tags:
+- blood-wedding
+- lorca
+- feast
+- empty-chair
+- absence
+- wedding
+- scandal
+- pursuit
+review_status: archived
+published: false
+hero_safe: true
+grid_safe: true
+social_safe: false
+portfolio_layout: auto
+series_layout: auto
+display_layouts: {}
+display_ratios: {}
+focal_point:
+  x: 39
+  y: 27
+image:
+  master: empty-chair-feast.png
+  render_name: empty-chair-feast

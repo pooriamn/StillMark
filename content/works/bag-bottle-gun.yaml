@@ -1,0 +1,34 @@
+id: bag-bottle-gun
+title: The Bag, the Bottle, the Gun
+series: happy-days
+year: '2026'
+location: Unspecified
+alt: Winnie's open black bag reveals a bottle, spectacles, lipstick, and a partly
+  visible revolver among the mound's dust.
+caption: The bag holds the day together and threatens to end it. Useful things and
+  final things lie beside one another without ceremony, as if survival and surrender
+  have always shared the same compartment.
+tags:
+- happy-days
+- bag
+- bottle
+- gun
+- revolver
+- ritual
+- survival
+- threat
+review_status: published
+published: true
+hero_safe: true
+grid_safe: true
+social_safe: false
+portfolio_layout: auto
+series_layout: auto
+display_layouts: {}
+display_ratios: {}
+focal_point:
+  x: 43
+  y: 28
+image:
+  master: bag-bottle-gun.png
+  render_name: bag-bottle-gun

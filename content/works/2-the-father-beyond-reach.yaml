@@ -1,0 +1,20 @@
+id: 2-the-father-beyond-reach
+title: 2 The Father Beyond Reach
+series: hamlet
+year: '2023'
+location: Untitled
+alt: I could not find any Delete in Series liberary in Series tab
+caption: 'In the content Builder, add these three performances for me as guide:'
+tags:
+- Hamlet
+review_status: draft
+published: false
+hero_safe: true
+grid_safe: true
+social_safe: false
+focal_point:
+  x: 67
+  y: 22
+image:
+  master: 2-the-father-beyond-reach.png
+  render_name: 2-the-father-beyond-reach

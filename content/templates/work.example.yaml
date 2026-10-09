@@ -1,0 +1,33 @@
+id: pale-road
+title: Pale Road
+series: winter-silence
+year: '2026'
+location: Winter road
+alt: Figure on a pale winter road beside bare trees.
+caption: Another figure entered, and loneliness changed shape.
+tags:
+  - winter
+  - road
+  - distance
+published: true
+hero_safe: true
+grid_safe: true
+social_safe: false
+focal_point:
+  x: 50
+  y: 50
+# Optional only when the stored source filename differs from the work id.
+# image:
+#   master: pale-road.jpg
+#   render_name: pale-road
+
+# Optional presentation controls.
+# Use these to control card size per image without breaking the design system.
+# Allowed values: auto, quiet, standard, medium, large, wide, full.
+portfolio_layout: auto
+series_layout: auto
+# Optional crop ratios by context. Leave blank/omit to use intrinsic ratio.
+# display_ratios:
+#   portfolio: 4 / 3
+#   series: 3 / 2
+#   hero: 16 / 10

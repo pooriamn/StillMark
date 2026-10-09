@@ -1,0 +1,33 @@
+id: exam-result
+title: The Exam Result
+series: curious-incident
+year: '2026'
+location: Unspecified
+alt: Christopher holds an exam result or paper in a quiet pool of stage light.
+caption: The paper does not fix the family, and it does not make the world gentle.
+  But it proves that the future has not closed. After everything, one clear result
+  still stands.
+tags:
+- curious-incident
+- exam
+- result
+- self-belief
+- future
+- proof
+- endurance
+- quiet-victory
+review_status: archived
+published: false
+hero_safe: true
+grid_safe: true
+social_safe: false
+portfolio_layout: auto
+series_layout: auto
+display_layouts: {}
+display_ratios: {}
+focal_point:
+  x: 50
+  y: 50
+image:
+  master: exam-result.png
+  render_name: exam-result

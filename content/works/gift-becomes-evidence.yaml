@@ -1,0 +1,30 @@
+id: gift-becomes-evidence
+title: The Gift Becomes Evidence
+series: othello
+year: '2026'
+location: Unspecified
+alt: Iago and Emilia stand near a table where the handkerchief is placed under hard
+  stage light.
+caption: A gift changes its nature when it enters the wrong language. It no longer
+  remembers the hand that received it with love. It waits to be named by someone who
+  understands that objects can be made to lie.
+tags:
+- othello
+- iago
+- emilia
+- handkerchief
+- evidence
+- manipulation
+- betrayal
+- object
+review_status: published
+published: true
+hero_safe: true
+grid_safe: true
+social_safe: false
+focal_point:
+  x: 81
+  y: 31
+image:
+  master: gift-becomes-evidence.png
+  render_name: gift-becomes-evidence

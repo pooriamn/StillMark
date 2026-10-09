@@ -1,0 +1,26 @@
+id: powder-heart
+title: What the Dark Cannot Keep
+series: stage-presence
+year: Stage archive
+location: Studio stage
+alt: A dancer throws powder into the air, tracing a bright heart shape in a dark studio.
+caption: The body holds its line for an instant while the air records what cannot
+  stay. A burst of white, a lifted arm, a fragile heart drawn against darkness. Not
+  innocence. Not spectacle. Only the brief defiance of making form where disappearance
+  is already at work.
+tags:
+- dance
+- performance
+- studio
+- gesture
+review_status: published
+published: true
+hero_safe: false
+grid_safe: true
+social_safe: false
+focal_point:
+  x: 50
+  y: 50
+image:
+  master: powder-heart.png
+  render_name: powder-heart

@@ -1,0 +1,29 @@
+id: moonlight-makes-witnesses
+title: Moonlight Makes Witnesses
+series: blood-wedding
+year: '2026'
+location: Unspecified
+alt: A solitary figure stands at the end of a bright path of light across a dark stage.
+caption: The moon has no mercy in this world. It does not bless, soften, or guide;
+  it reveals. Under its cold attention, hiding becomes impossible, and the forest
+  turns from shelter into testimony.
+tags:
+- blood-wedding
+- lorca
+- moon
+- witness
+- forest
+- fate
+- exposure
+- darkness
+review_status: published
+published: true
+hero_safe: true
+grid_safe: true
+social_safe: false
+focal_point:
+  x: 65
+  y: 21
+image:
+  master: moonlight-makes-witnesses.png
+  render_name: moonlight-makes-witnesses

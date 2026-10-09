@@ -1,0 +1,29 @@
+id: public-rupture
+title: Public Rupture
+series: othello
+year: '2026'
+location: Unspecified
+alt: Desdemona stands apart in white while Othello turns away in a public stage arrangement.
+caption: Private poison eventually needs witnesses. What was whispered in the dark
+  steps into public light, and shame begins moving faster than truth. The wound is
+  not only what is said; it is the space everyone allows around it.
+tags:
+- othello
+- desdemona
+- public-shame
+- rupture
+- accusation
+- humiliation
+- witnesses
+- tragedy
+review_status: published
+published: true
+hero_safe: true
+grid_safe: true
+social_safe: false
+focal_point:
+  x: 28
+  y: 18
+image:
+  master: public-rupture.png
+  render_name: public-rupture

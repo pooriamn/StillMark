@@ -1,0 +1,34 @@
+id: first-probability
+title: First Probability
+series: constellations
+year: '2026'
+location: Unspecified
+alt: Marianne and Roland stand apart on a bare black-box stage after an awkward first
+  exchange, with a chair and glass nearby.
+caption: A life can begin in a sentence too small to recognise. Nothing has committed
+  itself yet, but the room is already crowded with possible futures, each waiting
+  for one answer to become the world.
+tags:
+- constellations
+- marianne
+- roland
+- first-meeting
+- possibility
+- time
+- distance
+- stage
+review_status: published
+published: true
+hero_safe: true
+grid_safe: true
+social_safe: false
+portfolio_layout: auto
+series_layout: auto
+display_layouts: {}
+display_ratios: {}
+focal_point:
+  x: 33
+  y: 33
+image:
+  master: first-probability.png
+  render_name: first-probability

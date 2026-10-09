@@ -1,0 +1,34 @@
+id: suitcase-version
+title: The Suitcase Version
+series: constellations
+year: '2026'
+location: Unspecified
+alt: Marianne and Roland sit apart with a suitcase between them in a stripped stage
+  scene.
+caption: 'At the end, love becomes practical. A chair, a suitcase, a folded veil,
+  the distance between two bodies: the future is no longer imagined as romance, but
+  as accompaniment toward absence.'
+tags:
+- constellations
+- suitcase
+- farewell
+- marianne
+- roland
+- absence
+- choice
+- end-of-life
+review_status: published
+published: true
+hero_safe: true
+grid_safe: true
+social_safe: false
+portfolio_layout: auto
+series_layout: auto
+display_layouts: {}
+display_ratios: {}
+focal_point:
+  x: 21
+  y: 12
+image:
+  master: suitcase-version.png
+  render_name: suitcase-version

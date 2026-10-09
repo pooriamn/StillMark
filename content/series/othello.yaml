@@ -1,0 +1,50 @@
+slug: othello
+title: Othello
+years: '2026'
+mood: Othello, tragedy, handkerchief, desdemona, silence.
+description: '*Othello* is treated here as a tragedy of distance before it becomes
+  a tragedy of violence. The sequence follows the slow corruption of sight: love becomes
+  suspicion, suspicion becomes false certainty, and false certainty becomes an act
+  that cannot be undone.
+
+  The handkerchief moves through the project as the central witness. It begins as
+  intimacy, then becomes evidence, accusation, residue, and finally archive. Around
+  it, the stage remains spare and severe. Black space holds the pressure that language
+  has poisoned. Light does not clarify; it isolates.
+
+  This is not a literal record of every scene. It is a visual study of how trust collapses
+  when people stop seeing one another clearly. By the final image, the bodies are
+  gone, but the room still remembers. The tragedy survives in the objects left behind.'
+card_summary: Trust collapses by degrees as intimacy turns into evidence, accusation,
+  and a room that remembers after the bodies are gone.
+story_opening_text: 'The story opens with distance before violence: a small fracture
+  in trust that the rest of the sequence cannot repair.'
+story_sequence_text: The handkerchief and its surrounding gestures carry the middle
+  movement, where intimacy is transformed into evidence, accusation, and false certainty.
+story_closing_text: The final images leave the room after the tragedy, where objects
+  and surviving witnesses carry what the bodies no longer can.
+cover_work_id: first-gap
+work_ids:
+- first-gap
+- fallen-token
+- emilia-finds-weight
+- gift-becomes-evidence
+- honest-shadow
+- desdemona-waits
+- hidden-listener
+- bianca-returns-proof
+- public-rupture
+- door-before-bedroom
+- bed-holds-breath
+- before-smothering
+- after-the-breath
+- emilia-enters-ruin
+- witnesses-arrive-alone
+- iago-without-language
+- room-after-everyone
+order: 10
+visibility: public
+project_type: performance
+review_mode: true
+allow_favorites: true
+allow_inquiry_basket: true

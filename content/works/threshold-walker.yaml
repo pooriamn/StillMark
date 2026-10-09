@@ -1,0 +1,26 @@
+id: threshold-walker
+title: Threshold Walker
+series: urban-intervals
+year: Threshold sequence
+location: Stone façade
+alt: A solitary figure crosses a triangular spill of light beside a dark arched stone
+  doorway.
+caption: Some grief does not break down in tears. It leaves the room, enters the street,
+  and keeps moving beneath indifferent walls. Longing prefers distance to confession.
+  On certain days, walking asks more of sorrow than crying ever could.
+tags:
+- street
+- shadow
+- architecture
+- silhouette
+review_status: published
+published: true
+hero_safe: true
+grid_safe: true
+social_safe: false
+focal_point:
+  x: 20
+  y: 62
+image:
+  master: threshold-walker.png
+  render_name: threshold-walker

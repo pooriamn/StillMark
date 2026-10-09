@@ -1,0 +1,34 @@
+id: empty-house-leonardos-wife
+title: Leonardo's Wife Holds the Empty House
+series: blood-wedding
+year: '2026'
+location: Unspecified
+alt: Leonardo's Wife sits alone near a folded blanket in a sparse dark domestic space.
+caption: Some losses begin before the news arrives. The house knows abandonment before
+  widowhood has been named, and the future is reduced to what has been folded, left,
+  and waited beside. Her silence is not secondary to the tragedy; it is one of its
+  deepest rooms.
+tags:
+- blood-wedding
+- lorca
+- leonardos-wife
+- house
+- abandonment
+- widowhood
+- silence
+- domestic
+review_status: archived
+published: false
+hero_safe: true
+grid_safe: true
+social_safe: false
+portfolio_layout: auto
+series_layout: auto
+display_layouts: {}
+display_ratios: {}
+focal_point:
+  x: 36
+  y: 24
+image:
+  master: empty-house-leonardos-wife.png
+  render_name: empty-house-leonardos-wife

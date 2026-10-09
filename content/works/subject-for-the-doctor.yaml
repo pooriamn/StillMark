@@ -1,0 +1,34 @@
+id: subject-for-the-doctor
+title: Subject for the Doctor
+series: woyzeck
+year: '2026'
+location: Unspecified
+alt: Woyzeck sits or stands under clinical light while the Doctor observes him on
+  a minimal stage.
+caption: Some forms of violence do not need raised voices. Here, a body is examined
+  more carefully than a life is understood. The cruelty is procedural, almost tidy,
+  and that is what makes it harder to resist.
+tags:
+- woyzeck
+- doctor
+- experiment
+- observation
+- institution
+- body
+- control
+- humiliation
+review_status: archived
+published: false
+hero_safe: true
+grid_safe: true
+social_safe: false
+portfolio_layout: auto
+series_layout: auto
+display_layouts: {}
+display_ratios: {}
+focal_point:
+  x: 50
+  y: 50
+image:
+  master: subject-for-the-doctor.png
+  render_name: subject-for-the-doctor

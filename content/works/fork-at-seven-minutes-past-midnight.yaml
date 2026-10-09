@@ -1,0 +1,34 @@
+id: fork-at-seven-minutes-past-midnight
+title: Fork at Seven Minutes Past Midnight
+series: curious-incident
+year: '2026'
+location: Unspecified
+alt: Christopher kneels near Wellington and a garden fork in a stark night-time stage
+  scene.
+caption: The story begins as evidence before it becomes grief. A quiet garden turns
+  into an impossible equation, and the night opens around one fact that refuses to
+  stay small.
+tags:
+- curious-incident
+- christopher-boone
+- wellington
+- evidence
+- mystery
+- night
+- garden-fork
+- beginning
+review_status: published
+published: true
+hero_safe: true
+grid_safe: true
+social_safe: false
+portfolio_layout: auto
+series_layout: auto
+display_layouts: {}
+display_ratios: {}
+focal_point:
+  x: 18
+  y: 14
+image:
+  master: fork-at-seven-minutes-past-midnight.png
+  render_name: fork-at-seven-minutes-past-midnight

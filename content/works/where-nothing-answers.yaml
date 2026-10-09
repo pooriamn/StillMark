@@ -1,0 +1,27 @@
+id: where-nothing-answers
+title: Where Nothing Answers
+series: urban-intervals
+year: Threshold sequence
+location: Untitled location
+alt: Blurred solitary figure walking past a worn building with dark windows and stained
+  walls.
+caption: Neglect has its own architecture. It gathers in cracked walls, dim windows,
+  and the slow weathering of anything left outside concern. What passes before it
+  is brief; what stays behind is longer, heavier, and harder to name. Not ruin exactly.
+  More the discipline of being left.
+tags:
+- façade
+- abandonment
+- isolation
+- urban silence
+review_status: published
+published: true
+hero_safe: true
+grid_safe: true
+social_safe: false
+focal_point:
+  x: 29
+  y: 76
+image:
+  master: where-nothing-answers.png
+  render_name: where-nothing-answers

@@ -1,0 +1,32 @@
+id: mother-in-the-wrong-city
+title: Mother in the Wrong City
+series: curious-incident
+year: '2026'
+location: Unspecified
+alt: Christopher and Judy face each other across a charged distance in a London room.
+caption: Arrival is not the same as safety. The mother who was missing is present,
+  but presence cannot undo the years that taught absence how to sit between them.
+tags:
+- curious-incident
+- mother
+- judy
+- london
+- reunion
+- absence
+- guilt
+- family
+review_status: archived
+published: false
+hero_safe: true
+grid_safe: true
+social_safe: false
+portfolio_layout: auto
+series_layout: auto
+display_layouts: {}
+display_ratios: {}
+focal_point:
+  x: 50
+  y: 50
+image:
+  master: mother-in-the-wrong-city.png
+  render_name: mother-in-the-wrong-city

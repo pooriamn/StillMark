@@ -1,0 +1,27 @@
+id: against-the-gale
+title: Against the Gale
+series: weather-of-presence
+year: Weather sequence
+location: Open shore
+alt: A solitary figure walks through snow beside a wind-bent tree on an open wintry
+  shoreline.
+caption: Absence fills the field so completely that even the wind seems to move through
+  it with caution. One form bends, another continues, and the white distance offers
+  neither shelter nor reply. What remains is not victory over the storm, only the
+  severe grace of refusing to stop inside it.
+tags:
+- snow
+- wind
+- tree
+- shore
+review_status: published
+published: true
+hero_safe: true
+grid_safe: true
+social_safe: false
+focal_point:
+  x: 35
+  y: 68
+image:
+  master: against-the-gale.png
+  render_name: against-the-gale

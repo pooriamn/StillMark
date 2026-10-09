@@ -1,0 +1,34 @@
+id: marie-at-the-window
+title: Marie at the Window
+series: woyzeck
+year: '2026'
+location: Unspecified
+alt: Marie leans at a window frame on a dark stage, looking outward toward unseen
+  movement.
+caption: A life can begin to change through looking alone. At the window, desire does
+  not yet declare itself as betrayal. It arrives first as attention - a glance held
+  longer than safety, a hunger for more than the room can give.
+tags:
+- woyzeck
+- marie
+- window
+- desire
+- poverty
+- longing
+- threshold
+- isolation
+review_status: published
+published: true
+hero_safe: true
+grid_safe: true
+social_safe: false
+portfolio_layout: auto
+series_layout: auto
+display_layouts: {}
+display_ratios: {}
+focal_point:
+  x: 55
+  y: 19
+image:
+  master: marie-at-the-window.png
+  render_name: marie-at-the-window

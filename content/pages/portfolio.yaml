@@ -1,0 +1,15 @@
+meta:
+  title: Portfolio - STILLMRK
+  description: Browse selected STILLMRK photographs before entering the full Series and Stage
+    Works sequences.
+  og_description: Browse STILLMRK selected work, then move deeper into sequenced Series and
+    Stage Works.
+  og_image: assets/images/social/quiet-lens-og-portfolio.jpg
+  og_image_alt: STILLMRK portfolio social card for the portfolio overview.
+hero:
+  eyebrow: Portfolio
+  title: First Glance, Then Depth
+  lead: Start with selected images, then move into the fuller stories. Each photograph holds
+    its own weight, but the deeper structure lives in Series and Stage Works, where image
+    order, captions, and recurrence carry the narrative.
+  feature_work_id: against-the-gale

@@ -1,0 +1,30 @@
+id: passing-the-witness
+title: Passing The Witness
+series: transit-of-stillness
+year: Transit sequence
+location: Roadside witness tree
+alt: A cyclist rides along a road beside a lone tree and a narrow reflective pool
+  that mirrors both forms beneath a dark open sky.
+caption: The rider moves through the frame with the brief authority of motion, but
+  the tree remains under a different law. Rooted longer than any passing body, it
+  holds the edge of the road like a witness that does not interfere and does not forget.
+  Reflection keeps both together for a moment, not as equals, but as two different
+  measures of time.
+tags:
+- cyclist
+- tree
+- reflection
+- roadside
+- witness
+- passage
+review_status: published
+published: true
+hero_safe: true
+grid_safe: true
+social_safe: false
+focal_point:
+  x: 66
+  y: 69
+image:
+  master: passing-the-witness.png
+  render_name: passing-the-witness

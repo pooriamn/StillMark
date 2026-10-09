@@ -1,0 +1,33 @@
+id: honest-shadow
+title: Honest Shadow
+series: othello
+year: '2026'
+location: Unspecified
+alt: Othello sits under a pool of light while Iago stands behind him in darkness.
+caption: The most dangerous lie does not arrive as theatre. It arrives calmly, almost
+  helpfully, and stands close enough to sound like care. Persuasion begins not with
+  force, but with the patient occupation of another person's fear.
+tags:
+- othello
+- iago
+- jealousy
+- persuasion
+- fear
+- manipulation
+- shadow
+- suspicion
+review_status: archived
+published: false
+hero_safe: true
+grid_safe: true
+social_safe: false
+portfolio_layout: auto
+series_layout: auto
+display_layouts: {}
+display_ratios: {}
+focal_point:
+  x: 69
+  y: 26
+image:
+  master: honest-shadow.png
+  render_name: honest-shadow

@@ -1,0 +1,33 @@
+id: witnesses-arrive-alone
+title: The Witnesses Arrive Alone
+series: othello
+year: '2026'
+location: Unspecified
+alt: Several figures stand separately around the bedroom after Desdemona's death.
+caption: 'A crowd gathers, but comfort does not. Each figure stands inside a different
+  failure: knowledge too late, authority too weak, obedience too costly, grief too
+  large. The room fills without becoming whole.'
+tags:
+- othello
+- witnesses
+- aftermath
+- grief
+- truth
+- authority
+- damage
+- tragedy
+review_status: archived
+published: false
+hero_safe: true
+grid_safe: true
+social_safe: false
+portfolio_layout: auto
+series_layout: auto
+display_layouts: {}
+display_ratios: {}
+focal_point:
+  x: 71
+  y: 25
+image:
+  master: witnesses-arrive-alone.png
+  render_name: witnesses-arrive-alone

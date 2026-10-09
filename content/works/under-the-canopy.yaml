@@ -1,0 +1,30 @@
+id: under-the-canopy
+title: Under The Canopy
+series: transit-of-stillness
+year: Transit sequence
+location: Framed water
+alt: A kayaker moves across still water beneath overhanging tree branches, with the
+  trees and clouds reflected across the lake surface.
+caption: The surface is no longer crossed in the open. Branches gather above and reflection
+  gathers below, turning passage into something more enclosed, more absorbed. The
+  kayak moves with so little disturbance that motion begins to resemble listening.
+  What travels through this frame does not break the stillness. It enters it, and
+  is briefly carried within it.
+tags:
+- kayak
+- water
+- reflection
+- canopy
+- passage
+- stillness
+review_status: published
+published: true
+hero_safe: true
+grid_safe: true
+social_safe: false
+focal_point:
+  x: 33
+  y: 59
+image:
+  master: under-the-canopy.png
+  render_name: under-the-canopy

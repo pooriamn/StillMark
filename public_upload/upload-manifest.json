@@ -1,0 +1,21 @@
+{
+  "generatedAt": "2026-05-22T08:39:23.751531Z",
+  "environment": "production",
+  "siteUrl": "https://stillmark.art/",
+  "displayUrl": "https://stillmark.art/",
+  "allowIndexing": true,
+  "uploadFolder": "public_upload",
+  "uploadOnly": [
+    "index.html",
+    "portfolio.html",
+    "series.html",
+    "performance.html",
+    "about.html",
+    "contact.html",
+    "404.html",
+    "robots.txt",
+    "sitemap.xml",
+    "site.webmanifest",
+    "assets/"
+  ]
+}

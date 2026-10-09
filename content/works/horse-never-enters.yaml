@@ -1,0 +1,34 @@
+id: horse-never-enters
+title: The Horse Never Enters
+series: blood-wedding
+year: '2026'
+location: Unspecified
+alt: Leonardo stands apart from a bridle and folded cloth on a bare black stage.
+caption: 'Desire does not need to gallop in order to leave. It has already learned
+  the road in secret, already rehearsed the distance between a house and a forbidden
+  name. The absent horse becomes stronger than any body on stage: motion waiting for
+  permission it will not ask for.'
+tags:
+- blood-wedding
+- lorca
+- leonardo
+- horse
+- bridle
+- desire
+- flight
+- restlessness
+review_status: archived
+published: false
+hero_safe: true
+grid_safe: true
+social_safe: false
+portfolio_layout: auto
+series_layout: auto
+display_layouts: {}
+display_ratios: {}
+focal_point:
+  x: 69
+  y: 12
+image:
+  master: horse-never-enters.png
+  render_name: horse-never-enters

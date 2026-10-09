@@ -1,0 +1,34 @@
+id: after-the-first-touch
+title: After the First Touch
+series: romeo-and-juliet
+year: '2026'
+location: Unspecified
+alt: Juliet sits alone on a bed in dim stage light, holding the memory of a recent
+  encounter.
+caption: After desire enters, solitude is no longer empty. The room holds the trace
+  of what has just passed through it, and the body understands the change before language
+  can catch up.
+tags:
+- romeo-and-juliet
+- juliet
+- desire
+- solitude
+- memory
+- bed
+- intimacy
+- aftershock
+review_status: archived
+published: false
+hero_safe: true
+grid_safe: true
+social_safe: false
+portfolio_layout: auto
+series_layout: auto
+display_layouts: {}
+display_ratios: {}
+focal_point:
+  x: 39
+  y: 23
+image:
+  master: after-the-first-touch.png
+  render_name: after-the-first-touch

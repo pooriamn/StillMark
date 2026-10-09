@@ -1,0 +1,29 @@
+id: ophelia-without-water
+title: Ophelia Without Water
+series: hamlet
+year: '2026'
+location: Unspecified
+alt: Ophelia sits alone under a vertical shaft of light, surrounded by scattered flowers.
+caption: Long before the river, there is a quieter drowning. It begins in obedience,
+  in loneliness, in the slow unmaking that comes when no one hears distress until
+  it has become irreversible. The flowers remain, but they no longer belong to innocence.
+tags:
+- hamlet
+- ophelia
+- grief
+- madness
+- flowers
+- abandonment
+- silence
+- loss
+review_status: published
+published: true
+hero_safe: true
+grid_safe: true
+social_safe: false
+focal_point:
+  x: 49
+  y: 57
+image:
+  master: ophelia-without-water.png
+  render_name: ophelia-without-water

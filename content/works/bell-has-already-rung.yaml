@@ -1,0 +1,34 @@
+id: bell-has-already-rung
+title: The Bell Has Already Rung
+series: happy-days
+year: '2026'
+location: Unspecified
+alt: Winnie is buried waist-deep in a mound of dry earth on a bare stage, with her
+  black bag and toothbrush nearby.
+caption: 'The day begins before despair can organise itself. The bell has already
+  done its work, and habit rises to meet it: a face arranged against silence, a bag
+  within reach, a body still trying to call this continuation.'
+tags:
+- happy-days
+- samuel-beckett
+- winnie
+- bell
+- routine
+- mound
+- endurance
+- black-and-white
+review_status: published
+published: true
+hero_safe: true
+grid_safe: true
+social_safe: false
+portfolio_layout: auto
+series_layout: auto
+display_layouts: {}
+display_ratios: {}
+focal_point:
+  x: 51
+  y: 36
+image:
+  master: bell-has-already-rung.png
+  render_name: bell-has-already-rung

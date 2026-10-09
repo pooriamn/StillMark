@@ -1,0 +1,27 @@
+id: frosted-witness
+title: Too Late for What Once Waited
+series: winter-silence
+year: Winter sequence
+location: Frozen plain
+alt: A solitary hiker stands in snow facing a large frost-covered tree beneath a pale
+  sky.
+caption: A path reaches the tree, but not the past. Frost keeps its quiet authority,
+  the branches hold their white burden, and the field refuses to return what once
+  seemed waiting. There are arrivals that do not open anything. They only make loss
+  visible in full light.
+tags:
+- snow
+- tree
+- solitude
+- winter
+review_status: published
+published: true
+hero_safe: true
+grid_safe: true
+social_safe: false
+focal_point:
+  x: 31
+  y: 67
+image:
+  master: frosted-witness.png
+  render_name: frosted-witness

@@ -1,0 +1,29 @@
+id: bianca-returns-proof
+title: Bianca Returns the Proof
+series: othello
+year: '2026'
+location: Unspecified
+alt: Bianca stands near Cassio, Iago, and a discarded handkerchief on the stage floor.
+caption: The truth passes through the wrong room and becomes unusable. Everyone sees
+  something, but no one sees the same story. The handkerchief has travelled so far
+  from love that even innocence begins to look staged.
+tags:
+- othello
+- bianca
+- cassio
+- handkerchief
+- proof
+- misunderstanding
+- accusation
+- evidence
+review_status: published
+published: true
+hero_safe: true
+grid_safe: true
+social_safe: false
+focal_point:
+  x: 19
+  y: 26
+image:
+  master: bianca-returns-proof.png
+  render_name: bianca-returns-proof

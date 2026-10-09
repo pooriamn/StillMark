@@ -1,0 +1,33 @@
+id: emilia-enters-ruin
+title: Emilia Enters the Ruin
+series: othello
+year: '2026'
+location: Unspecified
+alt: Emilia appears in the doorway of the bedroom while Othello stands near the bed.
+caption: Witness arrives after mercy has left. Emilia enters not as rescue, but as
+  recognition. The room is already broken, yet truth still has to cross it, late and
+  necessary.
+tags:
+- othello
+- emilia
+- witness
+- truth
+- ruin
+- recognition
+- bedroom
+- aftermath
+review_status: archived
+published: false
+hero_safe: true
+grid_safe: true
+social_safe: false
+portfolio_layout: auto
+series_layout: auto
+display_layouts: {}
+display_ratios: {}
+focal_point:
+  x: 15
+  y: 29
+image:
+  master: emilia-enters-ruin.png
+  render_name: emilia-enters-ruin

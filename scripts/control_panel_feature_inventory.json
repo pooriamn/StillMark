@@ -1,0 +1,40 @@
+{
+  "version": "2026-04-26-phase-01-05",
+  "scope": "control-panel-only",
+  "daily": [
+    "Dashboard readiness hero",
+    "Works library and work editor",
+    "Series sequence and cover editing",
+    "Page/content builder",
+    "Save, preview, build"
+  ],
+  "weekly": [
+    "Publish validation",
+    "Release package preparation",
+    "Metadata audit",
+    "Series completeness review",
+    "Recent operation review"
+  ],
+  "rare": [
+    "Workbook import/export",
+    "Bulk relink missing sources",
+    "Derivative regeneration",
+    "Duplicate/orphan asset review",
+    "Release snapshots"
+  ],
+  "diagnostic": [
+    "Raw YAML editing",
+    "Source asset truth report",
+    "Static accessibility audit",
+    "Performance diagnostics",
+    "Task monitor / backend warnings"
+  ],
+  "remove_or_hide_from_dashboard": [
+    "Release check tree",
+    "Repair queue tree",
+    "Task monitor",
+    "Accessibility audit",
+    "Raw source reports"
+  ],
+  "principle": "Primary dashboard surfaces should answer: how ready is the portfolio, what is the single next action, and where should the user go next. Diagnostic tools remain accessible but should not compete with daily editing."
+}

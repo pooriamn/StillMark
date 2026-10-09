@@ -1,0 +1,33 @@
+id: two-coats-after-knives
+title: Two Coats After the Knives
+series: blood-wedding
+year: '2026'
+location: Unspecified
+alt: Two dark coats and a pale bridal veil lie separated under a hard overhead light.
+caption: After violence, the stage gives back only what bodies can leave behind. Fabric
+  becomes testimony. Distance becomes verdict. The veil does not reconcile the dead;
+  it lies between them like the final proof of what desire has cost.
+tags:
+- blood-wedding
+- lorca
+- coats
+- knives
+- veil
+- death
+- evidence
+- aftermath
+review_status: archived
+published: false
+hero_safe: true
+grid_safe: true
+social_safe: false
+portfolio_layout: auto
+series_layout: auto
+display_layouts: {}
+display_ratios: {}
+focal_point:
+  x: 56
+  y: 60
+image:
+  master: two-coats-after-knives.png
+  render_name: two-coats-after-knives

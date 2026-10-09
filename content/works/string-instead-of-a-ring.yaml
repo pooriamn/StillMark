@@ -1,0 +1,35 @@
+id: string-instead-of-a-ring
+title: String Instead of a Ring
+series: eurydice
+year: '2026'
+location: Unspecified
+alt: Orpheus ties a piece of string around Eurydice's finger on a sparse stage with
+  faint beach-like traces.
+caption: Love begins here without ceremony. A piece of string takes the place of a
+  ring, small enough to seem foolish and fragile enough to become memory. Before death,
+  before water, before forgetting, the promise is almost nothing - which is why it
+  can hold so much.
+tags:
+- eurydice
+- sarah-ruhl
+- orpheus
+- string
+- proposal
+- memory
+- love
+- theatre
+review_status: published
+published: true
+hero_safe: true
+grid_safe: true
+social_safe: false
+portfolio_layout: auto
+series_layout: auto
+display_layouts: {}
+display_ratios: {}
+focal_point:
+  x: 57
+  y: 30
+image:
+  master: string-instead-of-a-ring.png
+  render_name: string-instead-of-a-ring

@@ -1,0 +1,31 @@
+meta:
+  title: Series - STILLMRK
+  description: 'Explore STILLMRK photographic series as authored visual stories: sequenced
+    bodies of work where order, recurrence, spacing, and silence matter as much as the individual
+    frame.'
+  og_description: Explore STILLMRK through paced monochrome photographic series rather than
+    a loose image feed.
+  og_image: assets/images/social/quiet-lens-og-series.jpg
+  og_image_alt: STILLMRK series social card introducing the series pages.
+hero_title: Where Presence Meets Distance
+hero:
+  feature_work_id: reality-refuses-noise
+  eyebrow: Series
+  title: Where Presence Meets Distance
+  lead: Series are authored photographic stories. They begin from a visual pressure — distance,
+    witness, weather, threshold, nearness — and unfold through sequence rather than chronology.
+    Each image is a fragment; the order is part of the work.
+  notes: []
+hero_eyebrow: Series
+hero_lead: Series are authored photographic stories. They begin from a visual pressure — distance,
+  witness, weather, threshold, nearness — and unfold through sequence rather than chronology.
+  Each image is a fragment; the order is part of the work.
+related_series:
+  eyebrow: Related series
+  title: Other authored sequences in the archive.
+  intro: Move from one story to another without flattening the images into a general archive.
+inquiry:
+  title: Inquire
+  text: ''
+  label: Inquire
+  href: contact.html

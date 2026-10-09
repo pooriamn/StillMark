@@ -1,0 +1,29 @@
+id: chair-kingdom
+title: The Chair That Became a Kingdom
+series: hamlet
+year: '2026'
+location: Unspecified
+alt: Hamlet stands outside a pool of light where an empty chair suggests the absent
+  king and the weight of inheritance.
+caption: Every tragedy begins with a vacancy. Before revenge finds its language, the
+  kingdom is already ruled by what is missing. Here, power is not held — it is haunted.
+tags:
+- hamlet
+- absence
+- throne
+- inheritance
+- power
+- grief
+- solitude
+- black-and-white
+review_status: published
+published: true
+hero_safe: true
+grid_safe: true
+social_safe: false
+focal_point:
+  x: 24
+  y: 41
+image:
+  master: chair-kingdom.png
+  render_name: chair-kingdom

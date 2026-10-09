@@ -1,0 +1,30 @@
+id: window-before-wedding
+title: The Window Before the Wedding
+series: blood-wedding
+year: '2026'
+location: Unspecified
+alt: The Bride and Leonardo face one another across a bright doorway-like strip of
+  light.
+caption: The forbidden choice first appears as light between two lives. No one has
+  yet crossed far enough to call it ruin, but the future has already entered the room.
+  The threshold does not invite them. It measures the cost of being seen.
+tags:
+- blood-wedding
+- lorca
+- bride
+- leonardo
+- threshold
+- desire
+- forbidden-love
+- fate
+review_status: published
+published: true
+hero_safe: true
+grid_safe: true
+social_safe: false
+focal_point:
+  x: 55
+  y: 35
+image:
+  master: window-before-wedding.png
+  render_name: window-before-wedding

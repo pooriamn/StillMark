@@ -1,0 +1,89 @@
+meta:
+  title: STILLMRK - Monochrome photography
+  description: STILLMRK is a narrative monochrome photography portfolio built around
+    thresholds, witness, reflection, winter passage, and quiet forms of solidarity.
+  og_description: A monochrome sequence shaped by thresholds, water, snow, witness
+    trees, and the emotional condition of distance.
+  og_image: assets/images/social/quiet-lens-og-home.jpg
+  og_image_alt: STILLMRK homepage social card with the title The Distance That Remains.
+hero:
+  eyebrow: STILLMRK / The Distance That Remains
+  title: The Distance That Remains
+  lead: 'These photographs move through roads, shorelines, winter fields, and built
+    edges where a person can appear small without disappearing. Trees return as witnesses.
+    Water reflects what cannot be held for long. Snow removes excess and leaves only
+    relation: between one figure and another, between the body and the land, between
+    solitude and the brief forms of solidarity that interrupt it. Made across different
+    countries and years, the work is held together less by geography than by a recurring
+    condition of distance - not as emptiness, but as a way of being present.'
+  feature_work_id: mirror-shore
+  feature_label: Lead image
+  primary_action:
+    label: View portfolio
+    href: portfolio.html
+    style: primary
+  secondary_action:
+    label: Explore series
+    href: series.html
+    style: secondary
+  notes:
+  - Series-led narrative
+  - Across places and seasons
+  - Quiet forms of nearness
+metrics:
+- value: auto:works
+  label: Works on view
+- value: auto:series
+  label: Series on view
+- value: '05'
+  label: Years gathered across geographies
+featured_series:
+  eyebrow: Featured series
+  title: A narrative held together by recurrence rather than chronology.
+  intro: 'Each series follows a different condition of distance: threshold, horizon,
+    weather, or winter passage. The images are grouped by pressure and relation, not
+    by file date.'
+  series_slugs:
+  - witness-horizon
+  - winter-silence
+  - urban-intervals
+  - weather-of-presence
+selected_works:
+  eyebrow: Selected works
+  title: Entry points into the larger sequence.
+  intro: A small group of photographs that opens the larger body of work without flattening
+    it into a wall of images.
+  work_ids:
+  - threshold-walker
+  - mirror-shore
+  - between-trees
+  - night-road
+modules:
+- type: text
+  eyebrow: Approach
+  title: Image and narration should deepen one another, not compete.
+  text: 'The work moves by recurrence rather than explanation: thresholds first, then
+    open ground, reflection, weather, winter, and the rare moments when another presence
+    changes the meaning of distance. Text appears only where it deepens the image.'
+  actions:
+  - label: Read the practice
+    href: about.html
+    style: secondary
+  - label: Start an inquiry
+    href: contact.html
+    style: ghost
+- type: series_index
+  eyebrow: Series map
+  title: Current public series index
+  text: 'Move through the work by condition rather than date: threshold, witness,
+    weather, winter, and nearness.'
+- type: work_spotlight
+  eyebrow: Spotlight
+  title: Weather can turn distance into a form of nearness.
+  text: Weathered Nearness carries the archive through wind, rain, exposure, and the
+    brief solidarity that appears when the frame must hold more than one body at once.
+  work_id: storm-mirror
+  action:
+    label: Open Weathered Nearness
+    href: series.html?series=weather-of-presence
+    style: secondary

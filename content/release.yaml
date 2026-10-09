@@ -1,0 +1,14 @@
+staging_url: https://stillmark.art/
+production_url: https://stillmark.art/
+preview_branch: preview
+production_branch: main
+production_backend: github
+repo: redionix/stillmark-staging
+commit_message_template: 'content: {collection} - {entry}'
+change_note_template: 'Edited {collection}/{entry}: summarize what changed and why.'
+required_checks:
+- validate content schema
+- rebuild site successfully
+- check canonicals and og:url
+- confirm robots and sitemap state
+- confirm private series are not surfaced publicly

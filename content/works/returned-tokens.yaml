@@ -1,0 +1,30 @@
+id: returned-tokens
+title: Returned Tokens
+series: hamlet
+year: '2026'
+location: Unspecified
+alt: Ophelia holds returned tokens while Hamlet withdraws and shadowed observers watch
+  from the edges.
+caption: Love does not survive unchanged once the room acquires witnesses. What was
+  once intimate now passes through colder hands, and tenderness begins to resemble
+  evidence. From here on, even affection belongs to the court.
+tags:
+- hamlet
+- ophelia
+- love
+- rejection
+- surveillance
+- court
+- distance
+- evidence
+review_status: published
+published: true
+hero_safe: true
+grid_safe: true
+social_safe: false
+focal_point:
+  x: 32
+  y: 29
+image:
+  master: returned-tokens.png
+  render_name: returned-tokens

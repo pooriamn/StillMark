@@ -1,0 +1,34 @@
+id: father-builds-the-room
+title: The Father Builds the Room
+series: eurydice
+year: '2026'
+location: Unspecified
+alt: Eurydice's father builds a fragile room from string, chairs, pipes, and rough
+  stage anchors in the underworld.
+caption: In the underworld, care has to become architecture. The father has almost
+  nothing to offer except patience, string, and the stubborn belief that a room can
+  be made for someone who no longer remembers how to come home.
+tags:
+- eurydice
+- father
+- string-room
+- shelter
+- care
+- underworld
+- memory
+- tenderness
+review_status: published
+published: true
+hero_safe: true
+grid_safe: true
+social_safe: false
+portfolio_layout: auto
+series_layout: auto
+display_layouts: {}
+display_ratios: {}
+focal_point:
+  x: 71
+  y: 23
+image:
+  master: father-builds-the-room.png
+  render_name: father-builds-the-room

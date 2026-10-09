@@ -1,0 +1,32 @@
+id: steps-to-nowhere
+title: Steps to Nowhere
+series: winter-silence
+year: Untitled location
+location: Snow field
+alt: A lone figure stands in a snowy open field near a large leafless tree, with a
+  curved line of footprints leading across the snow.
+caption: Some distances are not crossed to reach another place, but to remain bearable
+  within oneself. The snow receives each step without promise, and the path goes on
+  without answer. What matters is not arrival, but the brief trace of a presence moving
+  through silence.
+tags:
+- Winter passage
+- Black and White
+- Fine art Photography
+- Minimalist Landscape
+- Solitude
+- Snow
+- Lone Figure
+- tree
+- Footprint
+review_status: published
+published: true
+hero_safe: true
+grid_safe: true
+social_safe: false
+focal_point:
+  x: 85
+  y: 68
+image:
+  master: steps-to-nowhere.jpg
+  render_name: steps-to-nowhere

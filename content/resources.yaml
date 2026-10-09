@@ -1,0 +1,23 @@
+downloads:
+- id: press-kit
+  title: Press kit
+  description: Studio overview, practice statement, short bio, and contact references.
+  file: /assets/documents/stillmark-press-kit.pdf
+  kind: press
+  audience: public
+  featured: true
+- id: exhibition-list
+  title: Exhibition list
+  description: Public exhibition dossier, presentation notes, and current availability
+    context.
+  file: /assets/documents/stillmark-exhibition-list.pdf
+  kind: exhibitions
+  audience: public
+  featured: false
+- id: studio-cv
+  title: Studio CV
+  description: Concise practice profile, working method, and collaboration details.
+  file: /assets/documents/stillmark-studio-cv.pdf
+  kind: cv
+  audience: public
+  featured: false

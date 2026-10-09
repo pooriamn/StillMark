@@ -1,0 +1,95 @@
+meta:
+  title: Stage Works - STILLMRK
+  description: Stage Works gathers theatre and performance projects as sequenced photographic
+    stories. Each project keeps its own order, context, and rhythm so every image
+    reads as a fragment of the whole.
+  og_description: 'Explore STILLMRK Stage Works: theatre and performance stories translated
+    into monochrome sequences of body, gesture, silence, and aftermath.'
+  og_image: assets/images/social/quiet-lens-og-performance.jpg
+  og_image_alt: STILLMRK Stage Works social card for body, gesture, and image sequences.
+hero:
+  eyebrow: Stage Works
+  title: Body, Gesture, Frame
+  lead: 'Stage Works gathers theatre and performance projects as complete photographic
+    stories. Each project keeps its own sequence: the opening image, the pauses, the
+    rupture, the aftermath. The stage is the source, but the final reading is photographic.'
+  feature_work_id: skull-not-prop
+  actions:
+  - label: View Stage Works
+    href: '#performance-projects'
+    style: primary
+  - label: Browse photographic series
+    href: series.html
+    style: secondary
+  notes:
+  - Story-first projects
+  - Project-level sequencing
+  - Images as narrative fragments
+  primary_action:
+    label: View Stage Works
+    href: '#performance-projects'
+    style: primary
+  secondary_action:
+    label: Browse photographic series
+    href: series.html
+    style: secondary
+projects:
+  eyebrow: Stage Works
+  title: Each staged work remains readable as a complete sequence.
+  intro: 'These projects are organised by play or performance, but they are not simple
+    documentation folders. They are ordered stories: each photograph has its own pressure,
+    and the sequence lets those fragments build toward the larger work.'
+  visible: true
+structure:
+  visible: true
+  eyebrow: How to read this section
+  title: Stage Works is a storytelling route, not an image dump.
+  intro: Series and Stage Works use the same careful sequencing, but they answer different
+    questions. Series begins from an authored photographic idea. Stage Works begins
+    from a performed work and follows how body, space, light, and silence unfold across
+    time.
+  cards:
+  - eyebrow: Route 01
+    title: Stage work
+    text: A play or performance treated as a complete photographic story, with its
+      own context, cover, statement, and ending.
+  - eyebrow: Route 02
+    title: Sequence
+    text: The order is intentional. The first image opens the threshold, the middle
+      builds pressure, and the final image decides what remains.
+  - eyebrow: Route 03
+    title: Image as fragment
+    text: Each photograph can stand alone, but its full meaning sharpens when it is
+      read as one piece of the larger staged story.
+cta:
+  visible: true
+  eyebrow: Inquiry
+  title: Stage photography, exhibitions, and collaborations.
+  text: Use the contact page for theatre and performance photography, exhibition context,
+    editions, licensing, or collaborative staged projects.
+  actions:
+  - label: Start an inquiry
+    href: contact.html?inquiryType=Collaboration
+    style: primary
+  - label: View portfolio
+    href: portfolio.html
+    style: secondary
+content_builder_guide:
+  visible: false
+  eyebrow: Guide scaffolds
+  title: Draft Stage Works in the Content Builder
+  intro: Private guide cards for shaping theatre and performance stories before adding
+    final images, captions, and cover works.
+  items:
+  - eyebrow: Stage Work guide
+    title: Hamlet
+    text: Use this scaffold for a performance sequence built around hesitation, repetition,
+      interior conflict, and the figure suspended before action.
+  - eyebrow: Stage Work guide
+    title: Othello
+    text: Use this scaffold for a performance sequence shaped by witness, proximity,
+      accusation, trust, and controlled rupture.
+  - eyebrow: Stage Work guide
+    title: Blood Wedding
+    text: Use this scaffold for a performance sequence built around ritual, pursuit,
+      desire, social pressure, and consequence.

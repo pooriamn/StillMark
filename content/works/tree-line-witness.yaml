@@ -1,0 +1,27 @@
+id: tree-line-witness
+title: Tree Line Witness
+series: winter-silence
+year: Winter sequence
+location: Snow plain
+alt: A bundled hiker stands in deep snow facing a lone frost-covered tree in an open
+  landscape.
+caption: At last, the distance gives way to presence, but not to recovery. The tree
+  still stands, the cold still holds, and the field offers only the calm that comes
+  after something essential has already passed. Arrival can be real and still come
+  too late for what mattered.
+tags:
+- snow
+- tree
+- hiker
+- distance
+review_status: published
+published: true
+hero_safe: true
+grid_safe: true
+social_safe: false
+focal_point:
+  x: 73
+  y: 67
+image:
+  master: tree-line-witness.png
+  render_name: tree-line-witness

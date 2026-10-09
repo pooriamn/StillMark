@@ -1,0 +1,34 @@
+id: letter-in-the-penthouse
+title: The Letter in the Penthouse
+series: eurydice
+year: '2026'
+location: Unspecified
+alt: Eurydice reaches toward a letter in a sparse unsettling penthouse-like stage
+  space while a suited man remains behind her.
+caption: Danger does not enter as violence. It enters as a message from the dead,
+  placed just far enough away to make reaching feel necessary. The room understands
+  the trap before she does.
+tags:
+- eurydice
+- letter
+- penthouse
+- nasty-interesting-man
+- danger
+- father
+- trap
+- underworld
+review_status: published
+published: true
+hero_safe: true
+grid_safe: true
+social_safe: false
+portfolio_layout: auto
+series_layout: auto
+display_layouts: {}
+display_ratios: {}
+focal_point:
+  x: 44
+  y: 38
+image:
+  master: letter-in-the-penthouse.png
+  render_name: letter-in-the-penthouse

@@ -1,0 +1,27 @@
+id: the-window-witness
+title: The Window Witness
+series: woyzeck
+year: '2026'
+location: Unspecified
+alt: Woyzeck stands inside while two softer figures are seen beyond a window-like
+  opening on stage.
+caption: He does not need words now. The window has already done enough damage. Beyond
+  it, two blurred figures continue as if the world were still intact; on this side,
+  a man becomes still enough for jealousy to take root.
+published: true
+hero_safe: true
+grid_safe: true
+social_safe: false
+tags:
+- woyzeck
+- jealousy
+- witness
+- window
+- marie
+- drum-major
+- collapse
+- suspicion
+focal_point:
+  x: 50
+  y: 50
+review_status: published

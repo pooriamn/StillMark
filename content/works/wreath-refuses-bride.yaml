@@ -1,0 +1,31 @@
+id: wreath-refuses-bride
+title: The Wreath Refuses the Bride
+series: blood-wedding
+year: '2026'
+location: Unspecified
+alt: The Bride stands on a dark stage near a fallen wreath, with figures held apart
+  by theatrical light.
+caption: A promise can fail before anyone has the courage to break it. The wedding
+  waits as ritual, object, and expectation, but the centre has already loosened. What
+  should have gathered a life together has begun to expose the life that cannot be
+  entered.
+tags:
+- blood-wedding
+- lorca
+- bride
+- wreath
+- wedding
+- hesitation
+- duty
+- tragedy
+review_status: published
+published: true
+hero_safe: true
+grid_safe: true
+social_safe: false
+focal_point:
+  x: 71
+  y: 25
+image:
+  master: wreath-refuses-bride.png
+  render_name: wreath-refuses-bride

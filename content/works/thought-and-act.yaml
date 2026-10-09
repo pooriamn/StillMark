@@ -1,0 +1,29 @@
+id: thought-and-act
+title: Between Thought and Act
+series: hamlet
+year: '2026'
+location: Unspecified
+alt: Hamlet stands in hesitation while a blade lies near the edge of the light.
+caption: Violence rarely begins in motion. It begins in delay — in the chamber where
+  thought circles consequence until both become indistinguishable. This is the hour
+  in which silence turns sharp.
+tags:
+- hamlet
+- hesitation
+- decision
+- blade
+- violence
+- consequence
+- silence
+- psychological
+review_status: published
+published: true
+hero_safe: true
+grid_safe: true
+social_safe: false
+focal_point:
+  x: 41
+  y: 23
+image:
+  master: thought-and-act.png
+  render_name: thought-and-act

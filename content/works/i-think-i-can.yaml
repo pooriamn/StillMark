@@ -1,0 +1,33 @@
+id: i-think-i-can
+title: I Think I Can
+series: curious-incident
+year: '2026'
+location: Unspecified
+alt: Christopher stands alone on a dark empty stage after the journey and family revelations.
+caption: The ending is not simple happiness. It is a possible beginning. The world
+  remains difficult, the stage remains dark, but he is still standing inside it with
+  a future he can now imagine.
+tags:
+- curious-incident
+- christopher
+- ending
+- self-possession
+- future
+- solitude
+- resilience
+- beginning
+review_status: archived
+published: false
+hero_safe: true
+grid_safe: true
+social_safe: false
+portfolio_layout: auto
+series_layout: auto
+display_layouts: {}
+display_ratios: {}
+focal_point:
+  x: 50
+  y: 50
+image:
+  master: i-think-i-can.png
+  render_name: i-think-i-can

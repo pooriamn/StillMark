@@ -1,0 +1,33 @@
+id: blood-at-the-elbow
+title: Blood at the Elbow
+series: woyzeck
+year: '2026'
+location: Unspecified
+alt: Woyzeck stands among others while a bloodstain at his elbow draws attention.
+caption: He returns to ordinary space and brings the act back with him. The stain
+  says what the mouth cannot manage, and around that small mark curiosity begins hardening
+  into accusation.
+tags:
+- woyzeck
+- blood
+- guilt
+- exposure
+- crowd
+- accusation
+- aftermath
+- evidence
+review_status: archived
+published: false
+hero_safe: true
+grid_safe: true
+social_safe: false
+portfolio_layout: auto
+series_layout: auto
+display_layouts: {}
+display_ratios: {}
+focal_point:
+  x: 50
+  y: 50
+image:
+  master: blood-at-the-elbow.png
+  render_name: blood-at-the-elbow

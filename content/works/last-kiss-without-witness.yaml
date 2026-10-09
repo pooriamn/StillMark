@@ -1,0 +1,33 @@
+id: last-kiss-without-witness
+title: The Last Kiss Without Witness
+series: romeo-and-juliet
+year: '2026'
+location: Unspecified
+alt: Romeo kneels beside Juliet's body on the bed in a final private moment.
+caption: Tenderness reaches its most devastating form when it is offered to what seems
+  beyond return. No one interrupts the mistake. Love speaks fully at the exact moment
+  when time has stopped listening.
+tags:
+- romeo-and-juliet
+- romeo
+- juliet
+- last-kiss
+- tenderness
+- death
+- privacy
+- tragedy
+review_status: published
+published: true
+hero_safe: true
+grid_safe: true
+social_safe: false
+portfolio_layout: auto
+series_layout: auto
+display_layouts: {}
+display_ratios: {}
+focal_point:
+  x: 64
+  y: 41
+image:
+  master: last-kiss-without-witness.png
+  render_name: last-kiss-without-witness

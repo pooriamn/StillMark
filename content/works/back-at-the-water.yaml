@@ -1,0 +1,33 @@
+id: back-at-the-water
+title: Back at the Water
+series: woyzeck
+year: '2026'
+location: Unspecified
+alt: Woyzeck returns alone to the water’s edge in a nearly empty stage composition.
+caption: He comes back as if water might still be negotiated with. The knife may sink,
+  the surface may close, but the place has already entered him. What can be hidden
+  now is smaller than what remains.
+tags:
+- woyzeck
+- pond
+- guilt
+- return
+- evidence
+- water
+- concealment
+- solitude
+review_status: archived
+published: false
+hero_safe: true
+grid_safe: true
+social_safe: false
+portfolio_layout: auto
+series_layout: auto
+display_layouts: {}
+display_ratios: {}
+focal_point:
+  x: 50
+  y: 50
+image:
+  master: back-at-the-water.png
+  render_name: back-at-the-water

@@ -1,0 +1,33 @@
+id: red-book-as-evidence
+title: The Red Book as Evidence
+series: curious-incident
+year: '2026'
+location: Unspecified
+alt: Christopher holds or writes in his red notebook under focused stage light.
+caption: The book is not simply where the story is written. It is the structure that
+  keeps the world from dissolving. Fact by fact, line by line, experience becomes
+  survivable.
+tags:
+- curious-incident
+- red-book
+- notebook
+- writing
+- evidence
+- order
+- survival
+- record
+review_status: archived
+published: false
+hero_safe: true
+grid_safe: true
+social_safe: false
+portfolio_layout: auto
+series_layout: auto
+display_layouts: {}
+display_ratios: {}
+focal_point:
+  x: 50
+  y: 50
+image:
+  master: red-book-as-evidence.png
+  render_name: red-book-as-evidence

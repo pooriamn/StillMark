@@ -1,0 +1,31 @@
+id: mother-sees-nothing
+title: The Mother Who Sees Nothing
+series: hamlet
+year: '2026'
+location: Unspecified
+alt: Hamlet reaches toward a ghostly presence while Gertrude sees only her son speaking
+  into emptiness.
+caption: Not every truth can cross from one soul to another. Some revelations arrive
+  alone and remain there, stranded between vision and disbelief. In *Hamlet*, the
+  deepest distances are not measured in space, but in what one heart cannot make another
+  see.
+tags:
+- hamlet
+- gertrude
+- ghost
+- truth
+- vision
+- isolation
+- memory
+- distance
+review_status: published
+published: true
+hero_safe: true
+grid_safe: true
+social_safe: false
+focal_point:
+  x: 66
+  y: 46
+image:
+  master: mother-sees-nothing.png
+  render_name: mother-sees-nothing

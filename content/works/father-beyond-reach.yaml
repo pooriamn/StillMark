@@ -1,0 +1,29 @@
+id: father-beyond-reach
+title: The Father Beyond Reach
+series: hamlet
+year: '2026'
+location: Unspecified
+alt: Hamlet faces the ghost of his father across a stark division of light and shadow.
+caption: Some inheritances arrive as comfort. This one arrives as command. The dead
+  return not to heal the living, but to place a burden inside them that cannot be
+  set down.
+tags:
+- hamlet
+- ghost
+- father
+- duty
+- inheritance
+- memory
+- grief
+- tragedy
+review_status: published
+published: true
+hero_safe: true
+grid_safe: true
+social_safe: false
+focal_point:
+  x: 62
+  y: 23
+image:
+  master: father-beyond-reach.png
+  render_name: father-beyond-reach

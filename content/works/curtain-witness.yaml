@@ -1,0 +1,29 @@
+id: curtain-witness
+title: The Curtain Heard Too Much
+series: hamlet
+year: '2026'
+location: Unspecified
+alt: Hamlet and Gertrude stand apart after a body has fallen near the curtain.
+caption: There is a point at which a private chamber ceases to be private. One mistake,
+  one hidden presence, one irrevocable break — and the room keeps the memory forever.
+  From that moment onward, walls do not protect; they testify.
+tags:
+- hamlet
+- gertrude
+- polonius
+- curtain
+- mistake
+- witness
+- private-space
+- aftermath
+review_status: published
+published: true
+hero_safe: true
+grid_safe: true
+social_safe: false
+focal_point:
+  x: 74
+  y: 60
+image:
+  master: curtain-witness.png
+  render_name: curtain-witness

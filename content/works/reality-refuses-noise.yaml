@@ -1,0 +1,33 @@
+id: reality-refuses-noise
+title: When Reality Refuses Noise
+series: witness-horizon
+year: Witness sequence
+location: Untitled location
+alt: Solitary figure standing at the edge of still water beneath a single cloud in
+  an open sky.
+caption: The scene feels almost unreal, not because it departs from the world, but
+  because it reveals how little the world needs in order to become unrecognizable.
+  A shore of snow, a black mirror of water, a suspended cloud, and one quiet presence
+  at the edge. Sometimes reality is most unsettling when it refuses all noise.
+tags:
+- emptiness
+- sky
+- reflection
+- existential solitude
+review_status: published
+published: true
+hero_safe: true
+grid_safe: true
+social_safe: false
+portfolio_layout: standard
+series_layout: standard
+display_layouts:
+  portfolio: standard
+  series: standard
+display_ratios: {}
+focal_point:
+  x: 53
+  y: 78
+image:
+  master: reality-refuses-noise.png
+  render_name: reality-refuses-noise

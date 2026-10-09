@@ -1,0 +1,31 @@
+id: horatio-after-noise
+title: Horatio After the Noise
+series: hamlet
+year: '2026'
+location: Unspecified
+alt: Horatio stands alone at the emptied centre of the stage after the violence has
+  ended.
+caption: 'Every kingdom eventually falls silent. When ambition, grief, revenge, and
+  innocence have spent themselves, one task remains: to remember. Horatio becomes
+  not the victor of the tragedy, but its keeper — the last living vessel for a ruined
+  story.'
+tags:
+- hamlet
+- horatio
+- aftermath
+- memory
+- witness
+- ending
+- silence
+- tragedy
+review_status: published
+published: true
+hero_safe: true
+grid_safe: true
+social_safe: false
+focal_point:
+  x: 50
+  y: 50
+image:
+  master: horatio-after-noise.png
+  render_name: horatio-after-noise

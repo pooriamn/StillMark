@@ -1,0 +1,25 @@
+items:
+- label: Home
+  href: index.html
+  page: home
+  visible: true
+- label: Portfolio
+  href: portfolio.html
+  page: portfolio
+  visible: true
+- label: Series
+  href: series.html
+  page: series
+  visible: true
+- label: Stage Works
+  href: performance.html
+  page: performance
+  visible: true
+- label: About
+  href: about.html
+  page: about
+  visible: true
+- label: Contact
+  href: contact.html
+  page: contact
+  visible: true

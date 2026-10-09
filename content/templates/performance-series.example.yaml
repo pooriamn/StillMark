@@ -1,0 +1,30 @@
+slug: stage-work-slug
+title: Stage Work Title
+years: Stage work, 2026
+mood: Gesture, repetition, body, space, pressure.
+description: Describe the specific stage work as a complete photographic story, not as a loose
+  set of documentation images.
+card_summary: A short 1-2 sentence summary for index cards and Stage Works overviews.
+story_opening_text: Explain how the opening image or opening beat begins the sequence.
+story_sequence_text: Explain how the middle pressure, development, or escalation works.
+story_closing_text: Explain what the last image leaves behind.
+# Optional cover overrides when the best index/hero image is not the default cover_work_id.
+# card_cover_work_id: stage-work-01
+# hero_work_id: stage-work-01
+cover_work_id: stage-work-01
+work_ids:
+- stage-work-01
+- stage-work-02
+- stage-work-03
+order: 99
+visibility: public
+review_mode: false
+allow_favorites: true
+allow_inquiry_basket: true
+project_type: performance
+download_ids: []
+related_series_slugs: []
+
+# Per-image layout control lives on each work YAML:
+# portfolio_layout: auto | quiet | standard | medium | large | wide | full
+# series_layout: auto | quiet | standard | medium | large | wide | full

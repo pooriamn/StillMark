@@ -1,0 +1,28 @@
+id: storm-mirror
+title: Storm Mirror
+series: transit-of-stillness
+year: Weather sequence
+location: Flood plain
+alt: A cyclist passes a large tree reflected in water beneath a dramatic storm-dark
+  sky.
+caption: The weather has not yet broken, but the frame already knows its direction.
+  The rider remains at the edge of motion while the tree gathers the sky above it
+  with a heavier patience. Reflection holds both inside the same dark field, where
+  passage seems briefly suspended, as if the world were deciding whether movement
+  will continue or be overtaken.
+tags:
+- tree
+- reflection
+- cyclist
+- storm
+review_status: published
+published: true
+hero_safe: true
+grid_safe: true
+social_safe: false
+focal_point:
+  x: 67
+  y: 59
+image:
+  master: storm-mirror.png
+  render_name: storm-mirror

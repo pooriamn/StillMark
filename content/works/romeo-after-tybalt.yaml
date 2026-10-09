@@ -1,0 +1,34 @@
+id: romeo-after-tybalt
+title: Romeo After Tybalt
+series: romeo-and-juliet
+year: '2026'
+location: Unspecified
+alt: Romeo stands alone after killing Tybalt, with a dropped blade and a distant bed
+  behind him.
+caption: Revenge never leaves the body clean. The act is over, but its weight has
+  only just entered him. Behind him waits the life that cannot be returned to, already
+  receding into another country called too late.
+tags:
+- romeo-and-juliet
+- romeo
+- tybalt
+- guilt
+- violence
+- exile
+- blade
+- aftermath
+review_status: archived
+published: false
+hero_safe: true
+grid_safe: true
+social_safe: false
+portfolio_layout: auto
+series_layout: auto
+display_layouts: {}
+display_ratios: {}
+focal_point:
+  x: 42
+  y: 18
+image:
+  master: romeo-after-tybalt.png
+  render_name: romeo-after-tybalt

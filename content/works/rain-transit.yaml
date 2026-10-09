@@ -1,0 +1,27 @@
+id: rain-transit
+title: Rain Transit
+series: weather-of-presence
+year: Threshold sequence
+location: City square
+alt: A solitary figure with an umbrella crosses a rain-soaked square while checking
+  a lit phone.
+caption: Rain covers the square in noise, yet the deepest distance remains silent.
+  A small screen offers contact without nearness, direction without arrival. Around
+  it, the city dissolves into reflection and blur, as if presence itself had become
+  temporary under weather.
+tags:
+- rain
+- street
+- umbrella
+- reflection
+review_status: published
+published: true
+hero_safe: false
+grid_safe: true
+social_safe: false
+focal_point:
+  x: 68
+  y: 26
+image:
+  master: rain-transit.png
+  render_name: rain-transit

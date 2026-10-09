@@ -1,0 +1,3 @@
+Drop new original image files in this folder.
+Then run:
+python scripts/ingest_work.py

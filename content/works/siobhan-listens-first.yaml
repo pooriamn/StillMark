@@ -1,0 +1,34 @@
+id: siobhan-listens-first
+title: Siobhan Listens First
+series: curious-incident
+year: '2026'
+location: Unspecified
+alt: Siobhan sits near Christopher as he writes in a notebook, with careful distance
+  between them.
+caption: Trust does not arrive as touch. It arrives as space given carefully, as a
+  person allowed to turn confusion into words without being crowded by another person's
+  need to comfort.
+tags:
+- curious-incident
+- siobhan
+- notebook
+- trust
+- listening
+- distance
+- care
+- writing
+review_status: archived
+published: false
+hero_safe: true
+grid_safe: true
+social_safe: false
+portfolio_layout: auto
+series_layout: auto
+display_layouts: {}
+display_ratios: {}
+focal_point:
+  x: 50
+  y: 50
+image:
+  master: siobhan-listens-first.png
+  render_name: siobhan-listens-first

@@ -1,0 +1,32 @@
+id: father-at-the-threshold
+title: Father at the Threshold
+series: curious-incident
+year: '2026'
+location: Unspecified
+alt: Ed stands near a doorway while Christopher remains separated inside the room.
+caption: Home does not collapse loudly. Sometimes it changes by a few metres of distance.
+  A father remains close enough to be known and far enough away to become unsafe.
+tags:
+- curious-incident
+- father
+- ed
+- threshold
+- home
+- fear
+- trust
+- family-rupture
+review_status: archived
+published: false
+hero_safe: true
+grid_safe: true
+social_safe: false
+portfolio_layout: auto
+series_layout: auto
+display_layouts: {}
+display_ratios: {}
+focal_point:
+  x: 40
+  y: 26
+image:
+  master: father-at-the-threshold.png
+  render_name: father-at-the-threshold

@@ -1,0 +1,32 @@
+id: potion-instruction
+title: Potion Instruction
+series: romeo-and-juliet
+year: '2026'
+location: Unspecified
+alt: Friar Laurence offers Juliet a small vial across a stark stage with a chair nearby.
+caption: Hope reaches her in the shape of something funereal. The vial is tiny, but
+  it asks for a courage larger than any blessing that came before it.
+tags:
+- romeo-and-juliet
+- friar-laurence
+- potion
+- juliet
+- hope
+- risk
+- false-death
+- decision
+review_status: published
+published: true
+hero_safe: true
+grid_safe: true
+social_safe: false
+portfolio_layout: auto
+series_layout: auto
+display_layouts: {}
+display_ratios: {}
+focal_point:
+  x: 79
+  y: 23
+image:
+  master: potion-instruction.png
+  render_name: potion-instruction

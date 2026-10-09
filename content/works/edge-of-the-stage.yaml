@@ -1,0 +1,25 @@
+id: edge-of-the-stage
+title: Edge of the Stage
+series: urban-intervals
+year: Stage archive
+location: Theatre floor
+alt: An older man in a suit walks toward a broad field of darkness on an otherwise
+  empty stage.
+caption: The work is driven by the threshold between lit floorboards and the surrounding
+  dark void.
+tags:
+- stage
+- performance
+- darkness
+- gesture
+review_status: published
+published: true
+hero_safe: false
+grid_safe: true
+social_safe: false
+focal_point:
+  x: 18
+  y: 44
+image:
+  master: edge-of-the-stage.png
+  render_name: edge-of-the-stage

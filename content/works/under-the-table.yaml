@@ -1,0 +1,34 @@
+id: under-the-table
+title: Under the Table
+series: curious-incident
+year: '2026'
+location: Unspecified
+alt: Christopher shelters under a table, creating a smaller space within a larger
+  threatening room.
+caption: Retreat is not failure here. It is intelligence. Under the table, the world
+  becomes smaller, edged, countable - a temporary shelter against everything arriving
+  too much at once.
+tags:
+- curious-incident
+- under-table
+- shelter
+- overload
+- retreat
+- survival
+- boundaries
+- anxiety
+review_status: published
+published: true
+hero_safe: true
+grid_safe: true
+social_safe: false
+portfolio_layout: auto
+series_layout: auto
+display_layouts: {}
+display_ratios: {}
+focal_point:
+  x: 41
+  y: 33
+image:
+  master: under-the-table.png
+  render_name: under-the-table

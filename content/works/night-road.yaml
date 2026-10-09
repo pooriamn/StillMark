@@ -1,0 +1,24 @@
+id: night-road
+title: Night Road
+series: winter-silence
+year: Winter sequence
+location: Winter road
+alt: A cyclist rides down a snowy road at night between frost-covered trees and distant
+  headlights.
+caption: A straight line was enough. The rest was already behind.
+tags:
+- night
+- snow
+- road
+- cyclist
+review_status: published
+published: true
+hero_safe: true
+grid_safe: true
+social_safe: false
+focal_point:
+  x: 49
+  y: 61
+image:
+  master: night-road.png
+  render_name: night-road

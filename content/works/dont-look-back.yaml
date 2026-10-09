@@ -1,0 +1,34 @@
+id: dont-look-back
+title: Don't Look Back
+series: eurydice
+year: '2026'
+location: Unspecified
+alt: Orpheus leads Eurydice along a narrow strip of light while she follows behind
+  him from the underworld.
+caption: The distance between them is the condition and the wound. To return, he must
+  not turn; to trust, she must follow without being seen. Love is stretched into a
+  path too narrow for fear.
+tags:
+- eurydice
+- orpheus
+- dont-look-back
+- return
+- trust
+- fear
+- underworld
+- loss
+review_status: published
+published: true
+hero_safe: true
+grid_safe: true
+social_safe: false
+portfolio_layout: auto
+series_layout: auto
+display_layouts: {}
+display_ratios: {}
+focal_point:
+  x: 73
+  y: 15
+image:
+  master: dont-look-back.png
+  render_name: dont-look-back

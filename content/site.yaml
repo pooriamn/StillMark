@@ -1,0 +1,21 @@
+name: STILLMRK
+short_description: A monochrome photography portfolio shaped by distance, witness,
+  reflection, and quiet forms of solidarity.
+description: STILLMRK is a narrative monochrome photography portfolio built around
+  thresholds, winter passage, reflection, and the emotional condition of distance.
+og_image: assets/images/social/quiet-lens-og-home.jpg
+site_url: https://stillmark.art
+display_url: https://stillmark.art
+environment: production
+allow_indexing: true
+search_names:
+- Pooria Moozarm Nia
+- Pooria Mn
+- پوریا موزرم نیا
+public_email: info@stillmark.art
+footer_text: ''
+footer_microcopy: ''
+footer_contact_text: ''
+copyright_text: ''
+footer_links: []
+analytics_id: G-FSYRMH54CY

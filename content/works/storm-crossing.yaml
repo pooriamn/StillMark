@@ -1,0 +1,30 @@
+id: storm-crossing
+title: Storm Crossing
+series: transit-of-stillness
+year: Transit sequence
+location: Storm horizon
+alt: A cyclist rides beside a large bare tree under a dark stormy sky, with both reflected
+  in a broad still pool in the foreground.
+caption: 'Here, the surface still holds reflection, but the sky no longer allows calm
+  to feel secure. The rider continues across the edge of the frame while the tree
+  rises into weather with a heavier kind of endurance. What passes through this image
+  is not only motion, but exposure: the quiet insistence of continuing beneath a world
+  that does not soften for it.'
+tags:
+- cyclist
+- tree
+- reflection
+- storm
+- weather
+- exposure
+review_status: published
+published: true
+hero_safe: true
+grid_safe: true
+social_safe: false
+focal_point:
+  x: 32
+  y: 57
+image:
+  master: storm-crossing.png
+  render_name: storm-crossing

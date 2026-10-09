@@ -1,0 +1,32 @@
+id: rush-hour-equation
+title: Rush Hour Equation
+series: curious-incident
+year: '2026'
+location: Unspecified
+alt: Christopher stands still among blurred commuters in a dense rush-hour stage composition.
+caption: The crowd has no individual mercy. It becomes movement, pressure, weather.
+  Inside it, he searches for a pattern strong enough to turn panic into a route.
+tags:
+- curious-incident
+- rush-hour
+- crowd
+- equation
+- anxiety
+- pattern
+- sensory-overload
+- movement
+review_status: published
+published: true
+hero_safe: true
+grid_safe: true
+social_safe: false
+portfolio_layout: auto
+series_layout: auto
+display_layouts: {}
+display_ratios: {}
+focal_point:
+  x: 69
+  y: 0
+image:
+  master: rush-hour-equation.png
+  render_name: rush-hour-equation

@@ -1,0 +1,26 @@
+id: rooted-longer-than-longing
+title: Rooted Longer Than Longing
+series: witness-horizon
+year: Witness sequence
+location: Open hillside
+alt: A lone tree stands on a bare hill while a small solitary figure appears nearby
+  against a pale open sky.
+caption: The tree keeps its old measure against the pale emptiness, while presence
+  arrives only briefly at its edge. Nothing here offers welcome, only proportion.
+  What remains stands longer than longing, and the distance between the two becomes
+  the quiet fact the image refuses to soften.
+tags:
+- Solitude
+- Lone tree
+- Hillside
+review_status: published
+published: true
+hero_safe: true
+grid_safe: true
+social_safe: false
+focal_point:
+  x: 69
+  y: 83
+image:
+  master: rooted-longer-than-longing.png
+  render_name: rooted-longer-than-longing

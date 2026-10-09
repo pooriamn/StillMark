@@ -1,0 +1,26 @@
+id: solitude
+title: Solitude
+series: urban-intervals
+year: Threshold sequence
+location: Untitled location
+alt: One Hundred Years of Solitude …
+caption: There are hours when grief refuses tears and takes the shape of movement
+  instead. A street, a wall, a brief cut of light, and the old weight carried forward
+  without witness. Crying releases. Walking often does not. It only stretches pain
+  across distance.
+tags:
+- threshold
+- shadow
+- estrangement
+- passage
+review_status: published
+published: true
+hero_safe: true
+grid_safe: true
+social_safe: false
+focal_point:
+  x: 34
+  y: 70
+image:
+  master: solitude.png
+  render_name: solitude

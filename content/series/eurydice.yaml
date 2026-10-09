@@ -1,0 +1,38 @@
+slug: eurydice
+title: Eurydice
+years: '2026'
+mood: tender, mournful, restrained, watery, intimate, cinematic
+description: 'Eurydice is approached here not as classical myth or fantasy underworld
+  imagery, but as a story of love interrupted by death, memory damaged by water, and
+  care rebuilt from ordinary stage materials. The emotional world is held by string,
+  letters, a glass, a chair, a globe, wet floor, and the fragile architecture of a
+  room made for someone who has forgotten how to return.
+
+
+  This compact sequence follows Eurydice from a playful promise into isolation, danger,
+  death, partial recognition, failed return, and residue. The images do not need grandeur.
+  Their force comes from smaller evidence: the wrong glass in the wrong hand, a letter
+  placed too far away, a room built from string, a path that requires trust at the
+  exact moment fear becomes unbearable.
+
+
+  The visual language should remain spare, damp, intimate, and unsentimental. Black
+  space is not mythic darkness; it is the underworld made from theatre matter. Water
+  does not cleanse; it erases. By the final image, love is no longer held by the bodies
+  alone. It remains in the objects that outlast memory.'
+cover_work_id: string-instead-of-a-ring
+work_ids:
+- string-instead-of-a-ring
+- outside-the-wedding
+- letter-in-the-penthouse
+- raining-elevator
+- father-builds-the-room
+- letter-falls-from-the-sky
+- dont-look-back
+- globe-after-everyone
+order: 14
+visibility: public
+project_type: performance
+review_mode: false
+allow_favorites: true
+allow_inquiry_basket: true

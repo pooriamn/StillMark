@@ -1,0 +1,33 @@
+id: before-drinking
+title: Juliet Before Drinking
+series: romeo-and-juliet
+year: '2026'
+location: Unspecified
+alt: Juliet sits alone at the edge of a bed with a vial, preparing to drink the potion.
+caption: Some decisions can only be made in absolute solitude. Terror stays in the
+  room with her, but so does will. The future narrows to one hand, one vial, and the
+  silence before irreversible choice.
+tags:
+- romeo-and-juliet
+- juliet
+- potion
+- solitude
+- courage
+- decision
+- bed
+- suspense
+review_status: published
+published: true
+hero_safe: true
+grid_safe: true
+social_safe: false
+portfolio_layout: auto
+series_layout: auto
+display_layouts: {}
+display_ratios: {}
+focal_point:
+  x: 55
+  y: 28
+image:
+  master: before-drinking.png
+  render_name: before-drinking

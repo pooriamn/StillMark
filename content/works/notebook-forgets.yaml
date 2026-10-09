@@ -1,0 +1,34 @@
+id: notebook-forgets
+title: The Notebook Forgets
+series: constellations
+year: '2026'
+location: Unspecified
+alt: Marianne sits alone under a narrow overhead light with an open notebook and loose
+  pages on the floor.
+caption: Knowledge does not always protect the person who carried it. The notebook
+  lies open like a failed shelter, and the mind that once trusted sequence begins
+  meeting silence inside its own rooms.
+tags:
+- constellations
+- marianne
+- notebook
+- illness
+- memory
+- language
+- solitude
+- fragility
+review_status: published
+published: true
+hero_safe: true
+grid_safe: true
+social_safe: false
+portfolio_layout: auto
+series_layout: auto
+display_layouts: {}
+display_ratios: {}
+focal_point:
+  x: 65
+  y: 24
+image:
+  master: notebook-forgets.png
+  render_name: notebook-forgets

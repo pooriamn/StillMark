@@ -1,0 +1,33 @@
+id: choosing-the-knife
+title: Choosing the Knife
+series: woyzeck
+year: '2026'
+location: Unspecified
+alt: Woyzeck leans toward a counter where a knife catches light in a sparse scene.
+caption: Tragedy rarely announces itself as destiny. Sometimes it appears as an ordinary
+  object waiting on a counter, still only merchandise, already heavy with the future
+  no one will stop.
+tags:
+- woyzeck
+- knife
+- decision
+- violence
+- purchase
+- intention
+- object
+- tragedy
+review_status: archived
+published: false
+hero_safe: true
+grid_safe: true
+social_safe: false
+portfolio_layout: auto
+series_layout: auto
+display_layouts: {}
+display_ratios: {}
+focal_point:
+  x: 50
+  y: 50
+image:
+  master: choosing-the-knife.png
+  render_name: choosing-the-knife

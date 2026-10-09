@@ -1,0 +1,33 @@
+id: consent-of-the-mouth
+title: Consent of the Mouth
+series: romeo-and-juliet
+year: '2026'
+location: Unspecified
+alt: Romeo and Juliet lean toward a first kiss while a bed waits behind them in shadow.
+caption: The most dangerous moments are often the ones that have not happened yet.
+  The air before the kiss holds two futures at once, and both are already trembling
+  inside the room.
+tags:
+- romeo-and-juliet
+- first-kiss
+- consent
+- desire
+- intimacy
+- turning-point
+- tension
+- love
+review_status: published
+published: true
+hero_safe: true
+grid_safe: true
+social_safe: false
+portfolio_layout: auto
+series_layout: auto
+display_layouts: {}
+display_ratios: {}
+focal_point:
+  x: 49
+  y: 29
+image:
+  master: consent-of-the-mouth.png
+  render_name: consent-of-the-mouth

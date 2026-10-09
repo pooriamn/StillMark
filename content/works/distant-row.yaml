@@ -1,0 +1,31 @@
+id: distant-row
+title: The First Honest Shape of Thought
+series: winter-silence
+year: Winter sequence
+location: Open field
+alt: A small solitary figure stands before a long straight line of bare trees under
+  heavy clouds.
+caption: The line of trees holds like a verdict across the horizon, while the field
+  keeps its wide, unsoftened silence. Near the center, a brief human scale interrupts
+  nothing and yet changes everything. To be small before such order is not defeat.
+  It is the first honest shape of thought.
+tags:
+- trees
+- field
+- distance
+- clouds
+review_status: published
+published: true
+hero_safe: true
+grid_safe: true
+social_safe: false
+portfolio_layout: auto
+series_layout: auto
+display_layouts: {}
+display_ratios: {}
+focal_point:
+  x: 54
+  y: 84
+image:
+  master: distant-row.jpg
+  render_name: distant-row

@@ -1,0 +1,33 @@
+id: door-before-bedroom
+title: The Door Before the Bedroom
+series: othello
+year: '2026'
+location: Unspecified
+alt: Othello stands before a stark doorway that reveals a bed in the distance.
+caption: The last threshold is still only a threshold, and that is what makes it unbearable.
+  Nothing irreversible has happened yet. The room waits ahead, already carrying the
+  future, while decision gathers itself in the dark.
+tags:
+- othello
+- threshold
+- bedroom
+- decision
+- fate
+- violence
+- darkness
+- suspense
+review_status: archived
+published: false
+hero_safe: true
+grid_safe: true
+social_safe: false
+portfolio_layout: auto
+series_layout: auto
+display_layouts: {}
+display_ratios: {}
+focal_point:
+  x: 34
+  y: 28
+image:
+  master: door-before-bedroom.png
+  render_name: door-before-bedroom
