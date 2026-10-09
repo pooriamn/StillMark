@@ -7211,3 +7211,63 @@ html.js.motion-ready .contact-grid > .reveal:first-child {
     font-size: clamp(0.95rem, 5.4vw, 1.31rem);
   }
 }
+
+/* ─────────────────────────────────────────────────────────────
+   Consent banner (assets/js/consent.js). Analytics load only after
+   the visitor accepts here.
+   ───────────────────────────────────────────────────────────── */
+.consent-banner {
+  position: fixed;
+  inset-inline: max(1rem, env(safe-area-inset-left));
+  bottom: max(1rem, env(safe-area-inset-bottom));
+  z-index: 10050;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.9rem 1.25rem;
+  max-width: 46rem;
+  margin-inline: auto;
+  padding: 1rem 1.1rem 1rem 1.25rem;
+  color: var(--text);
+  background: rgba(14, 14, 14, 0.92);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-md);
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+}
+
+.consent-banner[hidden] {
+  display: none;
+}
+
+.consent-banner__text {
+  flex: 1 1 22rem;
+  margin: 0;
+  font-size: 0.92rem;
+  line-height: 1.5;
+  color: var(--text-soft);
+}
+
+.consent-banner__actions {
+  display: flex;
+  gap: 0.6rem;
+}
+
+.footer-consent-link {
+  padding: 0;
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: 0;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+  text-decoration-color: var(--border-strong);
+}
+
+.footer-consent-link:hover,
+.footer-consent-link:focus-visible {
+  color: var(--text);
+}

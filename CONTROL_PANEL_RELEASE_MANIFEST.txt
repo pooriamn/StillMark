@@ -1,6 +1,0 @@
-Created UTC: 2026-04-27
-Package type: full-clean-project
-Gate: manual verified non-GUI
-Fix: Works gallery preview loading pipeline
-Excluded: .venv, __pycache__, generated build caches/logs/backups, corrupted legacy filename artifacts.
-Website UI/content hash comparison against previous package: changed=0, missing=0, added=0.
