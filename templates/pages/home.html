@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% from "partials/picture.html" import picture %}
+{% from "partials/blocks.html" import programme %}
 {% block main %}
 <section class="opening wrap" aria-labelledby="opening-title">
   {%- if hero.work %}
@@ -27,25 +28,15 @@
   </div>
 </section>
 
-<section class="home-section wrap" aria-labelledby="series-title">
+{%- for group in programme_groups %}
+<section class="home-section wrap" aria-labelledby="{{ group.id }}-title">
   <div class="section-head">
-    <h2 id="series-title">Series</h2>
-    {%- if programme_intro %}<p>{{ programme_intro }}</p>{% endif %}
+    <h2 id="{{ group.id }}-title"><a href="{{ group.href }}">{{ group.title }}</a></h2>
+    {%- if group.intro %}<p>{{ group.intro }}</p>{% endif %}
   </div>
-  <ol class="programme">
-    {%- for row in programme %}
-    <li class="programme__row">
-      <a class="programme__link" href="{{ row.href }}">
-        <span class="programme__title">{{ row.title }}</span>
-        <span class="programme__slot" aria-hidden="true">
-          {%- if row.cover %}<span class="programme__cover frame">{{ picture(row.cover, "22rem") }}</span>{% endif -%}
-        </span>
-        <span class="programme__facts">{{ row.count }} photograph{{ "" if row.count == 1 else "s" }}{% if row.years %}<br>{{ row.years }}{% endif %}</span>
-      </a>
-    </li>
-    {%- endfor %}
-  </ol>
+  {{ programme(group.rows) }}
 </section>
+{%- endfor %}
 
 {%- if selected %}
 <section class="home-section wrap" aria-labelledby="selected-title">

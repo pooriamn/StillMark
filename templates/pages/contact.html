@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% from "partials/blocks.html" import intro, documents %}
+{% block main %}
+<div class="wrap contact">
+  {{ intro(title, lead) }}
+  <div class="contact__grid">
+    <section class="contact__direct" aria-labelledby="direct-title">
+      <h2 id="direct-title">Write directly</h2>
+      {%- if email %}
+      <p class="contact__email"><a href="mailto:{{ email }}">{{ email }}</a></p>
+      <div class="actions">
+        <button type="button" class="text-link contact__copy" data-copy="{{ email }}">Copy email address</button>
+        {%- for link in social_links %}<a class="text-link" href="{{ link.href }}" rel="noreferrer">{{ link.label }}</a>{% endfor %}
+      </div>
+      <p class="contact__status" data-copy-status aria-live="polite"></p>
+      {%- endif %}
+      {%- if downloads %}
+      <h2 class="contact__docs-title">Documents</h2>
+      {{ documents(downloads) }}
+      {%- endif %}
+    </section>
+    {%- if email %}
+    <section class="composer" aria-labelledby="composer-title">
+      <h2 id="composer-title">Prepare an email</h2>
+      <p class="composer__note">Fill this in and your email app opens with the message ready to send.</p>
+      <form data-composer data-to="{{ email }}">
+        <label>What is it about?
+          <select name="topic">{% for topic in topics %}<option>{{ topic }}</option>{% endfor %}</select>
+        </label>
+        <label>Photographs or series <span class="composer__optional">(optional)</span>
+          <input name="works" type="text" autocomplete="off" placeholder="For example: Mirror Shore, the Hamlet series">
+        </label>
+        <label>Message
+          <textarea name="message" rows="7" required placeholder="Sizes, editions, dates, where the work would appear"></textarea>
+        </label>
+        <button type="submit" class="button">Open in my email app</button>
+      </form>
+      <script type="application/json" data-work-titles>{{ work_titles }}</script>
+      <script type="application/json" data-series-titles>{{ series_titles_json }}</script>
+    </section>
+    {%- endif %}
+  </div>
+</div>
+{% endblock %}

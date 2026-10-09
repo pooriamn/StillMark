@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% from "partials/blocks.html" import intro %}
+{% from "partials/picture.html" import picture %}
+{% block main %}
+<div class="wrap">
+  {{ intro(title, lead) }}
+  <div class="filters" role="group" aria-label="Show photographs from" data-filters hidden>
+    <button type="button" class="filters__button" data-filter="all" aria-pressed="true">All <span>{{ works | length }}</span></button>
+    {%- for group in filter_groups %}
+    {%- for item in group.entries %}
+    <button type="button" class="filters__button" data-filter="{{ item.slug }}" aria-pressed="false">{{ item.title }} <span>{{ item.count }}</span></button>
+    {%- endfor %}
+    {%- endfor %}
+  </div>
+  <p class="filters__status visually-hidden" aria-live="polite" data-filter-status></p>
+  <ul class="mosaic" data-mosaic>
+    {%- for work in works %}
+    <li class="mosaic__item" data-series="{{ work.series }}">
+      <a class="mosaic__link" href="{{ work_path(work.id) }}">
+        <figure class="frame">{{ picture(work, "(min-width: 75rem) 30vw, (min-width: 45rem) 46vw, 100vw") }}</figure>
+        <span class="mosaic__title">{{ work.title }}</span>
+        <span class="mosaic__meta">{{ series_titles.get(work.series, "") }}</span>
+      </a>
+    </li>
+    {%- endfor %}
+  </ul>
+  <div class="mosaic__more" data-more hidden><button type="button" class="button" data-more-button>Show more photographs</button></div>
+</div>
+{% endblock %}

@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% from "partials/blocks.html" import intro, documents %}
+{% from "partials/picture.html" import picture %}
+{% block main %}
+<div class="wrap">
+  <div class="about">
+    {%- if work %}
+    <figure class="frame about__frame">{{ picture(work, "(min-width: 60rem) 40vw, 100vw", loading="eager", priority="high") }}</figure>
+    {%- endif %}
+    <div class="about__text">
+      {{ intro(title, lead) }}
+      {%- if statement %}
+      <section aria-labelledby="statement-title" class="about__statement">
+        <h2 id="statement-title">{{ statement.title }}</h2>
+        {%- for paragraph in statement.text %}<p>{{ paragraph }}</p>{% endfor %}
+      </section>
+      {%- endif %}
+    </div>
+  </div>
+  {%- if practice %}
+  <section class="notes" aria-labelledby="practice-title">
+    <h2 id="practice-title">How the work is made</h2>
+    <div class="notes__grid">
+      {%- for card in practice %}<div><h3>{{ card.title }}</h3><p>{{ card.text }}</p></div>{% endfor %}
+    </div>
+  </section>
+  {%- endif %}
+  {%- if downloads %}
+  <section class="notes" id="documents" aria-labelledby="documents-title">
+    <h2 id="documents-title">Documents</h2>
+    {{ documents(downloads) }}
+  </section>
+  {%- endif %}
+  {%- if cta %}
+  <section class="statement home-section" aria-labelledby="cta-title">
+    <h2 id="cta-title">{{ cta.title }}</h2>
+    {%- if cta.text %}<p>{{ cta.text }}</p>{% endif %}
+    <div class="actions"><a class="button" href="/contact.html">Get in touch</a></div>
+  </section>
+  {%- endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,24 @@
+{#- Series index (/series.html) and Stage Works (/performance.html). -#}
+{% extends "base.html" %}
+{% from "partials/blocks.html" import cards, intro %}
+{% from "partials/picture.html" import picture %}
+{% block main %}
+<div class="wrap">
+  {{ intro(title, lead) }}
+  {{ cards(rows) }}
+  {%- if notes %}
+  <section class="notes" aria-labelledby="notes-title">
+    <h2 id="notes-title">{{ notes.title }}</h2>
+    {%- if notes.intro %}<p class="notes__intro">{{ notes.intro }}</p>{% endif %}
+    <div class="notes__grid">
+      {%- for card in notes.cards %}
+      <div><h3>{{ card.title }}</h3><p>{{ card.text }}</p></div>
+      {%- endfor %}
+    </div>
+  </section>
+  {%- endif %}
+  {%- if other %}
+  <p class="cross-link">{{ other.text }} <a class="text-link" href="{{ other.href }}">{{ other.label }}</a></p>
+  {%- endif %}
+</div>
+{% endblock %}

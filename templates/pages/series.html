@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% from "partials/picture.html" import picture %}
+{% block main %}
+<article class="wrap series">
+  <nav class="crumbs" aria-label="Breadcrumb"><a href="{{ section.href }}">{{ section.label }}</a></nav>
+  <header class="series__head">
+    <h1 class="series__title">{{ series.title }}</h1>
+    <div class="series__about">
+      <p class="series__facts">{{ works | length }} photographs{% if series.years and series.years != "2026" %}. {{ series.years }}{% endif %}</p>
+      {%- for paragraph in description %}<p>{{ paragraph }}</p>{% endfor %}
+      {%- for paragraph in opening %}<p>{{ paragraph }}</p>{% endfor %}
+    </div>
+  </header>
+
+  <ol class="sequence">
+    {%- for work in works %}
+    <li class="sequence__item sequence__item--{{ layouts[loop.index0] }}">
+      <a class="sequence__link" href="{{ work_path(work.id) }}">
+        <figure class="frame" style="--r: {{ work.width }} / {{ work.height }};">{{ picture(work, sizes[layouts[loop.index0]], loading=("eager" if loop.first else "lazy"), priority=("high" if loop.first else "auto")) }}</figure>
+        <span class="sequence__caption"><span class="sequence__number">{{ loop.index }}</span> {{ work.title }}</span>
+      </a>
+    </li>
+    {%- endfor %}
+  </ol>
+
+  {%- if closing %}
+  <div class="series__closing">
+    {%- for paragraph in closing %}<p>{{ paragraph }}</p>{% endfor %}
+  </div>
+  {%- endif %}
+  <div class="actions series__actions">
+    <a class="button" href="{{ inquiry_href }}">Ask about this series</a>
+  </div>
+
+  {%- if previous or following %}
+  <nav class="pager" aria-label="Other {{ section.label | lower }}">
+    {%- if previous %}<a rel="prev" href="{{ series_path(previous.slug) }}"><span class="pager__label">Previous</span><span class="pager__title">{{ previous.title }}</span></a>{% endif %}
+    {%- if following %}<a rel="next" href="{{ series_path(following.slug) }}"><span class="pager__label">Next</span><span class="pager__title">{{ following.title }}</span></a>{% endif %}
+  </nav>
+  {%- endif %}
+</article>
+{% endblock %}

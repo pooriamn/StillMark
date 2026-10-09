@@ -1,0 +1,60 @@
+{% from "partials/picture.html" import picture %}
+
+{#- Series index set like a theatre programme. -#}
+{% macro programme(rows) -%}
+<ol class="programme">
+  {%- for row in rows %}
+  <li class="programme__row">
+    <a class="programme__link" href="{{ row.href }}">
+      <span class="programme__title">{{ row.title }}</span>
+      <span class="programme__slot" aria-hidden="true">
+        {%- if row.cover %}<span class="programme__cover frame">{{ picture(row.cover, "22rem") }}</span>{% endif -%}
+      </span>
+      <span class="programme__facts">{{ row.count }} photograph{{ "" if row.count == 1 else "s" }}{% if row.years %}<br>{{ row.years }}{% endif %}</span>
+    </a>
+  </li>
+  {%- endfor %}
+</ol>
+{%- endmacro %}
+
+{#- Cover cards for the Series and Stage Works index pages. -#}
+{% macro cards(rows) -%}
+<ul class="cards">
+  {%- for row in rows %}
+  <li class="card">
+    <a class="card__link" href="{{ row.href }}">
+      {%- if row.cover %}<figure class="frame card__frame">{{ picture(row.cover, "(min-width: 60rem) 44vw, 100vw") }}</figure>{% endif %}
+      <span class="card__title">{{ row.title }}</span>
+      <span class="card__facts">{{ row.count }} photograph{{ "" if row.count == 1 else "s" }}{% if row.years and row.years != "2026" %}, {{ row.years | lower }}{% endif %}</span>
+      {%- if row.summary %}<span class="card__summary">{{ row.summary }}</span>{% endif %}
+    </a>
+  </li>
+  {%- endfor %}
+</ul>
+{%- endmacro %}
+
+{#- Page opening with an optional photograph. -#}
+{% macro intro(title, lead, work=none, caption_series="") -%}
+<header class="page-intro">
+  <h1 class="page-intro__title">{{ title }}</h1>
+  {%- if lead %}
+  <div class="page-intro__lead">
+    {%- for paragraph in lead %}<p>{{ paragraph }}</p>{% endfor %}
+  </div>
+  {%- endif %}
+</header>
+{%- endmacro %}
+
+{% macro documents(items) -%}
+<ul class="documents">
+  {%- for item in items %}
+  <li>
+    <a class="documents__link" href="{{ item.file }}">
+      <span class="documents__title">{{ item.title }}</span>
+      <span class="documents__meta">PDF{% if item.size %}, {{ item.size }}{% endif %}</span>
+    </a>
+    {%- if item.description %}<p>{{ item.description }}</p>{% endif %}
+  </li>
+  {%- endfor %}
+</ul>
+{%- endmacro %}
